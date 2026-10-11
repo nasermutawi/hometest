@@ -35,13 +35,27 @@ test('other households cannot see or edit tasks', async () => {
   await naser.agent.post('/api/tasks').send({ title: 'x', owner_id: stranger.me.user.id }).expect(400);
 });
 
-test('assigning a task to your partner notifies them', async () => {
+test('the partner hears about new tasks and assignments, worded for them', async () => {
   const { app, sent } = setup();
   const { naser, sara } = await couple(app);
+  sent.length = 0;
   await naser.agent.post('/api/tasks').send({ title: 'Book MOT', owner_id: sara.me.user.id }).expect(201);
-  const notes = (await sara.agent.get('/api/notifications')).body;
-  assert.equal(notes[0].title, 'Naser assigned you a task');
-  assert.equal(sent.at(-1).userId, sara.me.user.id);
+  const toSara = sent.filter((s) => s.userId === sara.me.user.id);
+  assert.equal(toSara.length, 1);
+  assert.match(toSara[0].body, /Naser added "Book MOT"\. It's assigned to you\./);
+  // Naser made the change, so Naser isn't told about it.
+  assert.equal(sent.filter((s) => s.userId === naser.me.user.id).length, 0);
+
+  const task = (await naser.agent.post('/api/tasks').send({ title: 'Clear gutters' })).body;
+  assert.match(sent.at(-1).body, /Nobody has taken it yet/);
+  assert.match(sent.at(-1).chatHint, /I'll take it/);
+
+  await sara.agent.patch(`/api/tasks/${task.id}`).send({ owner_id: sara.me.user.id }).expect(200);
+  assert.equal(sent.at(-1).userId, naser.me.user.id);
+  assert.match(sent.at(-1).body, /Sara is taking care of "Clear gutters"/);
+
+  await sara.agent.patch(`/api/tasks/${task.id}`).send({ owner_id: naser.me.user.id }).expect(200);
+  assert.match(sent.at(-1).body, /Sara assigned "Clear gutters" to you/);
 });
 
 test('prep steps are stored, editable and can be ticked off', async () => {
@@ -66,9 +80,9 @@ test('completing a task notifies the partner and clears pending reminders', asyn
   const { app, db } = setup();
   const { naser, sara } = await couple(app);
   const task = (await naser.agent.post('/api/tasks').send({ title: 'Pay council tax', due_at: inDays(3), owner_id: naser.me.user.id })).body;
-  assert.ok(db.prepare('SELECT COUNT(*) n FROM reminders WHERE task_id = ?').get(task.id).n > 0);
+  assert.ok(db.prepare('SELECT COUNT(*) n FROM task_reminders WHERE task_id = ?').get(task.id).n > 0);
   await naser.agent.patch(`/api/tasks/${task.id}`).send({ status: 'done' }).expect(200);
-  assert.equal(db.prepare('SELECT COUNT(*) n FROM reminders WHERE task_id = ? AND sent_at IS NULL').get(task.id).n, 0);
+  assert.equal(db.prepare('SELECT COUNT(*) n FROM task_reminders WHERE task_id = ? AND sent_at IS NULL').get(task.id).n, 0);
   assert.equal((await sara.agent.get('/api/notifications')).body[0].title, 'Naser finished a task');
 });
 
@@ -96,6 +110,23 @@ test('auth: rejects bad credentials, duplicate emails and anonymous access', asy
   // Bearer tokens work too, for a future native client.
   await request(app).get('/api/tasks').set('Authorization', `Bearer ${body.token}`).expect(200);
   await request(app).post('/api/auth/register').send({ name: 'Y', email: 'y@example.com', password: 'short' }).expect(400);
+});
+
+test('phone numbers are normalised and unique', async () => {
+  const { app } = setup();
+  const { naser, sara } = await couple(app);
+  assert.equal((await naser.agent.patch('/api/me').send({ phone: '+44 7700 900123' }).expect(200)).body.phone, '447700900123');
+  await sara.agent.patch('/api/me').send({ phone: '0044 7700-900123' }).expect(409);
+  await sara.agent.patch('/api/me').send({ phone: '123' }).expect(400);
+  const me = (await sara.agent.get('/api/me')).body;
+  assert.deepEqual(me.members.map((m) => m.whatsapp), [true, false]);
+});
+
+test('household timezone can be set and is validated', async () => {
+  const { app } = setup();
+  const { naser } = await couple(app);
+  assert.equal((await naser.agent.patch('/api/household').send({ timezone: 'Asia/Kuwait' }).expect(200)).body.timezone, 'Asia/Kuwait');
+  await naser.agent.patch('/api/household').send({ timezone: 'Mars/Olympus' }).expect(400);
 });
 
 test('joining with a code moves an existing user and their tasks', async () => {

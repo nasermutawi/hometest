@@ -39,7 +39,7 @@ const PREP_LEAD = /\b(?:need to|have to|must|should|make sure (?:to|we|i)?|remem
 
 function pad(n) { return String(n).padStart(2, '0'); }
 
-function parseNow(now) {
+export function parseNow(now) {
   const m = /^(\d{4})-(\d{2})-(\d{2})(?:T(\d{2}):(\d{2}))?/.exec(now);
   if (!m) throw new Error('now must be a local ISO date-time');
   return new Date(Date.UTC(+m[1], +m[2] - 1, +m[3]));
@@ -48,7 +48,7 @@ function parseNow(now) {
 function fmt(d) { return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}`; }
 function addDays(d, n) { return new Date(d.getTime() + n * 86400_000); }
 
-function findDate(text, today) {
+export function findDate(text, today) {
   const t = text.toLowerCase();
   let m;
   if ((m = /\b(\d{4})-(\d{2})-(\d{2})\b/.exec(t))) return `${m[1]}-${m[2]}-${m[3]}`;
@@ -83,7 +83,7 @@ function findDate(text, today) {
   return null;
 }
 
-function findTime(text) {
+export function findTime(text) {
   const t = text.toLowerCase();
   let m;
   if ((m = /\b(\d{1,2})(?::(\d{2}))?\s*(am|pm)\b/.exec(t))) {
@@ -96,6 +96,24 @@ function findTime(text) {
   if (/\bmorning\b/.test(t)) return '09:00';
   if (/\bafternoon\b/.test(t)) return '14:00';
   if (/\bevening|tonight\b/.test(t)) return '19:00';
+  return null;
+}
+
+const RECURRENCE_PATTERNS = [
+  [/\b(?:every (?:other|2|two) weeks?|fortnightly|biweekly)\b/, 'week', 2],
+  [/\b(?:quarterly|every (?:3|three) months|every quarter|each quarter)\b/, 'month', 3],
+  [/\b(?:every (?:6|six) months|twice a year|half[- ]yearly|biannual(?:ly)?)\b/, 'month', 6],
+  [/\b(?:every (?:day|morning|evening|night)|daily)\b/, 'day', 1],
+  [/\b(?:every (?:week|monday|tuesday|wednesday|thursday|friday|saturday|sunday)s?|weekly|each week)\b/, 'week', 1],
+  [/\b(?:every month|monthly|each month)\b/, 'month', 1],
+  [/\b(?:every year|yearly|annual(?:ly)?|each year|once a year)\b/, 'year', 1],
+];
+
+export function findRecurrence(text) {
+  const t = text.toLowerCase();
+  let m;
+  if ((m = /\bevery (\d+) (day|week|month|year)s\b/.exec(t))) return { unit: m[2], interval: Number(m[1]) };
+  for (const [re, unit, interval] of RECURRENCE_PATTERNS) if (re.test(t)) return { unit, interval };
   return null;
 }
 
@@ -149,6 +167,8 @@ function explicitPrep(clauses) {
 
 function cleanTitle(clause, members) {
   let t = clause
+    .replace(/\b(?:every (?:other |\d+ |two |three |six )?(?:day|week|month|year|quarter|morning|evening|night|monday|tuesday|wednesday|thursday|friday|saturday|sunday)s?|fortnightly|biweekly|quarterly|weekly|monthly|yearly|annually|daily|twice a year|once a year|half[- ]yearly)\b/gi, '')
+    .replace(/\b(?:starting|beginning|from)\b(?= *(?:on |the |next |this )?(?:\d|mon|tue|wed|thu|fri|sat|sun|tomorrow|today|jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec))/gi, '')
     .replace(/\b(?:on |this |next )?(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday)s?\b/gi, '')
     .replace(/\b(?:day after tomorrow|tomorrow|today|tonight|next week|this weekend|at the weekend|in \d+ (?:days?|weeks?))\b/gi, '')
     .replace(/\b(?:at|by|around)?\s*\d{1,2}(?::\d{2})?\s*(?:am|pm)\b/gi, '')
@@ -173,6 +193,7 @@ export function parseWithRules({ text, now, members, speaker, history = [] }) {
   const due_date = findDate(full, today);
   const due_time = findTime(full);
   const owner = findOwner(full, members, speaker);
+  const recurrence = findRecurrence(full);
   const category = findCategory(text);
 
   const lower = text.toLowerCase();
@@ -197,6 +218,7 @@ export function parseWithRules({ text, now, members, speaker, history = [] }) {
     due_time,
     owner,
     prep_steps: prep.slice(0, 4),
+    recurrence,
     reminder_offsets_minutes: sameDayErrand ? [60] : [1440, 60],
     questions,
   };

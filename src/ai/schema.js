@@ -18,6 +18,10 @@ export const TaskDraftSchema = z.object({
     title: z.string().describe('Preparation that must happen before the task'),
     days_before: z.number().describe('How many days before the due date this prep should be done (0 = same day, earlier)'),
   })),
+  recurrence: z.object({
+    unit: z.enum(['day', 'week', 'month', 'year']),
+    interval: z.number().describe('Repeat every N units: weekly = week/1, fortnightly = week/2, quarterly = month/3, twice a year = month/6'),
+  }).nullable().describe('Set only when the task repeats; null for one-off tasks'),
   reminder_offsets_minutes: z.array(z.number()).describe('Minutes before the due time to remind the owner, e.g. [1440, 60]'),
   questions: z.array(z.string()).describe('Clarifying questions, only for information that is genuinely missing and needed (usually the date or owner). Empty if nothing important is missing.'),
 });

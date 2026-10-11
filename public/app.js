@@ -7,7 +7,18 @@ const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '
 const REMINDER_CHOICES = [
   [10080, '1 week before'], [1440, '1 day before'], [120, '2 hours before'], [60, '1 hour before'], [0, 'At the time'],
 ];
+const REPEAT_CHOICES = [
+  ['', 'Does not repeat'], ['week:1', 'Weekly'], ['week:2', 'Every 2 weeks'], ['month:1', 'Monthly'],
+  ['month:3', 'Quarterly'], ['month:6', 'Every 6 months'], ['year:1', 'Yearly'],
+];
 const DAY = 86400_000;
+const browserTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+function repeatLabel(r) {
+  if (!r) return null;
+  const preset = REPEAT_CHOICES.find(([k]) => k === `${r.unit}:${r.interval}`);
+  return preset ? preset[1].toLowerCase() : `every ${r.interval} ${r.unit}s`;
+}
 
 const state = {
   me: null,
@@ -111,6 +122,7 @@ $('#auth-form').addEventListener('submit', async (e) => {
   const body = Object.fromEntries(form);
   if (authMode === 'login') { delete body.name; delete body.inviteCode; }
   if (!body.inviteCode) delete body.inviteCode;
+  if (authMode === 'register') body.timezone = browserTimeZone;
   $('#auth-submit').disabled = true;
   try {
     await api(`/api/auth/${authMode}`, { method: 'POST', body });
@@ -191,6 +203,7 @@ function renderTask(t) {
         ${t.due_at ? `<span class="${overdue ? 'late' : ''}">${esc(friendlyDate(t.due_at))}</span>` : ''}
         <span class="pill ${owner ? '' : 'none'}">${esc(owner ?? 'Anyone')}</span>
         <span>${esc(t.category)}</span>
+        ${t.recurrence ? `<span class="repeat" title="Repeats">&#8635; ${esc(repeatLabel(t.recurrence))}</span>` : ''}
       </div>
       ${t.notes ? `<p class="task-notes">${esc(t.notes)}</p>` : ''}
       ${steps ? `<ul class="prep"><li class="prep-label">Prep</li>${steps}</ul>` : ''}
@@ -235,6 +248,10 @@ async function boot() {
   }
   $('#auth-view').hidden = true;
   $('#app-view').hidden = false;
+  // Reminders and chat replies are worded in the household's local time.
+  if (state.me.household.timezone === 'UTC' && browserTimeZone && browserTimeZone !== 'UTC') {
+    state.me.household = await api('/api/household', { method: 'PATCH', body: { timezone: browserTimeZone } }).catch(() => state.me.household);
+  }
   renderHeader();
   await refresh();
   if (location.hash.startsWith('#task-')) document.getElementById(location.hash.slice(1))?.scrollIntoView({ block: 'center' });
@@ -265,8 +282,9 @@ $('#task-list').addEventListener('change', async (e) => {
   const step = e.target.dataset.step;
   try {
     if (complete) {
-      await api(`/api/tasks/${complete}`, { method: 'PATCH', body: { status: e.target.checked ? 'done' : 'open' } });
-      toast(e.target.checked ? 'Nice, task done' : 'Task reopened');
+      const res = await api(`/api/tasks/${complete}`, { method: 'PATCH', body: { status: e.target.checked ? 'done' : 'open' } });
+      if (res.next) toast(`Done. Next one: ${friendlyDate(res.next.due_at)}`);
+      else toast(e.target.checked ? 'Nice, task done' : 'Task reopened');
     } else if (step) {
       await api(`/api/prep-steps/${step}`, { method: 'PATCH', body: { done: e.target.checked } });
     }
@@ -314,8 +332,10 @@ async function runParse() {
 $('#manual-btn').addEventListener('click', () => { state.draft = null; openEditor(null); });
 
 const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-if (Recognition) {
-  const mic = $('#mic-btn');
+
+// Dictation into a text field using the browser's speech recognition.
+function attachMic(mic, field, { onFinal } = {}) {
+  if (!Recognition) return;
   mic.hidden = false;
   let rec = null;
   mic.addEventListener('click', () => {
@@ -324,17 +344,25 @@ if (Recognition) {
     rec.lang = navigator.language || 'en-GB';
     rec.interimResults = true;
     rec.continuous = false;
-    const base = $('#compose-text').value.trim();
+    const base = field.value.trim();
+    let final = false;
     rec.onresult = (ev) => {
       const said = [...ev.results].map((r) => r[0].transcript).join('');
-      $('#compose-text').value = base ? `${base} ${said}` : said;
+      field.value = base ? `${base} ${said}` : said;
+      final = ev.results[ev.results.length - 1].isFinal;
     };
     rec.onerror = (ev) => toast(ev.error === 'not-allowed' ? 'Microphone permission denied' : 'Could not hear that');
-    rec.onend = () => { mic.classList.remove('listening'); rec = null; };
+    rec.onend = () => {
+      mic.classList.remove('listening');
+      rec = null;
+      if (final && onFinal) onFinal();
+    };
     mic.classList.add('listening');
     rec.start();
   });
 }
+
+attachMic($('#mic-btn'), $('#compose-text'));
 
 // ---------------------------------------------------------------- Task editor
 
@@ -407,6 +435,7 @@ function openEditor(task, draft = null) {
       date: due ? localDate(due) : '', time: due ? localTime(due) : '',
       owner_id: task.owner_id ?? '', reminders: task.reminder_offsets,
       steps: task.prep_steps.map((s) => ({ id: s.id, title: s.title, done: s.done, days: daysBefore(task.due_at, s.due_at) })),
+      recurrence: task.recurrence,
     };
   } else if (draft) {
     values = {
@@ -414,6 +443,7 @@ function openEditor(task, draft = null) {
       date: draft.due_date ?? '', time: draft.due_time ?? '',
       owner_id: draft.owner_id ?? '', reminders: draft.reminder_offsets_minutes?.length ? draft.reminder_offsets_minutes : [1440, 60],
       steps: draft.prep_steps.map((s) => ({ title: s.title, days: s.days_before })),
+      recurrence: draft.recurrence,
     };
   } else {
     values = { title: '', notes: '', category: 'other', date: '', time: '', owner_id: user.id, reminders: [1440, 60], steps: [] };
@@ -425,6 +455,10 @@ function openEditor(task, draft = null) {
   form.elements.date.value = values.date;
   form.elements.time.value = values.time;
   form.elements.owner_id.value = String(values.owner_id);
+  const repeatKey = values.recurrence ? `${values.recurrence.unit}:${values.recurrence.interval}` : '';
+  const repeatChoices = REPEAT_CHOICES.some(([k]) => k === repeatKey) ? REPEAT_CHOICES : [...REPEAT_CHOICES, [repeatKey, repeatLabel(values.recurrence)]];
+  form.elements.repeat.innerHTML = repeatChoices.map(([k, label]) => `<option value="${esc(k)}">${esc(label)}</option>`).join('');
+  form.elements.repeat.value = repeatKey;
   $('#prep-list').replaceChildren(...values.steps.map(prepRow));
   renderReminderChecks(values.reminders);
   if (!draft) state.draft = null;
@@ -452,6 +486,9 @@ form.addEventListener('submit', async (e) => {
     owner_id: form.elements.owner_id.value ? Number(form.elements.owner_id.value) : null,
     reminder_offsets: $$('#reminder-checks input:checked').map((i) => Number(i.value)),
     prep_steps: steps,
+    recurrence: form.elements.repeat.value
+      ? { unit: form.elements.repeat.value.split(':')[0], interval: Number(form.elements.repeat.value.split(':')[1]) }
+      : null,
   };
   if (!state.editing && state.draft) body.source_text = state.draft.text;
   try {
@@ -543,8 +580,34 @@ $('#settings-btn').addEventListener('click', () => {
   $('#invite-code').textContent = household.invite_code;
   $('#member-list').innerHTML = members.map((m) => `<li>${esc(m.name)} <span class="muted small">${esc(m.email)}</span></li>`).join('');
   $('#signed-in-as').textContent = `Signed in as ${user.email}`;
+  $('#phone-form [name=phone]').value = user.phone ? `+${user.phone}` : '';
+  renderWhatsAppStatus();
   pushStatus();
   $('#settings-dialog').showModal();
+});
+
+function renderWhatsAppStatus() {
+  const { channels, whatsappNumber, user } = state.me;
+  const el = $('#wa-status');
+  if (!channels.whatsapp) {
+    el.textContent = 'WhatsApp isn\'t switched on for this app yet. You can save your number now, and messages will start once it is.';
+  } else if (!user.phone) {
+    el.textContent = 'Add your number to get reminders on WhatsApp and reply to change tasks.';
+  } else {
+    el.textContent = `Linked. Send "hi" to ${whatsappNumber || 'the household number'} on WhatsApp to start chatting.`;
+  }
+}
+
+$('#phone-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  try {
+    const { phone } = await api('/api/me', { method: 'PATCH', body: { phone: e.target.elements.phone.value.trim() || null } });
+    state.me.user.phone = phone;
+    renderWhatsAppStatus();
+    toast(phone ? 'WhatsApp number saved' : 'WhatsApp number removed');
+  } catch (err) {
+    toast(err.message);
+  }
 });
 
 $('#copy-invite').addEventListener('click', async () => {
@@ -585,6 +648,46 @@ $('#logout').addEventListener('click', async () => {
   state.me = null;
   showAuth();
 });
+
+// ---------------------------------------------------------------- Chat
+
+function addBubble(direction, text, extra = '') {
+  const div = document.createElement('div');
+  div.className = `bubble ${direction} ${extra}`;
+  div.textContent = text;
+  $('#chat-log').append(div);
+  $('#chat-log').scrollTop = $('#chat-log').scrollHeight;
+  return div;
+}
+
+$('#chat-btn').addEventListener('click', async () => {
+  $('#chat-dialog').showModal();
+  $('#chat-log').replaceChildren();
+  const history = await api('/api/chat').catch(() => []);
+  if (!history.length) addBubble('out', 'Hi! Tell me what to change, e.g. "the plumber task is done", "move the boiler service to next Friday", "I\'ll take the bins" or "add: water the plants every Sunday".');
+  for (const m of history) addBubble(m.direction, m.body);
+  $('#chat-form [name=text]').focus();
+});
+
+async function sendChat() {
+  const input = $('#chat-form [name=text]');
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+  addBubble('in', text);
+  const pending = addBubble('out', '...', 'pending');
+  try {
+    const { reply } = await api('/api/chat', { method: 'POST', body: { text } });
+    pending.textContent = reply;
+    pending.classList.remove('pending');
+    refresh();
+  } catch (err) {
+    pending.textContent = err.message;
+  }
+}
+
+$('#chat-form').addEventListener('submit', (e) => { e.preventDefault(); sendChat(); });
+attachMic($('#chat-mic'), $('#chat-form [name=text]'), { onFinal: sendChat });
 
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');
 boot();

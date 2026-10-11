@@ -13,6 +13,7 @@ Preparation steps matter most. Think about what has to happen ahead of time for 
 Keep prep steps concrete and few (0-4). Don't invent prep for trivial tasks.
 
 Dates: resolve relative dates ("next Tuesday", "end of the month") against the current local date provided. Use null when no date is stated; do not guess one.
+Repeating tasks: if the request says it repeats ("every Monday", "monthly", "each quarter", "annual boiler service"), set recurrence and use the next occurrence as the date.
 Owner: use the exact name of a listed member. "I"/"me" means the person speaking. If nobody is named, leave owner null.
 Reminders: choose sensible offsets (default [1440, 60]; use [60] for same-day errands; add 10080 for big things like contractor visits a week out).
 Questions: ask only when something essential is missing (usually the date, or the owner when it's ambiguous). Keep each question short. If the conversation already contains answers, use them and don't ask again.
