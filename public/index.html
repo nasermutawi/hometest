@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Household</title>
+  <meta name="theme-color" content="#2f6f5e">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" href="/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/icon.svg">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <!-- Signed-out view -->
+  <main id="auth-view" class="auth" hidden>
+    <div class="auth-card">
+      <h1>Household</h1>
+      <p class="muted">Shared tasks for the people you live with.</p>
+      <div class="tabs" role="tablist">
+        <button type="button" class="tab active" data-auth-tab="login">Sign in</button>
+        <button type="button" class="tab" data-auth-tab="register">Create account</button>
+      </div>
+      <form id="auth-form">
+        <label data-register>Your name<input name="name" autocomplete="given-name"></label>
+        <label>Email<input name="email" type="email" autocomplete="email" required></label>
+        <label>Password<input name="password" type="password" autocomplete="current-password" required minlength="8"></label>
+        <label data-register>Partner's invite code <span class="muted">(optional)</span>
+          <input name="inviteCode" autocomplete="off" placeholder="Leave blank to start a new household">
+        </label>
+        <p id="auth-error" class="error" hidden></p>
+        <button class="primary wide" type="submit" id="auth-submit">Sign in</button>
+      </form>
+    </div>
+  </main>
+
+  <!-- Signed-in view -->
+  <div id="app-view" hidden>
+    <header class="topbar">
+      <h1 id="household-name">Household</h1>
+      <div class="topbar-actions">
+        <button type="button" class="icon-btn" id="bell-btn" aria-label="Notifications">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22Zm7-6V11a7 7 0 0 0-5.5-6.84V3a1.5 1.5 0 0 0-3 0v1.16A7 7 0 0 0 5 11v5l-2 2v1h18v-1Z"/></svg>
+          <span id="bell-count" class="badge" hidden></span>
+        </button>
+        <button type="button" class="icon-btn" id="settings-btn" aria-label="Settings">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.4 13a7.6 7.6 0 0 0 0-2l2.1-1.6-2-3.5-2.5 1a7.5 7.5 0 0 0-1.7-1L15 3h-4l-.4 2.9a7.5 7.5 0 0 0-1.7 1l-2.5-1-2 3.5L6.6 11a7.6 7.6 0 0 0 0 2l-2.1 1.6 2 3.5 2.5-1a7.5 7.5 0 0 0 1.7 1L11 21h4l.4-2.9a7.5 7.5 0 0 0 1.7-1l2.5 1 2-3.5ZM13 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Z" transform="translate(-1 0)"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <main class="content">
+      <section class="composer card" aria-label="Add a task">
+        <form id="compose-form">
+          <label for="compose-text" class="composer-label">What needs doing?</label>
+          <div class="composer-row">
+            <textarea id="compose-text" rows="2" placeholder="e.g. Plumber coming Thursday at 10am to fix the kitchen leak, Sara to handle it. We need to empty the cupboard under the sink first."></textarea>
+            <button type="button" class="icon-btn mic" id="mic-btn" aria-label="Speak" hidden>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v7a3 3 0 0 0 3 3Zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V22h2v-3.08A7 7 0 0 0 19 12Z"/></svg>
+            </button>
+          </div>
+          <div class="composer-actions">
+            <span class="muted small" id="engine-label"></span>
+            <button type="button" class="link" id="manual-btn">Add manually</button>
+            <button type="submit" class="primary" id="compose-submit">Create task</button>
+          </div>
+        </form>
+      </section>
+
+      <nav class="filters" aria-label="Filter tasks">
+        <div class="chips" id="owner-filter"></div>
+        <div class="tabs small-tabs">
+          <button type="button" class="tab active" data-status="open">To do</button>
+          <button type="button" class="tab" data-status="done">Done</button>
+        </div>
+      </nav>
+
+      <div id="task-list" aria-live="polite"></div>
+    </main>
+  </div>
+
+  <!-- Task editor -->
+  <dialog id="task-dialog">
+    <form id="task-form" method="dialog">
+      <header class="dialog-head">
+        <h2 id="task-dialog-title">New task</h2>
+        <button type="button" class="icon-btn close" data-close aria-label="Close">&times;</button>
+      </header>
+
+      <div id="questions" class="questions" hidden></div>
+
+      <label>Title<input name="title" required maxlength="200"></label>
+      <div class="grid2">
+        <label>Date<input name="date" type="date"></label>
+        <label>Time<input name="time" type="time"></label>
+      </div>
+      <div class="grid2">
+        <label>Owner<select name="owner_id"></select></label>
+        <label>Category<select name="category"></select></label>
+      </div>
+
+      <fieldset>
+        <legend>Preparation</legend>
+        <p class="muted small" id="prep-hint">Things to do ahead of time. Each gets its own reminder.</p>
+        <ul id="prep-list" class="prep-edit"></ul>
+        <button type="button" class="link" id="add-prep">+ Add a prep step</button>
+      </fieldset>
+
+      <fieldset>
+        <legend>Remind the owner</legend>
+        <div class="checks" id="reminder-checks"></div>
+      </fieldset>
+
+      <label>Notes<textarea name="notes" rows="3" placeholder="Contractor name, phone number, quote, shopping list..."></textarea></label>
+
+      <p id="task-error" class="error" hidden></p>
+      <footer class="dialog-foot">
+        <button type="button" class="danger link" id="delete-task" hidden>Delete</button>
+        <span class="spacer"></span>
+        <button type="button" data-close>Cancel</button>
+        <button type="submit" class="primary" value="save">Save task</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <!-- Notifications -->
+  <dialog id="notes-dialog">
+    <header class="dialog-head">
+      <h2>Notifications</h2>
+      <button type="button" class="icon-btn close" data-close aria-label="Close">&times;</button>
+    </header>
+    <ul id="notes-list" class="notes"></ul>
+  </dialog>
+
+  <!-- Settings -->
+  <dialog id="settings-dialog">
+    <header class="dialog-head">
+      <h2>Household settings</h2>
+      <button type="button" class="icon-btn close" data-close aria-label="Close">&times;</button>
+    </header>
+    <form id="household-form" class="inline-form">
+      <label>Household name<input name="name" required maxlength="80"></label>
+      <button type="submit">Rename</button>
+    </form>
+    <section>
+      <h3>Invite your partner</h3>
+      <p class="muted small">They create an account and enter this code (or enter it below if they already have one).</p>
+      <div class="invite"><code id="invite-code"></code><button type="button" id="copy-invite">Copy</button></div>
+    </section>
+    <section>
+      <h3>Members</h3>
+      <ul id="member-list" class="members"></ul>
+    </section>
+    <section>
+      <h3>Reminders on this device</h3>
+      <p class="muted small" id="push-status"></p>
+      <div class="row-gap">
+        <button type="button" id="enable-push">Enable notifications</button>
+        <button type="button" id="test-push">Send a test</button>
+      </div>
+    </section>
+    <form id="join-form" class="inline-form">
+      <label>Join a different household<input name="inviteCode" placeholder="Invite code" autocomplete="off"></label>
+      <button type="submit">Join</button>
+    </form>
+    <footer class="dialog-foot">
+      <span class="muted small" id="signed-in-as"></span>
+      <span class="spacer"></span>
+      <button type="button" id="logout">Sign out</button>
+    </footer>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" hidden></div>
+  <script type="module" src="/app.js"></script>
+</body>
+</html>
