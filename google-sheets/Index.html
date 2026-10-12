@@ -54,8 +54,10 @@ label > input, label > select, label > textarea { margin-top: 4px; font-weight: 
 
 .composer { padding: 14px; }
 .composer label { margin: 0 0 6px; font-weight: 600; }
-.composer-actions { display: flex; align-items: center; gap: 8px; margin-top: 10px; justify-content: flex-end; }
+.composer-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 10px; justify-content: flex-end; }
 .composer-actions .grow { margin-right: auto; white-space: nowrap; }
+/* On phones the sheet link moves to its own line so the buttons keep their room. */
+@media (max-width: 480px) { .composer-actions .grow { order: 3; flex-basis: 100%; margin: 0; } }
 
 .filters { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; margin: 18px 0 6px; }
 .chips { display: flex; gap: 6px; flex-wrap: wrap; }
