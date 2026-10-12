@@ -29,13 +29,13 @@ test('setup builds the tabs, adds the owner as a member and installs the timers'
   assert.deepEqual(gas.rows('Members')[0], {
     Name: 'Naser', Email: NASER, 'Email reminders': 'Yes', 'Email updates': 'Yes', 'Morning summary': 'No', 'Calendar invites': 'Yes',
   });
-  assert.equal(gas.rows('Settings').find((r) => r.Setting === 'Assistant key').Value.length, 32);
+  assert.equal(gas.rows('Settings').some((r) => r.Setting === 'Assistant key'), false, 'the old connector key is not kept');
   assert.deepEqual(gas.triggers.map((t) => t.handler).sort(), ['onSheetEdit', 'runScheduledJobs']);
   // Running it again doesn't duplicate anything.
   gas.context.setup();
   assert.equal(gas.rows('Members').length, 1);
   assert.equal(gas.triggers.length, 2);
-  assert.equal(gas.rows('Settings').length, 6);
+  assert.equal(gas.rows('Settings').length, 5);
 });
 
 test('a second person joins from the app; people without sheet access are told why', () => {
@@ -193,39 +193,103 @@ test('chat assistant handles the everyday commands', () => {
   assert.match(gas.call(NASER, 'chat', 'banana'), /didn't catch that/);
 });
 
-test('Claude connector (MCP): handshake, tools and key check', () => {
+// ---- Claude in the app
+
+const KEY = 'sk-ant-test-0123456789';
+const claudeSays = (plan) => ({ status: 200, body: JSON.stringify({ stop_reason: 'end_turn', content: [{ type: 'text', text: JSON.stringify(plan) }] }) });
+const withKey = (gas) => gas.context.PropertiesService.getScriptProperties().setProperty('ANTHROPIC_API_KEY', KEY);
+
+test('without a key nothing goes to Claude and the simple rules answer', () => {
   const gas = household();
-  const key = gas.rows('Settings').find((r) => r.Setting === 'Assistant key').Value;
-  const rpc = (body, k = key) => {
-    const out = gas.context.doPost({ parameter: { key: k }, postData: { contents: JSON.stringify(body) } }).getContent();
-    return out ? JSON.parse(out) : null;
-  };
+  assert.equal(gas.call(NASER, 'getState').assistant, 'rules');
+  gas.call(NASER, 'saveTask', { title: 'Clear the gutters', dueDate: '2026-10-17', time: '10:00' });
+  assert.match(gas.call(SARA, 'chat', "I'll take the gutters"), /is yours/);
+  assert.equal(gas.http.calls.length, 0);
+});
 
-  const init = rpc({ jsonrpc: '2.0', id: 1, method: 'initialize', params: { protocolVersion: '2025-06-18', capabilities: {}, clientInfo: { name: 'test' } } });
-  assert.equal(init.result.serverInfo.name, 'household-sheet');
-  assert.equal(rpc({ jsonrpc: '2.0', method: 'notifications/initialized' }), null);
-  assert.deepEqual(rpc({ jsonrpc: '2.0', id: 2, method: 'tools/list' }).result.tools.map((t) => t.name),
-    ['get_household', 'list_tasks', 'add_task', 'update_task', 'delete_task']);
+test('with a key, Claude\'s plan is applied; the key is only sent to Anthropic and never shown', () => {
+  const gas = household();
+  withKey(gas);
+  gas.call(NASER, 'saveTask', { title: 'Clear the gutters', dueDate: '2026-10-17', time: '10:00' });
+  gas.http.responder = () => claudeSays({ operations: [{ type: 'assign', task_id: 1, owner: 'Sara' }], message: '' });
+  const reply = gas.call(NASER, 'chat', 'could Sara do the gutters please');
+  assert.match(reply, /Assigned "Clear the gutters" to Sara/);
+  assert.equal(gas.rows('Tasks')[0].Owner, 'Sara');
 
-  const call = (name, args) => rpc({ jsonrpc: '2.0', id: 3, method: 'tools/call', params: { name, arguments: args } }).result;
-  assert.deepEqual(JSON.parse(call('get_household', {}).content[0].text).members, ['Naser', 'Sara']);
+  const call = gas.http.calls[0];
+  assert.equal(call.url, 'https://api.anthropic.com/v1/messages');
+  assert.equal(call.opts.headers['x-api-key'], KEY);
+  assert.equal(JSON.parse(call.opts.payload).model, 'claude-opus-5-5');
+  assert.equal(gas.call(NASER, 'getState').assistant, 'claude');
+  assert.equal(JSON.stringify(gas.call(NASER, 'getState')).includes(KEY), false);
+  assert.equal(JSON.stringify(gas.rows('Settings')).includes(KEY), false);
+  assert.equal(JSON.stringify(gas.rows('Activity')).includes(KEY), false);
+});
 
-  const added = JSON.parse(call('add_task', {
-    title: 'Electrician visit', due_date: '2026-10-16', due_time: '08:00', owner: 'Naser', requested_by: 'Sara',
-    prep_steps: [{ title: 'Clear the hallway', days_before: 1 }],
-  }).content[0].text).added;
-  assert.equal(added.when, 'Fri 16 Oct, 08:00');
-  assert.equal(gas.rows('Activity').at(-1).Who, 'Sara');
+test('Claude can create a task with its own details and prep steps, not just the rules', () => {
+  const gas = household();
+  withKey(gas);
+  gas.http.responder = () => claudeSays({
+    operations: [{ type: 'create', draft: {
+      title: 'Electrician visit', due_date: '2026-10-16', due_time: '08:00', owner: 'Naser', repeats: 'Never',
+      category: 'contractor', notes: 'Dave, 07700 900123', prep_steps: [{ title: 'Clear the hallway', days_before: 1 }],
+      reminders_minutes_before: [1440],
+    } }],
+    message: 'Added it for Friday.',
+  });
+  const reply = gas.call(SARA, 'chat', 'book the electrician for Friday 8am, Dave is on 07700 900123, clear the hallway the day before');
+  assert.match(reply, /Added "Electrician visit", Fri 16 Oct, 08:00, Naser/);
+  assert.match(reply, /Added it for Friday\./);
+  const row = gas.rows('Tasks')[0];
+  assert.equal(row.Notes, 'Dave, 07700 900123');
+  assert.equal(row['Prep steps'], '☐ Clear the hallway (1 day before)');
+  assert.equal(row.Reminders, '1 day');
+});
 
-  const done = JSON.parse(call('update_task', { id: added.id, done: true }).content[0].text);
-  assert.equal(done.updated.done, true);
-  assert.equal(JSON.parse(call('list_tasks', {}).content[0].text).length, 0);
+test('a Claude draft with no reminders gets the household default', () => {
+  const gas = household();
+  withKey(gas);
+  gas.http.responder = () => claudeSays({ operations: [{ type: 'create', draft: { title: 'Bins out', due_date: '2026-10-12', due_time: '19:00', owner: '' } }], message: '' });
+  gas.call(NASER, 'chat', 'bins out Monday evening');
+  assert.equal(gas.rows('Tasks')[0].Reminders, '1 day, 1 hour');
+});
 
-  const bad = call('update_task', { id: 99, title: 'x' });
-  assert.equal(bad.isError, true);
-  assert.match(bad.content[0].text, /no longer exists/);
+test('if Claude is unavailable the rules answer, and the reply says so', () => {
+  const gas = household();
+  withKey(gas);
+  gas.http.responder = () => ({ status: 500, body: 'oops' });
+  const reply = gas.call(NASER, 'chat', 'add: put the bins out every Monday evening, Naser');
+  assert.match(reply, /Added "Put the bins out"/);
+  assert.match(reply, /Claude is unavailable right now, so I used the simple rules \(service returned 500\)/);
+});
 
-  assert.match(rpc({ jsonrpc: '2.0', id: 4, method: 'tools/list' }, 'wrong').error.message, /wrong key/);
+test('a reply without a plan falls back to the rules; unknown types and task ids are ignored', () => {
+  const gas = household();
+  gas.call(NASER, 'saveTask', { title: 'Clear the gutters', dueDate: '2026-10-17', time: '10:00' });
+  withKey(gas);
+
+  gas.http.responder = () => ({ status: 200, body: JSON.stringify({ content: [{ type: 'text', text: 'Sure thing!' }] }) });
+  assert.match(gas.call(NASER, 'chat', 'the gutters are done'), /Marked "Clear the gutters" as done[\s\S]*Claude is unavailable/);
+
+  gas.call(NASER, 'saveTask', { title: 'Mow the lawn', dueDate: '2026-10-18' });
+  gas.http.responder = () => claudeSays({ operations: [{ type: 'delete_everything', task_id: 2 }, { type: 'complete', task_id: 999 }], message: '' });
+  const reply = gas.call(NASER, 'chat', 'please sort everything');
+  assert.match(reply, /I'm not sure which task you mean/);
+  assert.doesNotMatch(reply, /Marked/, 'the current task was not acted on');
+  assert.equal(gas.rows('Tasks').filter((r) => r.Done === true).length, 1, 'nothing extra was changed');
+});
+
+test('the recent conversation is sent with each message, so follow-ups make sense', () => {
+  const gas = household();
+  withKey(gas);
+  gas.http.responder = () => claudeSays({ operations: [], message: 'Which day should it be?' });
+  assert.equal(gas.call(NASER, 'chat', 'add a bin collection reminder'), 'Which day should it be?');
+  gas.http.responder = () => claudeSays({ operations: [{ type: 'create', draft: { title: 'Bin collection', due_date: '2026-10-15' } }], message: '' });
+  gas.call(NASER, 'chat', 'Thursday');
+  const sent = JSON.parse(gas.http.calls[1].opts.payload).messages[0].content;
+  assert.match(sent, /Assistant: Which day should it be\?/);
+  assert.match(sent, /Person: add a bin collection reminder/);
+  assert.match(sent, /Message from Naser:\nThursday/);
 });
 
 test('Parser.gs is up to date with the Node parsers', () => {

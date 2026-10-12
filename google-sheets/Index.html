@@ -119,6 +119,11 @@ legend { font-weight: 600; font-size: 0.9rem; padding: 0 4px; }
 .bubble.out { align-self: flex-start; background: var(--bg); border-bottom-left-radius: 4px; }
 .bubble.pending { opacity: 0.6; }
 .chat-form { display: flex; gap: 6px; align-items: center; padding-top: 8px; border-top: 1px solid var(--line); }
+.mic { background: var(--accent-soft); color: var(--accent); flex: 0 0 auto; }
+.mic.listening { background: var(--danger); color: #fff; animation: pulse 1.2s infinite; }
+@keyframes pulse { 50% { opacity: 0.6; } }
+.dialog-title small { display: block; font-weight: 400; }
+.chat-dialog .toggle { margin: 4px 0 6px; }
 .toast { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); background: var(--text); color: var(--bg);
   padding: 10px 16px; border-radius: 10px; z-index: 20; max-width: calc(100vw - 32px); }
 @media (max-width: 380px) { .grid2 { grid-template-columns: 1fr; } }
@@ -164,6 +169,7 @@ legend { font-weight: 600; font-size: 0.9rem; padding: 0 4px; }
         <textarea id="compose-text" rows="2" placeholder="e.g. Plumber coming Thursday at 10am to fix the kitchen leak, Sara to handle it. We need to empty the cupboard under the sink first."></textarea>
         <div class="composer-actions">
           <a class="small grow" id="sheet-link" href="#" target="_blank" rel="noopener">Open the sheet</a>
+          <button type="button" class="icon-btn mic" id="compose-mic" aria-label="Speak your task" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v7a3 3 0 0 0 3 3Zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V22h2v-3.08A7 7 0 0 0 19 12Z"/></svg></button>
           <button type="button" class="link" id="manual-btn">Add manually</button>
           <button type="submit" class="primary" id="compose-submit">Create task</button>
         </div>
@@ -220,12 +226,14 @@ legend { font-weight: 600; font-size: 0.9rem; padding: 0 4px; }
 
 <dialog id="chat-dialog" class="chat-dialog">
   <header class="dialog-head">
-    <h2>Assistant</h2>
+    <h2 class="dialog-title">Assistant<small class="muted" id="assistant-mode"></small></h2>
     <button type="button" class="icon-btn close" data-close aria-label="Close">&times;</button>
   </header>
+  <label class="toggle" for="speak-replies">Read replies aloud<input type="checkbox" id="speak-replies"></label>
   <div id="chat-log" class="chat-log" aria-live="polite"></div>
   <form id="chat-form" class="chat-form">
     <input id="chat-text" autocomplete="off" placeholder="e.g. move the boiler service to Friday" aria-label="Message">
+    <button type="button" class="icon-btn mic" id="chat-mic" aria-label="Speak your message" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v7a3 3 0 0 0 3 3Zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V22h2v-3.08A7 7 0 0 0 19 12Z"/></svg></button>
     <button type="submit" class="primary">Send</button>
   </form>
 </dialog>
@@ -582,12 +590,58 @@ function bubble(dir, text, extra) {
 }
 
 $('#chat-btn').addEventListener('click', () => {
+  $('#assistant-mode').textContent = state.data && state.data.assistant === 'claude'
+    ? 'Powered by Claude' : 'Simple rules (Claude isn\'t set up yet)';
   if (!$('#chat-log').children.length) {
     bubble('out', 'Hi! Tell me what to change, e.g. "the plumber task is done", "move the boiler service to next Friday", "I\'ll take the bins" or "add: water the plants every Sunday".');
   }
   $('#chat-dialog').showModal();
   $('#chat-text').focus();
 });
+
+// Spoken replies are a per-phone preference.
+const SPEAK_KEY = 'householdSpeakReplies';
+try { $('#speak-replies').checked = localStorage.getItem(SPEAK_KEY) === '1'; } catch (e) { /* private browsing */ }
+$('#speak-replies').addEventListener('change', (e) => {
+  try { localStorage.setItem(SPEAK_KEY, e.target.checked ? '1' : '0'); } catch (err) { /* not remembered */ }
+  if (!e.target.checked && 'speechSynthesis' in window) speechSynthesis.cancel();
+});
+
+function speak(text) {
+  if (!$('#speak-replies').checked || !('speechSynthesis' in window)) return;
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = navigator.language || 'en-GB';
+  speechSynthesis.speak(u);
+}
+
+// Dictation: speech becomes text in the box. The person checks it and taps Send.
+const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+function attachDictation(button, field) {
+  if (!SpeechRec) return;
+  button.hidden = false;
+  let rec = null;
+  button.addEventListener('click', () => {
+    if (rec) { rec.stop(); return; }
+    rec = new SpeechRec();
+    rec.lang = navigator.language || 'en-GB';
+    rec.interimResults = true;
+    rec.continuous = false;
+    const base = field.value.trim();
+    rec.onresult = (ev) => {
+      const said = Array.from(ev.results).map((r) => r[0].transcript).join('');
+      field.value = base ? `${base} ${said}` : said;
+    };
+    rec.onerror = (ev) => toast(ev.error === 'not-allowed' || ev.error === 'service-not-allowed'
+      ? 'Microphone is blocked. Allow it for this site in your browser settings, or use your keyboard\'s microphone.'
+      : 'Didn\'t catch that. Try again, or use your keyboard\'s microphone.');
+    rec.onend = () => { button.classList.remove('listening'); rec = null; };
+    button.classList.add('listening');
+    rec.start();
+  });
+}
+attachDictation($('#compose-mic'), $('#compose-text'));
+attachDictation($('#chat-mic'), $('#chat-text'));
 
 $('#chat-form').addEventListener('submit', async (e) => {
   e.preventDefault();
@@ -599,6 +653,7 @@ $('#chat-form').addEventListener('submit', async (e) => {
   try {
     pending.textContent = await run('chat', text);
     pending.classList.remove('pending');
+    speak(pending.textContent);
     load();
   } catch (err) {
     pending.textContent = err.message;

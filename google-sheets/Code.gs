@@ -43,7 +43,6 @@ const DEFAULT_SETTINGS = [
   ['Default reminders', '1 day, 1 hour', 'Used for new tasks. Options: 1 week, 2 days, 1 day, 2 hours, 1 hour, 30 minutes, at the time.'],
   ['Morning summary time', '07:00', "When the daily summary email goes out (24-hour clock) to people who've turned it on."],
   ['Calendar sync', 'Yes', 'Yes = put tasks with a date in Google Calendar, with alerts, for members who turned on Calendar invites.'],
-  ['Assistant key', '', 'Secret for connecting Claude (MCP). Keep it private; clear it and run setup again to make a new one.'],
   ['App link', '', 'Filled in automatically the first time someone opens the app.'],
 ];
 
@@ -64,7 +63,7 @@ function setup() {
   const existing = settings.getLastRow() > 1 ? settings.getRange(2, 1, settings.getLastRow() - 1, 2).getValues() : [];
   const have = new Set(existing.map((r) => String(r[0])));
   DEFAULT_SETTINGS.forEach((row) => { if (!have.has(row[0])) settings.appendRow(row); });
-  if (!getSetting_('Assistant key')) setSetting_('Assistant key', Utilities.getUuid().replace(/-/g, ''));
+  removeSetting_('Assistant key'); // the old Claude connector key; no longer used
   settings.setColumnWidth(1, 190).setColumnWidth(2, 220).setColumnWidth(3, 520);
 
   // The person running setup becomes the first member.
@@ -201,6 +200,13 @@ function getSetting_(key) {
   if (!sh || sh.getLastRow() < 2) return '';
   const row = sh.getRange(2, 1, sh.getLastRow() - 1, 2).getValues().find((r) => String(r[0]) === key);
   return row ? String(row[1]).trim() : '';
+}
+
+function removeSetting_(key) {
+  const sh = sheet_(SETTINGS);
+  const rows = sh.getLastRow() > 1 ? sh.getRange(2, 1, sh.getLastRow() - 1, 1).getValues() : [];
+  const i = rows.findIndex((r) => String(r[0]) === key);
+  if (i >= 0) sh.deleteRow(i + 2);
 }
 
 function setSetting_(key, value) {
@@ -499,8 +505,7 @@ function deleteTask_(id, actor) {
 
 // ---------------------------------------------------------------- Web app
 
-function doGet(e) {
-  if (e && e.parameter && e.parameter.key) return mcpInfo_(e);
+function doGet() {
   return HtmlService.createHtmlOutputFromFile('Index')
     .setTitle('Household')
     .addMetaTag('viewport', 'width=device-width, initial-scale=1, viewport-fit=cover');
@@ -532,6 +537,7 @@ function getState() {
     categories: CATEGORIES,
     repeats: Object.keys(REPEATS),
     defaultReminders: parseReminders_(getSetting_('Default reminders')),
+    assistant: claudeKey_() ? 'claude' : 'rules',
     now: fmt_(new Date(), "yyyy-MM-dd'T'HH:mm"),
   };
 }
@@ -632,25 +638,66 @@ function getActivity() {
 
 // ---------------------------------------------------------------- Chat assistant (in the app)
 
+// The key lives in Apps Script's Script properties (Project Settings), never in the sheet or the page.
+const CLAUDE_KEY_PROPERTY = 'ANTHROPIC_API_KEY';
+const CLAUDE_MODEL = 'claude-opus-5-5';
+const CHAT_HISTORY_MESSAGES = 6;
+const OPERATION_TYPES = ['create', 'complete', 'reopen', 'reschedule', 'assign', 'unassign', 'rename', 'add_note', 'list'];
+
+const CHAT_SYSTEM_PROMPT = `You are the assistant inside a shared household task app. Household members message you to manage their shared tasks. Reply with ONLY a JSON object, no other text, in this shape:
+{"operations": [ ... ], "message": "..."}
+
+Operations (use only these types):
+- "create": a new task. Put its details in "draft": {"title", "due_date" (YYYY-MM-DD or null), "due_time" (HH:MM 24h or null), "owner" (exact member name or null), "repeats" (one of: Never, Daily, Weekly, Every 2 weeks, Monthly, Quarterly, Every 6 months, Yearly), "category" (one of: ${CATEGORIES.join(', ')}), "notes" (phone numbers, names, quotes from the message, or ""), "prep_steps" ([{"title", "days_before"}]: things to do beforehand, only when clearly needed, usually 0 to 4), "reminders_minutes_before" (e.g. [1440, 60])}.
+- "complete" or "reopen": task_id.
+- "reschedule": task_id, plus due_date and/or due_time for the new value (null keeps the current one).
+- "assign": task_id and owner (exact member name). "I", "me" and "mine" mean the person speaking.
+- "unassign": task_id.
+- "rename" or "add_note": task_id and text.
+
+Use only the task ids listed. Resolve relative dates ("next Tuesday", "in two weeks") from the current local date. If the message refers to the task being discussed ("it", "that one", "the reminder"), use the current task. If you can't tell which task is meant, or a needed detail is missing (such as the date for a new task), return no operations and ask one short question in "message". For questions about the list, answer in "message" and return no operations.
+
+"message" is read on a phone and may be read aloud: keep it to one or two short, friendly sentences, addressed to the person who sent the message. Never invent tasks or members.`;
+
+function claudeKey_() {
+  return PropertiesService.getScriptProperties().getProperty(CLAUDE_KEY_PROPERTY) || '';
+}
+
 /** Handles a chat message such as "done", "I'll take the gutters" or "move it to Friday". */
 function chat(text) {
   const me = requireMember_();
-  const props = PropertiesService.getUserProperties();
-  const context = JSON.parse(props.getProperty('chatContext') || '{}');
+  const userProps = PropertiesService.getUserProperties();
+  const context = JSON.parse(userProps.getProperty('chatContext') || '{}');
   const contextTaskId = context.at && Date.now() - context.at < 86400000 ? context.taskId : null;
-  const reply = withLock_(() => runChat_(String(text || ''), me.name, contextTaskId));
-  props.setProperty('chatContext', JSON.stringify({ taskId: reply.taskId || contextTaskId, at: Date.now() }));
+  const history = JSON.parse(userProps.getProperty('chatHistory') || '[]');
+  const message = String(text || '').slice(0, 2000);
+  const reply = withLock_(() => runChat_(message, me.name, contextTaskId, history));
+  userProps.setProperty('chatContext', JSON.stringify({ taskId: reply.taskId || contextTaskId, at: Date.now() }));
+  const kept = [...history, { role: 'user', content: message }, { role: 'assistant', content: reply.text }];
+  userProps.setProperty('chatHistory', JSON.stringify(kept.slice(-CHAT_HISTORY_MESSAGES)));
   return reply.text;
 }
 
-function runChat_(text, speaker, contextTaskId) {
-  const all = tasks_();
-  const open = all.filter((t) => !t.done || t.id === contextTaskId);
+function runChat_(text, speaker, contextTaskId, history) {
   const members = members_();
-  const plan = interpretWithRules({
-    text, speaker, members: members.map((m) => ({ name: m.name })),
-    tasks: open.map((t) => ({ id: t.id, title: t.title })), contextTaskId, now: fmt_(new Date(), "yyyy-MM-dd'T'HH:mm"),
-  });
+  const open = tasks_().filter((t) => !t.done || t.id === contextTaskId);
+  const now = fmt_(new Date(), "yyyy-MM-dd'T'HH:mm");
+  let plan = null;
+  let notice = '';
+  if (claudeKey_()) {
+    try {
+      plan = askClaude_({ text, speaker, members, tasks: open, contextTaskId, now, history });
+    } catch (err) {
+      console.error('Claude chat failed:', err);
+      notice = `Claude is unavailable right now, so I used the simple rules (${err.message}).`;
+    }
+  }
+  if (!plan) {
+    plan = interpretWithRules({
+      text, speaker, members: members.map((m) => ({ name: m.name })),
+      tasks: open.map((t) => ({ id: t.id, title: t.title })), contextTaskId, now,
+    });
+  }
   const lines = [];
   let taskId = contextTaskId;
   plan.operations.forEach((op) => {
@@ -663,7 +710,99 @@ function runChat_(text, speaker, contextTaskId) {
     }
   });
   if (plan.message) lines.push(plan.message);
+  if (notice) lines.push(notice);
   return { text: lines.join('\n') || 'OK.', taskId };
+}
+
+/** Asks Claude for a plan. Throws on any failure so the caller can fall back to the rules. */
+function askClaude_({ text, speaker, members, tasks, contextTaskId, now, history }) {
+  const taskLines = tasks.slice(0, 80).map((t) => `- id ${t.id}: "${t.title}" | ${t.done ? 'done' : 'open'} | ${when_(t) || 'no date'} | owner: ${t.owner || 'nobody'}${t.repeats !== 'Never' ? ` | repeats ${t.repeats.toLowerCase()}` : ''}`);
+  const content = [
+    `Current local date/time: ${now}`,
+    `Household members: ${members.map((m) => m.name).join(', ')}`,
+    `Open tasks:\n${taskLines.join('\n') || '(none)'}`,
+    `Current task: ${contextTaskId ? `id ${contextTaskId}` : 'none'}`,
+    history.length ? `Recent conversation:\n${history.map((h) => `${h.role === 'user' ? 'Person' : 'Assistant'}: ${h.content}`).join('\n')}` : '',
+    `Message from ${speaker}:\n${text}`,
+  ].filter(Boolean).join('\n\n');
+
+  const res = UrlFetchApp.fetch('https://api.anthropic.com/v1/messages', {
+    method: 'post',
+    contentType: 'application/json',
+    muteHttpExceptions: true,
+    headers: {
+      'x-api-key': claudeKey_(),
+      'anthropic-version': '2023-06-01',
+      'anthropic-beta': 'server-side-fallback-2026-07-01',
+    },
+    payload: JSON.stringify({
+      model: CLAUDE_MODEL,
+      max_tokens: 2000,
+      fallbacks: 'default',
+      system: CHAT_SYSTEM_PROMPT,
+      messages: [{ role: 'user', content }],
+    }),
+  });
+  if (res.getResponseCode() !== 200) throw new Error(`service returned ${res.getResponseCode()}`);
+  const body = JSON.parse(res.getContentText());
+  if (body.stop_reason === 'refusal') throw new Error('the request was declined');
+  const reply = (body.content || []).filter((b) => b.type === 'text').map((b) => b.text).join('');
+  return parseChatPlan_(reply, tasks);
+}
+
+/** Checks Claude's JSON before anything is changed: unknown types and unknown task ids are dropped. */
+function parseChatPlan_(reply, tasks) {
+  const match = /\{[\s\S]*\}/.exec(reply);
+  if (!match) throw new Error('no plan in the reply');
+  const raw = JSON.parse(match[0]);
+  const ids = new Set(tasks.map((t) => t.id));
+  const proposed = (Array.isArray(raw.operations) ? raw.operations : []).filter((op) => op && OPERATION_TYPES.includes(op.type));
+  // A task id that doesn't exist is dropped, not guessed at. A missing id means "the current task".
+  const usable = proposed.filter((op) => op.task_id == null || ids.has(Number(op.task_id)));
+  const operations = usable.map((op) => ({
+      type: op.type,
+      task_id: ids.has(Number(op.task_id)) ? Number(op.task_id) : null,
+      due_date: dateStr_(op.due_date) || null,
+      due_time: timeStr_(op.due_time) || null,
+      owner: typeof op.owner === 'string' ? op.owner : null,
+      text: typeof op.text === 'string' ? op.text.slice(0, 500) : null,
+      draft: op.type === 'create' && op.draft ? cleanDraft_(op.draft) : null,
+    }));
+  let message = typeof raw.message === 'string' ? raw.message.slice(0, 500) : '';
+  if (proposed.length && !operations.length && !message) message = "I'm not sure which task you mean. Could you say part of its name?";
+  return { operations, message };
+}
+
+function cleanDraft_(d) {
+  const list = (v) => (Array.isArray(v) ? v : []);
+  return {
+    title: String(d.title || '').trim().slice(0, 200),
+    dueDate: dateStr_(d.due_date),
+    time: timeStr_(d.due_time),
+    owner: typeof d.owner === 'string' ? d.owner : '',
+    repeats: Object.keys(REPEATS).includes(d.repeats) ? d.repeats : 'Never',
+    category: CATEGORIES.includes(d.category) ? d.category : 'other',
+    notes: String(d.notes || '').slice(0, 5000),
+    prep: list(d.prep_steps).filter((s) => s && String(s.title || '').trim())
+      .map((s) => ({ title: String(s.title).trim().slice(0, 200), daysBefore: Math.max(0, Number(s.days_before) || 0) })),
+    // Undefined (not []) when Claude gave none, so the household default applies.
+    reminders: list(d.reminders_minutes_before).map(Number).filter((n) => n >= 0 && n <= 525600).length
+      ? list(d.reminders_minutes_before).map(Number).filter((n) => n >= 0 && n <= 525600) : undefined,
+  };
+}
+
+/** The simple rules' reading of a sentence, in the same shape as a Claude draft. */
+function draftFromRules_(text, speaker) {
+  const draft = parseWithRules({
+    text: text || '', now: fmt_(new Date(), "yyyy-MM-dd'T'HH:mm"), members: members_().map((m) => ({ name: m.name })), speaker,
+  });
+  const repeats = Object.keys(REPEATS).find((k) => REPEATS[k] && draft.recurrence
+    && REPEATS[k].unit === draft.recurrence.unit && REPEATS[k].interval === draft.recurrence.interval) || 'Never';
+  return {
+    title: draft.title, dueDate: draft.due_date || '', time: draft.due_time || '', owner: draft.owner || '', repeats,
+    category: draft.category, notes: '', reminders: draft.reminder_offsets_minutes,
+    prep: draft.prep_steps.map((s) => ({ title: s.title, daysBefore: s.days_before })),
+  };
 }
 
 function describeTask_(t) {
@@ -676,15 +815,8 @@ function applyOperation_(op, speaker, contextTaskId) {
     return { line: open.length ? `Coming up:\n${open.map((t) => `• ${describeTask_(t)}`).join('\n')}` : 'Nothing on the list.' };
   }
   if (op.type === 'create') {
-    const members = members_();
-    const draft = parseWithRules({ text: op.text || '', now: fmt_(new Date(), "yyyy-MM-dd'T'HH:mm"), members: members.map((m) => ({ name: m.name })), speaker });
-    const repeats = Object.keys(REPEATS).find((k) => REPEATS[k] && draft.recurrence
-      && REPEATS[k].unit === draft.recurrence.unit && REPEATS[k].interval === draft.recurrence.interval) || 'Never';
-    const t = createTask_({
-      title: draft.title, dueDate: draft.due_date || '', time: draft.due_time || '', owner: draft.owner || '',
-      repeats: draft.due_date ? repeats : 'Never', category: draft.category, reminders: draft.reminder_offsets_minutes,
-      prep: draft.prep_steps.map((s) => ({ title: s.title, daysBefore: s.days_before })),
-    }, speaker);
+    const d = op.draft || draftFromRules_(op.text, speaker);
+    const t = createTask_({ ...d, repeats: d.dueDate ? d.repeats : 'Never' }, speaker);
     return { taskId: t.id, line: `Added ${describeTask_(t)}.${t.prep.length ? ` Prep: ${t.prep.map((s) => s.title).join('; ')}.` : ''}${t.dueDate ? '' : ' No date yet. Reply with one to set it.'}` };
   }
 
@@ -921,185 +1053,4 @@ function syncCalendar_(tasks, members, lastRun, activityRows) {
     t.calendarEvent = event.getId();
     saveTaskRow_(t);
   });
-}
-
-// ---------------------------------------------------------------- Claude connector (MCP)
-
-const MCP_TOOLS = [
-  {
-    name: 'get_household',
-    description: "Get the household's members, today's date and time, timezone, and the allowed categories and repeat options. Call this first so dates and names are right.",
-    inputSchema: { type: 'object', properties: {} },
-  },
-  {
-    name: 'list_tasks',
-    description: 'List household tasks with their id, date, owner, repeat, prep steps and status.',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        status: { type: 'string', enum: ['open', 'done', 'all'], description: 'Defaults to open' },
-        owner: { type: 'string', description: 'Only tasks owned by this member' },
-      },
-    },
-  },
-  {
-    name: 'add_task',
-    description: 'Add a task. Work out prep steps (things to do beforehand) from the description, e.g. confirm a contractor the day before.',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        title: { type: 'string' },
-        due_date: { type: 'string', description: 'YYYY-MM-DD in the household timezone' },
-        due_time: { type: 'string', description: 'HH:MM 24-hour; omit if no time' },
-        owner: { type: 'string', description: 'Exact member name; omit if nobody' },
-        repeats: { type: 'string', enum: Object.keys(REPEATS) },
-        prep_steps: { type: 'array', items: { type: 'object', properties: { title: { type: 'string' }, days_before: { type: 'number' } }, required: ['title'] } },
-        notes: { type: 'string' },
-        category: { type: 'string', enum: CATEGORIES },
-        reminders_minutes_before: { type: 'array', items: { type: 'number' }, description: 'e.g. [1440, 60] for 1 day and 1 hour before' },
-        requested_by: { type: 'string', description: 'Name of the member asking' },
-      },
-      required: ['title'],
-    },
-  },
-  {
-    name: 'update_task',
-    description: 'Change a task: reschedule, reassign (owner "" means nobody), rename, change prep steps or notes, or mark it done/not done.',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        id: { type: 'number' },
-        title: { type: 'string' },
-        due_date: { type: 'string' },
-        due_time: { type: 'string' },
-        owner: { type: 'string' },
-        repeats: { type: 'string', enum: Object.keys(REPEATS) },
-        prep_steps: { type: 'array', items: { type: 'object', properties: { title: { type: 'string' }, days_before: { type: 'number' }, done: { type: 'boolean' } }, required: ['title'] } },
-        notes: { type: 'string' },
-        done: { type: 'boolean' },
-        requested_by: { type: 'string' },
-      },
-      required: ['id'],
-    },
-  },
-  {
-    name: 'delete_task',
-    description: 'Delete a task permanently. Only when the person clearly asks to delete it.',
-    inputSchema: { type: 'object', properties: { id: { type: 'number' }, requested_by: { type: 'string' } }, required: ['id'] },
-  },
-];
-
-function json_(obj) {
-  return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON);
-}
-
-function mcpInfo_(e) {
-  const ok = e.parameter.key === getSetting_('Assistant key');
-  return json_(ok ? { ok: true, name: 'household-sheet', tools: MCP_TOOLS.map((t) => t.name) } : { ok: false, error: 'Wrong key' });
-}
-
-/** MCP endpoint (Streamable HTTP, JSON responses). Requires ?key=<Assistant key>. */
-function doPost(e) {
-  const key = getSetting_('Assistant key');
-  if (!key || !e || !e.parameter || e.parameter.key !== key) {
-    return json_({ jsonrpc: '2.0', id: null, error: { code: -32001, message: 'Missing or wrong key in the connector URL' } });
-  }
-  let body;
-  try {
-    body = JSON.parse(e.postData.contents);
-  } catch (err) {
-    return json_({ jsonrpc: '2.0', id: null, error: { code: -32700, message: 'Parse error' } });
-  }
-  if (Array.isArray(body)) {
-    const out = body.map(handleRpc_).filter(Boolean);
-    return out.length ? json_(out) : ContentService.createTextOutput('');
-  }
-  const res = handleRpc_(body);
-  return res ? json_(res) : ContentService.createTextOutput('');
-}
-
-function handleRpc_(msg) {
-  if (!msg || msg.id === undefined || msg.id === null) return null; // notification
-  const ok = (result) => ({ jsonrpc: '2.0', id: msg.id, result });
-  switch (msg.method) {
-    case 'initialize':
-      return ok({
-        protocolVersion: (msg.params && msg.params.protocolVersion) || '2025-06-18',
-        capabilities: { tools: { listChanged: false } },
-        serverInfo: { name: 'household-sheet', version: '1.0.0' },
-        instructions: 'Household task list kept in a Google Sheet. Call get_household first for names and today\'s date.',
-      });
-    case 'ping':
-      return ok({});
-    case 'tools/list':
-      return ok({ tools: MCP_TOOLS });
-    case 'tools/call': {
-      const name = msg.params && msg.params.name;
-      const args = (msg.params && msg.params.arguments) || {};
-      try {
-        const result = withLock_(() => callTool_(name, args));
-        return ok({ content: [{ type: 'text', text: typeof result === 'string' ? result : JSON.stringify(result, null, 2) }] });
-      } catch (err) {
-        return ok({ content: [{ type: 'text', text: `Error: ${err.message}` }], isError: true });
-      }
-    }
-    default:
-      return { jsonrpc: '2.0', id: msg.id, error: { code: -32601, message: `Unknown method ${msg.method}` } };
-  }
-}
-
-function mcpTask_(t) {
-  return {
-    id: t.id, title: t.title, done: t.done, due_date: t.dueDate || null, due_time: t.time || null, when: when_(t) || null,
-    owner: t.owner || null, repeats: t.repeats, category: t.category, notes: t.notes || undefined,
-    prep_steps: t.prep.map((s) => ({ title: s.title, days_before: s.daysBefore, done: s.done })),
-    reminders: formatReminders_(t.reminders),
-  };
-}
-
-function callTool_(name, a) {
-  const actor = (memberByName_(a.requested_by) || {}).name || 'Claude';
-  switch (name) {
-    case 'get_household':
-      return {
-        household: getSetting_('Household name'), timezone: tz_(), now: fmt_(new Date(), "EEEE yyyy-MM-dd HH:mm"),
-        members: members_().map((m) => m.name), categories: CATEGORIES, repeats: Object.keys(REPEATS),
-        default_reminders: getSetting_('Default reminders'),
-      };
-    case 'list_tasks': {
-      const status = a.status || 'open';
-      return tasks_()
-        .filter((t) => status === 'all' || (status === 'done') === t.done)
-        .filter((t) => !a.owner || t.owner.toLowerCase() === String(a.owner).toLowerCase())
-        .sort(byDue_).map(mcpTask_);
-    }
-    case 'add_task': {
-      const t = createTask_({
-        title: a.title, dueDate: a.due_date, time: a.due_time, owner: a.owner, repeats: a.repeats, notes: a.notes, category: a.category,
-        reminders: a.reminders_minutes_before, prep: (a.prep_steps || []).map((s) => ({ title: s.title, daysBefore: s.days_before })),
-      }, actor);
-      return { added: mcpTask_(t) };
-    }
-    case 'update_task': {
-      const patch = {};
-      if (a.title !== undefined) patch.title = a.title;
-      if (a.due_date !== undefined) patch.dueDate = a.due_date;
-      if (a.due_time !== undefined) patch.time = a.due_time;
-      if (a.owner !== undefined) patch.owner = a.owner;
-      if (a.repeats !== undefined) patch.repeats = a.repeats;
-      if (a.notes !== undefined) patch.notes = a.notes;
-      if (a.prep_steps !== undefined) patch.prep = a.prep_steps.map((s) => ({ title: s.title, daysBefore: s.days_before, done: s.done }));
-      if (a.done !== undefined) patch.done = a.done;
-      const t = updateTask_(a.id, patch, actor);
-      const next = t.nextId && a.done ? taskById_(t.nextId) : null;
-      return { updated: mcpTask_(t), next_occurrence: next ? mcpTask_(next) : undefined };
-    }
-    case 'delete_task': {
-      const t = taskById_(a.id);
-      deleteTask_(a.id, actor);
-      return `Deleted "${t.title}".`;
-    }
-    default:
-      throw new Error(`Unknown tool ${name}`);
-  }
 }

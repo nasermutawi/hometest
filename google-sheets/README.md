@@ -6,7 +6,8 @@ The same household task app, running entirely on a Google account at no cost:
 - **The app** is a Google Apps Script web app attached to the sheet. It's phone-friendly: plain-language task entry with prep-step detection, owners, repeating tasks, prep checklists, an in-app chat assistant ("I'll take the gutters", "move it to Friday 10am", "done"), and an activity feed.
 - **Reminders and updates go by email** from a 5-minute timer. Each person gets them worded for them ("You're on it" / "Sara is on it" / "Nobody has taken it yet"), plus an optional morning summary.
 - **Google Calendar sync** (optional): tasks with a date become calendar events with alerts, and partners are added as guests.
-- **Claude connector (MCP), experimental:** a second deployment of the same script lets Claude read and change tasks. Claude does the language understanding, so there's no API bill.
+- **Claude in the app (optional):** the chat and the microphone understand full sentences by calling the Claude API from the script. The API key is kept in the script's Script Properties, so it's never in the sheet or the page. Without a key, the app uses the simple rules, and says so.
+- **Microphone:** speech becomes text in the task box or chat. You check it and tap Send. Replies can be read aloud, per phone.
 
 Only people the sheet is shared with (as Editors) can use the app. Each person signs in with their own Google account.
 
@@ -14,7 +15,7 @@ Only people the sheet is shared with (as Editors) can use the app. Each person s
 
 | File | What it is |
 |---|---|
-| `Code.gs` | Everything server-side: sheet setup, task logic, repeats, reminder emails, calendar sync, the web app endpoints and the MCP endpoint |
+| `Code.gs` | Everything server-side: sheet setup, task logic, repeats, reminder emails, calendar sync, the chat (Claude or simple rules) |
 | `Parser.gs` | The offline language parser. **Generated** from `src/ai/rulesParser.js` and `src/chat/rulesInterpreter.js` by `npm run build:sheets`, so both editions understand the same phrases |
 | `Index.html` | The web app page |
 | `appsscript.json` | Manifest, only needed if you use `clasp` |
@@ -32,15 +33,13 @@ The non-technical step-by-step guide is linked from the project conversation. In
 
 **Updating the code later:** paste the new files, then use **Deploy → Manage deployments → ✏️ → Version: New version → Deploy**. The link stays the same.
 
-### Connecting Claude (experimental)
+### Turning on Claude in the app (optional)
 
-1. **Deploy → New deployment → Web app**, with *Execute as: Me* and *Who has access: Anyone*. Copy the `/exec` link.
-2. Copy the **Assistant key** from the sheet's `Settings` tab.
-3. In Claude, add a custom connector with the URL `<that link>?key=<assistant key>`.
+1. Create a developer key at platform.claude.com (API keys), and add a small credit with auto-reload **off**. This is billed separately from a Claude Pro subscription.
+2. In the script editor, click the gear icon (Project Settings), then **Script Properties → Add script property**. Name it `ANTHROPIC_API_KEY` and paste the key.
+3. Open the app, approve the "connect to an external service" permission when Google asks, and check the chat header says **Powered by Claude**.
 
-Tools: `get_household`, `list_tasks`, `add_task`, `update_task`, `delete_task`. Anyone with the full URL can change tasks, so keep it private. To revoke access, clear the key in `Settings` and run `setup` again.
-
-This hasn't been verified against a live Claude connector yet. Apps Script answers POST requests with a redirect, and not every connector client follows that.
+Changes to Claude's behaviour are made in `askClaude_`'s prompt (see `CHAT_SYSTEM_PROMPT`) (`CHAT_SYSTEM_PROMPT` in `Code.gs`). Claude's answers are checked before anything changes: unknown actions and task numbers that don't exist are dropped, and a failed request falls back to the simple rules with a note saying so. The model is `claude-opus-5-5`; it can be changed in `CLAUDE_MODEL`.
 
 ## Limits
 

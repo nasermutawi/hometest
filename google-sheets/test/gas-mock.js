@@ -42,6 +42,11 @@ export function createGas({ timeZone = 'Europe/London', owner = 'naser@example.c
   const userProps = {};
   const scriptProps = {};
   const events = new Map();
+  // Outgoing web requests (the Claude API). Tests set http.responder; by default the network is off.
+  const http = {
+    calls: [],
+    responder: () => { throw new Error('network disabled in tests'); },
+  };
   let eventSeq = 0;
 
   const RealDate = Date;
@@ -183,6 +188,13 @@ export function createGas({ timeZone = 'Europe/London', owner = 'naser@example.c
       getUserProperties: () => props(userProps[activeUser] ||= {}),
     },
     LockService: { getScriptLock: () => ({ waitLock() {}, releaseLock() {} }) },
+    UrlFetchApp: {
+      fetch(url, opts) {
+        http.calls.push({ url, opts: { ...opts, payload: opts.payload } });
+        const r = http.responder(url, opts);
+        return { getResponseCode: () => r.status, getContentText: () => r.body };
+      },
+    },
     ScriptApp: {
       getProjectTriggers: () => triggers.map((t) => ({ getHandlerFunction: () => t.handler, _t: t })),
       deleteTrigger: (t) => triggers.splice(triggers.indexOf(t._t), 1),
@@ -207,6 +219,7 @@ export function createGas({ timeZone = 'Europe/London', owner = 'naser@example.c
 
   const gas = {
     context,
+    http,
     clock,
     outbox,
     triggers,
