@@ -6,7 +6,9 @@
   "scripts": {
     "start": "node --no-warnings=ExperimentalWarning src/server.js",
     "dev": "node --no-warnings=ExperimentalWarning --watch src/server.js",
-    "test": "node --no-warnings=ExperimentalWarning --test test/*.test.js"
+    "test": "node --no-warnings=ExperimentalWarning --test test/*.test.js google-sheets/test/*.test.js",
+    "build:sheets": "node --no-warnings google-sheets/build-parser.mjs",
+    "preview:sheets": "node --no-warnings google-sheets/test/preview-server.mjs"
   },
   "repository": {
     "type": "git",

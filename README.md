@@ -8,6 +8,8 @@ You describe a task in plain language, typed or spoken, for example:
 
 The app turns that into a task with a title, a date and time, an owner, a category, and **prep steps**: the things that have to happen beforehand. It picks up prep you mention ("empty the cupboard") and prep the task implies ("confirm the appointment the day before", "clear access to the work area"). If something essential is missing, like the date or who owns it, it asks. You check the draft, adjust it if needed, and save.
 
+> **Two editions.** This README covers the full Node.js app (`src/`, `public/`). For a **free version that runs on a Google account**, with a Google Sheet as the database, email reminders, Google Calendar sync and a Claude connector, see [google-sheets/README.md](google-sheets/README.md).
+
 ## Features (MVP)
 
 - **Accounts and households.** Sign up, then share the invite code or link (Settings → Invite your partner) so the other person can join.

@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<base target="_top">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Household</title>
+<style>
+:root {
+  --bg: #f5f4f0; --surface: #ffffff; --text: #1d2321; --muted: #66706c; --line: #e2e0d9;
+  --accent: #2f6f5e; --accent-ink: #ffffff; --accent-soft: #e3efea; --danger: #b23b2e;
+  --radius: 14px; --shadow: 0 1px 2px rgb(0 0 0 / 0.05), 0 4px 16px rgb(0 0 0 / 0.04);
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #131615; --surface: #1c201e; --text: #e8ebe9; --muted: #9aa49f; --line: #2d3330;
+    --accent: #6cc3a6; --accent-ink: #0d1a15; --accent-soft: #1f3530; --danger: #ef7d70; color-scheme: dark;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+[hidden] { display: none !important; }
+h1, h2, h3 { margin: 0; line-height: 1.2; }
+h1 { font-size: 1.3rem; } h2 { font-size: 1.12rem; } h3 { font-size: 0.95rem; margin: 18px 0 6px; }
+p { margin: 0; }
+.muted { color: var(--muted); } .small { font-size: 0.85rem; }
+.error { color: var(--danger); margin: 8px 0; }
+a { color: var(--accent); }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 9px 14px; cursor: pointer; white-space: nowrap; }
+button:disabled { opacity: 0.6; cursor: progress; }
+button.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600; }
+button.link { border: none; background: none; color: var(--accent); padding: 6px 4px; }
+button.danger { color: var(--danger); }
+.icon-btn { display: inline-grid; place-items: center; width: 40px; height: 40px; padding: 0; border-radius: 50%; border: none; background: transparent; }
+.icon-btn svg { width: 22px; height: 22px; fill: currentColor; }
+.icon-btn.close { font-size: 1.6rem; color: var(--muted); }
+input, select, textarea { width: 100%; border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 9px 11px; min-width: 0; }
+textarea { resize: vertical; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+label { display: block; font-size: 0.9rem; font-weight: 500; margin: 10px 0; }
+label > input, label > select, label > textarea { margin-top: 4px; font-weight: 400; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); }
+
+.center { min-height: 80vh; display: grid; place-items: center; padding: 16px; }
+.panel { width: min(420px, 100%); padding: 24px; display: flex; flex-direction: column; gap: 12px; }
+
+.topbar { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  padding: 10px 16px; background: color-mix(in srgb, var(--bg) 90%, transparent); backdrop-filter: blur(8px); }
+.topbar h1 { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.topbar-actions { display: flex; gap: 2px; flex: 0 0 auto; }
+.content { max-width: 760px; margin: 0 auto; padding: 4px 16px 40px; }
+
+.composer { padding: 14px; }
+.composer label { margin: 0 0 6px; font-weight: 600; }
+.composer-actions { display: flex; align-items: center; gap: 8px; margin-top: 10px; justify-content: flex-end; }
+.composer-actions .grow { margin-right: auto; white-space: nowrap; }
+
+.filters { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; margin: 18px 0 6px; }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.chip { border-radius: 999px; padding: 5px 12px; font-size: 0.88rem; }
+.chip.active { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.tabs { display: flex; gap: 4px; background: var(--surface); border: 1px solid var(--line); padding: 3px; border-radius: 12px; }
+.tab { border: none; background: transparent; border-radius: 9px; padding: 5px 12px; color: var(--muted); font-size: 0.9rem; }
+.tab.active { background: var(--accent-soft); color: var(--text); font-weight: 600; }
+
+.group-title { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin: 20px 4px 8px; }
+.group-title.overdue { color: var(--danger); }
+.task { padding: 12px 14px; margin-bottom: 8px; display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; }
+.task .check { width: 24px; height: 24px; margin: 1px 0 0; accent-color: var(--accent); cursor: pointer; }
+.task-title { font-weight: 600; cursor: pointer; overflow-wrap: anywhere; }
+.task.done .task-title { text-decoration: line-through; color: var(--muted); }
+.task-meta { grid-column: 2; display: flex; flex-wrap: wrap; gap: 6px 10px; font-size: 0.85rem; color: var(--muted); align-items: center; }
+.task-meta .late { color: var(--danger); font-weight: 600; }
+.pill { background: var(--accent-soft); color: var(--accent); border-radius: 999px; padding: 1px 9px; font-weight: 600; }
+.pill.none { background: var(--bg); color: var(--muted); }
+.repeat { color: var(--accent); }
+.task-notes { grid-column: 2; font-size: 0.9rem; color: var(--muted); white-space: pre-wrap; overflow-wrap: anywhere; }
+.prep { grid-column: 2; list-style: none; margin: 6px 0 0; padding: 8px 10px; background: var(--bg); border-radius: 10px; }
+.prep li { display: flex; gap: 8px; align-items: flex-start; font-size: 0.9rem; padding: 3px 0; }
+.prep input { width: 18px; height: 18px; margin: 2px 0 0; flex: 0 0 auto; accent-color: var(--accent); }
+.prep .when { color: var(--muted); margin-left: auto; white-space: nowrap; padding-left: 8px; }
+.prep .done-step span:first-of-type { text-decoration: line-through; color: var(--muted); }
+.prep-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
+.empty { text-align: center; color: var(--muted); padding: 40px 16px; }
+
+dialog { width: min(560px, calc(100vw - 16px)); max-height: calc(100dvh - 16px); border: 1px solid var(--line); border-radius: var(--radius);
+  background: var(--surface); color: var(--text); padding: 16px 18px; box-shadow: 0 10px 40px rgb(0 0 0 / 0.25); }
+dialog::backdrop { background: rgb(0 0 0 / 0.35); }
+.dialog-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+.dialog-foot { display: flex; align-items: center; gap: 8px; margin-top: 16px; }
+.spacer { flex: 1; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; }
+fieldset { border: 1px solid var(--line); border-radius: 12px; margin: 12px 0; padding: 6px 12px 10px; }
+legend { font-weight: 600; font-size: 0.9rem; padding: 0 4px; }
+.prep-edit { list-style: none; padding: 0; margin: 0; }
+.prep-edit li { display: grid; grid-template-columns: 1fr auto 32px; gap: 6px; align-items: center; margin: 6px 0; }
+.prep-edit .days { display: flex; align-items: center; gap: 4px; font-size: 0.8rem; color: var(--muted); white-space: nowrap; }
+.prep-edit .days input { width: 60px; padding: 7px 6px; text-align: center; }
+.checks { display: flex; flex-wrap: wrap; gap: 4px 14px; }
+.checks label { display: flex; gap: 6px; align-items: center; margin: 4px 0; font-weight: 400; }
+.checks input { width: auto; margin: 0; accent-color: var(--accent); }
+.questions { background: var(--accent-soft); border-radius: 12px; padding: 10px 12px; margin: 8px 0; }
+.questions p { font-weight: 600; font-size: 0.9rem; }
+.list { list-style: none; padding: 0; margin: 8px 0 0; }
+.list li { padding: 10px 2px; border-bottom: 1px solid var(--line); }
+.list time { display: block; font-size: 0.8rem; color: var(--muted); }
+.toggle { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 8px 0; margin: 0; font-weight: 400; border-bottom: 1px solid var(--line); }
+.toggle input { width: 22px; height: 22px; margin: 0; flex: 0 0 auto; accent-color: var(--accent); }
+.copyrow { display: flex; gap: 8px; align-items: center; }
+.copyrow input { font-size: 0.85rem; }
+.steps { padding-left: 20px; margin: 6px 0; display: flex; flex-direction: column; gap: 4px; font-size: 0.92rem; }
+
+.chat-dialog[open] { display: flex; flex-direction: column; height: min(620px, calc(100dvh - 16px)); }
+.chat-log { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding: 8px 2px; }
+.bubble { max-width: 85%; padding: 8px 12px; border-radius: 14px; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 0.95rem; }
+.bubble.in { align-self: flex-end; background: var(--accent); color: var(--accent-ink); border-bottom-right-radius: 4px; }
+.bubble.out { align-self: flex-start; background: var(--bg); border-bottom-left-radius: 4px; }
+.bubble.pending { opacity: 0.6; }
+.chat-form { display: flex; gap: 6px; align-items: center; padding-top: 8px; border-top: 1px solid var(--line); }
+.toast { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); background: var(--text); color: var(--bg);
+  padding: 10px 16px; border-radius: 10px; z-index: 20; max-width: calc(100vw - 32px); }
+@media (max-width: 380px) { .grid2 { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<div id="loading" class="center"><p class="muted">Loading your household...</p></div>
+
+<div id="blocked" class="center" hidden>
+  <div class="panel card"><h2>Can't open the household</h2><p id="blocked-msg"></p></div>
+</div>
+
+<div id="join" class="center" hidden>
+  <form id="join-form" class="panel card">
+    <h2>Welcome</h2>
+    <p class="muted">You're signed in as <strong id="join-email"></strong>. What should the household call you?</p>
+    <label for="join-name">Your first name<input id="join-name" required maxlength="40" autocomplete="given-name"></label>
+    <p class="error" id="join-error" hidden></p>
+    <button class="primary" type="submit">Join the household</button>
+  </form>
+</div>
+
+<div id="app" hidden>
+  <header class="topbar">
+    <h1 id="household-name">Household</h1>
+    <div class="topbar-actions">
+      <button type="button" class="icon-btn" id="chat-btn" aria-label="Chat with the assistant">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H9l-5 4v-4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Zm3 6.5a1.5 1.5 0 1 0 0 .01Zm5 0a1.5 1.5 0 1 0 0 .01Zm5 0a1.5 1.5 0 1 0 0 .01Z"/></svg>
+      </button>
+      <button type="button" class="icon-btn" id="activity-btn" aria-label="Recent activity">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 3a9 9 0 1 0 8.95 10h-2.02A7 7 0 1 1 13 5V3Zm-1 4v6l5 3 .9-1.5-3.9-2.3V7Z"/></svg>
+      </button>
+      <button type="button" class="icon-btn" id="settings-btn" aria-label="Settings">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.4 13a7.6 7.6 0 0 0 0-2l2.1-1.6-2-3.5-2.5 1a7.5 7.5 0 0 0-1.7-1L15 3h-4l-.4 2.9a7.5 7.5 0 0 0-1.7 1l-2.5-1-2 3.5L6.6 11a7.6 7.6 0 0 0 0 2l-2.1 1.6 2 3.5 2.5-1a7.5 7.5 0 0 0 1.7 1L11 21h4l.4-2.9a7.5 7.5 0 0 0 1.7-1l2.5 1 2-3.5ZM13 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Z" transform="translate(-1 0)"/></svg>
+      </button>
+    </div>
+  </header>
+  <main class="content">
+    <section class="composer card">
+      <form id="compose-form">
+        <label for="compose-text">What needs doing?</label>
+        <textarea id="compose-text" rows="2" placeholder="e.g. Plumber coming Thursday at 10am to fix the kitchen leak, Sara to handle it. We need to empty the cupboard under the sink first."></textarea>
+        <div class="composer-actions">
+          <a class="small grow" id="sheet-link" href="#" target="_blank" rel="noopener">Open the sheet</a>
+          <button type="button" class="link" id="manual-btn">Add manually</button>
+          <button type="submit" class="primary" id="compose-submit">Create task</button>
+        </div>
+      </form>
+    </section>
+    <nav class="filters" aria-label="Filter tasks">
+      <div class="chips" id="owner-filter"></div>
+      <div class="tabs">
+        <button type="button" class="tab active" data-status="open">To do</button>
+        <button type="button" class="tab" data-status="done">Done</button>
+      </div>
+    </nav>
+    <div id="task-list" aria-live="polite"></div>
+  </main>
+</div>
+
+<dialog id="task-dialog">
+  <form id="task-form">
+    <header class="dialog-head">
+      <h2 id="task-dialog-title">New task</h2>
+      <button type="button" class="icon-btn close" data-close aria-label="Close">&times;</button>
+    </header>
+    <div id="questions" class="questions" hidden></div>
+    <label for="f-title">Title<input id="f-title" required maxlength="200"></label>
+    <div class="grid2">
+      <label for="f-date">Date<input id="f-date" type="date"></label>
+      <label for="f-time">Time<input id="f-time" type="time"></label>
+    </div>
+    <div class="grid2">
+      <label for="f-owner">Owner<select id="f-owner"></select></label>
+      <label for="f-repeats">Repeats<select id="f-repeats"></select></label>
+    </div>
+    <label for="f-category">Category<select id="f-category"></select></label>
+    <fieldset>
+      <legend>Preparation</legend>
+      <p class="muted small">Things to do beforehand. Each one gets a reminder.</p>
+      <ul id="prep-list" class="prep-edit"></ul>
+      <button type="button" class="link" id="add-prep">+ Add a prep step</button>
+    </fieldset>
+    <fieldset>
+      <legend>Remind everyone</legend>
+      <div class="checks" id="reminder-checks"></div>
+    </fieldset>
+    <label for="f-notes">Notes<textarea id="f-notes" rows="3" placeholder="Contractor name, phone number, quote..."></textarea></label>
+    <p id="task-error" class="error" hidden></p>
+    <footer class="dialog-foot">
+      <button type="button" class="link danger" id="delete-task" hidden>Delete</button>
+      <span class="spacer"></span>
+      <button type="button" data-close>Cancel</button>
+      <button type="submit" class="primary" id="save-task">Save task</button>
+    </footer>
+  </form>
+</dialog>
+
+<dialog id="chat-dialog" class="chat-dialog">
+  <header class="dialog-head">
+    <h2>Assistant</h2>
+    <button type="button" class="icon-btn close" data-close aria-label="Close">&times;</button>
+  </header>
+  <div id="chat-log" class="chat-log" aria-live="polite"></div>
+  <form id="chat-form" class="chat-form">
+    <input id="chat-text" autocomplete="off" placeholder="e.g. move the boiler service to Friday" aria-label="Message">
+    <button type="submit" class="primary">Send</button>
+  </form>
+</dialog>
+
+<dialog id="activity-dialog">
+  <header class="dialog-head">
+    <h2>Recent activity</h2>
+    <button type="button" class="icon-btn close" data-close aria-label="Close">&times;</button>
+  </header>
+  <ul id="activity-list" class="list"></ul>
+</dialog>
+
+<dialog id="settings-dialog">
+  <header class="dialog-head">
+    <h2>Settings</h2>
+    <button type="button" class="icon-btn close" data-close aria-label="Close">&times;</button>
+  </header>
+  <h3>How you want to hear from the app</h3>
+  <label class="toggle" for="p-reminders">Email me reminders<input type="checkbox" id="p-reminders"></label>
+  <label class="toggle" for="p-updates">Email me when someone else changes a task<input type="checkbox" id="p-updates"></label>
+  <label class="toggle" for="p-summary">Morning summary email<input type="checkbox" id="p-summary"></label>
+  <label class="toggle" for="p-calendar">Add tasks to my Google Calendar<input type="checkbox" id="p-calendar"></label>
+  <p class="muted small" style="margin-top:8px">Tip: turn on Gmail notifications on your phone so reminder emails pop up.</p>
+
+  <h3>Members</h3>
+  <ul id="member-list" class="list"></ul>
+
+  <h3>Invite your partner</h3>
+  <ol class="steps">
+    <li><a id="share-sheet" href="#" target="_blank" rel="noopener">Open the Google Sheet</a>, tap <strong>Share</strong> and add their Gmail address as an <strong>Editor</strong>.</li>
+    <li>Send them this app link:</li>
+  </ol>
+  <div class="copyrow"><input id="app-link" readonly aria-label="App link"><button type="button" id="copy-link">Copy</button></div>
+
+  <h3>Everything else</h3>
+  <p class="small muted">Household name, default reminders, morning summary time and calendar sync are in the sheet's <strong>Settings</strong> tab. You can also add or edit tasks straight in the <strong>Tasks</strong> tab.</p>
+  <footer class="dialog-foot"><span class="muted small" id="signed-in-as"></span></footer>
+</dialog>
+
+<div id="toast" class="toast" role="status" hidden></div>
+
+<script>
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const REMINDER_CHOICES = [[10080, '1 week before'], [2880, '2 days before'], [1440, '1 day before'], [120, '2 hours before'], [60, '1 hour before'], [30, '30 min before'], [0, 'At the time']];
+
+// google.script.run as promises.
+function run(fn, ...args) {
+  return new Promise((resolve, reject) => {
+    google.script.run.withSuccessHandler(resolve).withFailureHandler((err) => reject(err instanceof Error ? err : new Error(String(err && err.message || err))))[fn](...args);
+  });
+}
+
+const state = { data: null, status: 'open', owner: 'all', editing: null, draft: null };
+
+function toast(msg) {
+  const el = $('#toast');
+  el.textContent = msg;
+  el.hidden = false;
+  clearTimeout(toast.t);
+  toast.t = setTimeout(() => { el.hidden = true; }, 3000);
+}
+
+function show(id) {
+  ['loading', 'blocked', 'join', 'app'].forEach((v) => { $('#' + v).hidden = v !== id; });
+}
+
+function apply(data) {
+  state.data = data;
+  if (data.error) {
+    $('#blocked-msg').textContent = data.message;
+    show('blocked');
+    return;
+  }
+  if (!data.me) {
+    $('#join-email').textContent = data.email;
+    show('join');
+    return;
+  }
+  show('app');
+  render();
+}
+
+async function load() {
+  try {
+    apply(await run('getState'));
+  } catch (err) {
+    $('#blocked-msg').textContent = err.message;
+    show('blocked');
+  }
+}
+
+// ---------------------------------------------------------------- Rendering
+
+function render() {
+  const d = state.data;
+  $('#household-name').textContent = d.household.name;
+  $('#sheet-link').href = d.household.sheetUrl;
+  const filters = [['all', 'Everyone'], ['me', 'Mine']]
+    .concat(d.members.filter((m) => m.name !== d.me.name).map((m) => [m.name, m.name]))
+    .concat([['none', 'Unassigned']]);
+  $('#owner-filter').innerHTML = filters.map(([k, label]) =>
+    `<button type="button" class="chip ${state.owner === k ? 'active' : ''}" data-owner="${esc(k)}">${esc(label)}</button>`).join('');
+  renderTasks();
+}
+
+function today() { return state.data.now.slice(0, 10); }
+function addDays(dateStr, n) {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  return new Date(Date.UTC(y, m - 1, d + n)).toISOString().slice(0, 10);
+}
+
+function visibleTasks() {
+  const me = state.data.me.name;
+  return state.data.tasks.filter((t) => {
+    if ((state.status === 'done') !== t.done) return false;
+    if (state.owner === 'all') return true;
+    if (state.owner === 'me') return t.owner === me;
+    if (state.owner === 'none') return !t.owner;
+    return t.owner === state.owner;
+  });
+}
+
+function groups(tasks) {
+  if (state.status === 'done') {
+    return [['Recently done', tasks.slice().sort((a, b) => (b.completed || '').localeCompare(a.completed || '')).slice(0, 50)]];
+  }
+  const t0 = today();
+  const out = { Overdue: [], Today: [], Tomorrow: [], 'Next 7 days': [], Later: [], 'No date': [] };
+  tasks.slice().sort((a, b) => (a.dueAt || '9').localeCompare(b.dueAt || '9')).forEach((t) => {
+    if (!t.dueDate) out['No date'].push(t);
+    else if (new Date(t.dueAt) < new Date() && t.dueDate <= t0) out[t.dueDate < t0 ? 'Overdue' : 'Today'].push(t);
+    else if (t.dueDate === t0) out.Today.push(t);
+    else if (t.dueDate === addDays(t0, 1)) out.Tomorrow.push(t);
+    else if (t.dueDate < addDays(t0, 7)) out['Next 7 days'].push(t);
+    else out.Later.push(t);
+  });
+  return Object.entries(out).filter(([, l]) => l.length);
+}
+
+function renderTask(t) {
+  const late = !t.done && t.dueAt && new Date(t.dueAt) < new Date();
+  const prep = t.prep.map((s, i) => `
+    <li class="${s.done ? 'done-step' : ''}">
+      <input type="checkbox" data-prep="${t.id}:${i}" ${s.done ? 'checked' : ''} aria-label="Prep step done">
+      <span>${esc(s.title)}</span>${s.when ? `<span class="when">${esc(s.when)}</span>` : ''}
+    </li>`).join('');
+  return `<article class="task card ${t.done ? 'done' : ''}">
+    <input type="checkbox" class="check" data-done="${t.id}" ${t.done ? 'checked' : ''} aria-label="Task done">
+    <div class="task-title" data-edit="${t.id}">${esc(t.title)}</div>
+    <div class="task-meta">
+      ${t.when ? `<span class="${late ? 'late' : ''}">${esc(t.when)}</span>` : ''}
+      <span class="pill ${t.owner ? '' : 'none'}">${esc(t.owner || 'Anyone')}</span>
+      <span>${esc(t.category)}</span>
+      ${t.repeats !== 'Never' ? `<span class="repeat">&#8635; ${esc(t.repeats.toLowerCase())}</span>` : ''}
+    </div>
+    ${t.notes ? `<p class="task-notes">${esc(t.notes)}</p>` : ''}
+    ${prep ? `<ul class="prep"><li class="prep-label">Prep</li>${prep}</ul>` : ''}
+  </article>`;
+}
+
+function renderTasks() {
+  const g = groups(visibleTasks());
+  $('#task-list').innerHTML = g.length
+    ? g.map(([name, list]) => `<h2 class="group-title ${name === 'Overdue' ? 'overdue' : ''}">${esc(name)}</h2>${list.map(renderTask).join('')}`).join('')
+    : `<p class="empty">${state.status === 'open' ? 'Nothing to do. Add a task above.' : 'No finished tasks yet.'}</p>`;
+}
+
+// ---------------------------------------------------------------- List actions
+
+$('#owner-filter').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-owner]');
+  if (!b) return;
+  state.owner = b.dataset.owner;
+  render();
+});
+
+$$('[data-status]').forEach((b) => b.addEventListener('click', () => {
+  state.status = b.dataset.status;
+  $$('[data-status]').forEach((x) => x.classList.toggle('active', x === b));
+  renderTasks();
+}));
+
+$('#task-list').addEventListener('change', async (e) => {
+  const el = e.target;
+  try {
+    if (el.dataset.done) {
+      const res = await run('setTaskDone', Number(el.dataset.done), el.checked);
+      apply(res);
+      toast(res.next ? `Done. Next one: ${res.next.when}` : el.checked ? 'Nice, task done' : 'Task reopened');
+    } else if (el.dataset.prep) {
+      const [id, i] = el.dataset.prep.split(':').map(Number);
+      apply(await run('setPrepDone', id, i, el.checked));
+    }
+  } catch (err) {
+    toast(err.message);
+    load();
+  }
+});
+
+$('#task-list').addEventListener('click', (e) => {
+  const id = e.target.closest('[data-edit]') && Number(e.target.closest('[data-edit]').dataset.edit);
+  if (id) openEditor(state.data.tasks.find((t) => t.id === id));
+});
+
+// ---------------------------------------------------------------- Composer
+
+$('#compose-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const text = $('#compose-text').value.trim();
+  if (!text) { $('#compose-text').focus(); return; }
+  state.draft = { text, history: [] };
+  await runParse();
+});
+
+async function runParse() {
+  const btn = $('#compose-submit');
+  btn.disabled = true;
+  btn.textContent = 'Reading...';
+  try {
+    const draft = await run('parseText', state.draft.text, state.draft.history);
+    state.draft.questions = draft.questions;
+    openEditor(null, draft);
+  } catch (err) {
+    toast(err.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Create task';
+  }
+}
+
+$('#manual-btn').addEventListener('click', () => { state.draft = null; openEditor(null); });
+
+// ---------------------------------------------------------------- Editor
+
+function prepRow(s) {
+  const li = document.createElement('li');
+  li.dataset.done = s && s.done ? '1' : '';
+  li.innerHTML = `<input class="prep-title" value="${esc(s ? s.title : '')}" placeholder="e.g. Clear access to the boiler" aria-label="Prep step">
+    <span class="days"><input class="prep-days" type="number" min="0" max="60" value="${s ? Number(s.daysBefore) || 0 : 1}" aria-label="Days before"> days before</span>
+    <button type="button" class="icon-btn close" aria-label="Remove step">&times;</button>`;
+  li.querySelector('button').addEventListener('click', () => li.remove());
+  return li;
+}
+
+$('#add-prep').addEventListener('click', () => {
+  const li = prepRow(null);
+  $('#prep-list').append(li);
+  li.querySelector('input').focus();
+});
+
+function renderQuestions() {
+  const qs = (state.draft && state.draft.questions) || [];
+  const box = $('#questions');
+  box.hidden = !qs.length;
+  if (!qs.length) return;
+  box.innerHTML = `<p>A couple of things to check:</p>${qs.map((q, i) => `<label for="q${i}">${esc(q)}<input id="q${i}" data-q="${i}" placeholder="Your answer"></label>`).join('')}
+    <button type="button" id="answer-btn">Update draft</button> <span class="muted small">or fill in the form below</span>`;
+  $('#answer-btn').addEventListener('click', () => {
+    const answers = $$('[data-q]', box).map((i) => ({ question: qs[Number(i.dataset.q)], answer: i.value.trim() })).filter((a) => a.answer);
+    if (!answers.length) return;
+    state.draft.history = state.draft.history.concat(answers);
+    runParse();
+  });
+}
+
+function openEditor(task, draft) {
+  const d = state.data;
+  state.editing = task || null;
+  if (!draft && !task) state.draft = null;
+  $('#task-error').hidden = true;
+  $('#task-dialog-title').textContent = task ? 'Edit task' : draft ? 'Check the details' : 'New task';
+  $('#delete-task').hidden = !task;
+  $('#f-owner').innerHTML = `<option value="">Anyone</option>${d.members.map((m) => `<option>${esc(m.name)}</option>`).join('')}`;
+  $('#f-repeats').innerHTML = d.repeats.map((r) => `<option>${esc(r)}</option>`).join('');
+  $('#f-category').innerHTML = d.categories.map((c) => `<option>${esc(c)}</option>`).join('');
+  const v = task || draft || { title: '', dueDate: '', time: '', owner: d.me.name, repeats: 'Never', category: 'other', notes: '', prep: [], reminders: d.defaultReminders };
+  $('#f-title').value = v.title;
+  $('#f-date').value = v.dueDate || '';
+  $('#f-time').value = v.time || '';
+  $('#f-owner').value = v.owner || '';
+  $('#f-repeats').value = v.repeats || 'Never';
+  $('#f-category').value = v.category || 'other';
+  $('#f-notes').value = v.notes || '';
+  $('#prep-list').replaceChildren(...(v.prep || []).map(prepRow));
+  const reminders = v.reminders && v.reminders.length ? v.reminders : d.defaultReminders;
+  const choices = REMINDER_CHOICES.concat(reminders.filter((m) => !REMINDER_CHOICES.some(([c]) => c === m)).map((m) => [m, `${m} min before`]));
+  $('#reminder-checks').innerHTML = choices.map(([m, label]) =>
+    `<label><input type="checkbox" value="${m}" ${reminders.includes(m) ? 'checked' : ''}> ${esc(label)}</label>`).join('');
+  renderQuestions();
+  if (!$('#task-dialog').open) $('#task-dialog').showModal();
+}
+
+$('#task-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const data = {
+    id: state.editing ? state.editing.id : null,
+    title: $('#f-title').value.trim(),
+    dueDate: $('#f-date').value,
+    time: $('#f-time').value,
+    owner: $('#f-owner').value,
+    repeats: $('#f-repeats').value,
+    category: $('#f-category').value,
+    notes: $('#f-notes').value,
+    reminders: $$('#reminder-checks input:checked').map((i) => Number(i.value)),
+    prep: $$('#prep-list li').map((li) => ({
+      title: li.querySelector('.prep-title').value.trim(),
+      daysBefore: Number(li.querySelector('.prep-days').value) || 0,
+      done: li.dataset.done === '1',
+    })).filter((s) => s.title),
+  };
+  $('#save-task').disabled = true;
+  try {
+    apply(await run('saveTask', data));
+    $('#task-dialog').close();
+    if (!state.editing) $('#compose-text').value = '';
+    toast(state.editing ? 'Task updated' : 'Task added');
+    state.draft = null;
+  } catch (err) {
+    $('#task-error').textContent = err.message;
+    $('#task-error').hidden = false;
+  } finally {
+    $('#save-task').disabled = false;
+  }
+});
+
+let deleteArmed = false;
+$('#delete-task').addEventListener('click', async () => {
+  if (!deleteArmed) {
+    deleteArmed = true;
+    $('#delete-task').textContent = 'Tap again to delete';
+    setTimeout(() => { deleteArmed = false; $('#delete-task').textContent = 'Delete'; }, 4000);
+    return;
+  }
+  deleteArmed = false;
+  $('#delete-task').textContent = 'Delete';
+  apply(await run('deleteTask', state.editing.id));
+  $('#task-dialog').close();
+  toast('Task deleted');
+});
+
+$$('[data-close]').forEach((b) => b.addEventListener('click', () => b.closest('dialog').close()));
+
+// ---------------------------------------------------------------- Chat
+
+function bubble(dir, text, extra) {
+  const div = document.createElement('div');
+  div.className = `bubble ${dir} ${extra || ''}`;
+  div.textContent = text;
+  $('#chat-log').append(div);
+  $('#chat-log').scrollTop = $('#chat-log').scrollHeight;
+  return div;
+}
+
+$('#chat-btn').addEventListener('click', () => {
+  if (!$('#chat-log').children.length) {
+    bubble('out', 'Hi! Tell me what to change, e.g. "the plumber task is done", "move the boiler service to next Friday", "I\'ll take the bins" or "add: water the plants every Sunday".');
+  }
+  $('#chat-dialog').showModal();
+  $('#chat-text').focus();
+});
+
+$('#chat-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const text = $('#chat-text').value.trim();
+  if (!text) return;
+  $('#chat-text').value = '';
+  bubble('in', text);
+  const pending = bubble('out', '...', 'pending');
+  try {
+    pending.textContent = await run('chat', text);
+    pending.classList.remove('pending');
+    load();
+  } catch (err) {
+    pending.textContent = err.message;
+  }
+});
+
+// ---------------------------------------------------------------- Activity & settings
+
+$('#activity-btn').addEventListener('click', async () => {
+  $('#activity-list').innerHTML = '<li class="muted">Loading...</li>';
+  $('#activity-dialog').showModal();
+  const items = await run('getActivity');
+  $('#activity-list').innerHTML = items.length
+    ? items.map((a) => `<li>${esc(a.text)}<time>${esc(a.when)}</time></li>`).join('')
+    : '<li class="muted">Nothing yet.</li>';
+});
+
+$('#settings-btn').addEventListener('click', () => {
+  const d = state.data;
+  $('#p-reminders').checked = d.me.prefs.emailReminders;
+  $('#p-updates').checked = d.me.prefs.emailUpdates;
+  $('#p-summary').checked = d.me.prefs.morningSummary;
+  $('#p-calendar').checked = d.me.prefs.calendarInvites;
+  $('#member-list').innerHTML = d.members.map((m) => `<li>${esc(m.name)} <span class="muted small">${esc(m.email)}</span></li>`).join('');
+  $('#share-sheet').href = d.household.sheetUrl;
+  $('#app-link').value = d.household.appUrl || '';
+  $('#signed-in-as').textContent = `Signed in as ${d.me.email}`;
+  $('#settings-dialog').showModal();
+});
+
+$$('#settings-dialog .toggle input').forEach((box) => box.addEventListener('change', async () => {
+  try {
+    apply(await run('savePreferences', {
+      emailReminders: $('#p-reminders').checked, emailUpdates: $('#p-updates').checked,
+      morningSummary: $('#p-summary').checked, calendarInvites: $('#p-calendar').checked,
+    }));
+    toast('Saved');
+  } catch (err) {
+    toast(err.message);
+  }
+}));
+
+$('#copy-link').addEventListener('click', () => {
+  const input = $('#app-link');
+  input.select();
+  const done = () => toast('Link copied');
+  if (navigator.clipboard) navigator.clipboard.writeText(input.value).then(done, () => { document.execCommand('copy'); done(); });
+  else { document.execCommand('copy'); done(); }
+});
+
+$('#join-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  try {
+    apply(await run('joinHousehold', $('#join-name').value));
+  } catch (err) {
+    $('#join-error').textContent = err.message;
+    $('#join-error').hidden = false;
+  }
+});
+
+// Keep both phones in sync while the app is open.
+setInterval(() => { if (!document.hidden && !$('dialog[open]')) load(); }, 30000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) load(); });
+load();
+</script>
+</body>
+</html>
