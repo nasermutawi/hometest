@@ -39,7 +39,7 @@ The non-technical step-by-step guide is linked from the project conversation. In
 2. In the script editor, click the gear icon (Project Settings), then **Script Properties → Add script property**. Name it `ANTHROPIC_API_KEY` and paste the key.
 3. Open the app, approve the "connect to an external service" permission when Google asks, and check the chat header says **Powered by Claude**.
 
-Changes to Claude's behaviour are made in `askClaude_`'s prompt (see `CHAT_SYSTEM_PROMPT`) (`CHAT_SYSTEM_PROMPT` in `Code.gs`). Claude's answers are checked before anything changes: unknown actions and task numbers that don't exist are dropped, and a failed request falls back to the simple rules with a note saying so. The model is `claude-opus-5-5`; it can be changed in `CLAUDE_MODEL`.
+Changes to Claude's behaviour are made in `askClaude_`'s prompt (the `CHAT_SYSTEM_PROMPT` constant in `Code.gs`). Claude's answers are checked before anything changes: unknown actions and task numbers that don't exist are dropped, and a failed request falls back to the simple rules with a note saying so. The model is `claude-opus-5-5`; it can be changed in `CLAUDE_MODEL`.
 
 ## Limits
 
