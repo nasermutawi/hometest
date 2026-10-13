@@ -5,274 +5,502 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Household</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap">
 <style>
 :root {
-  --bg: #f5f4f0; --surface: #ffffff; --text: #1d2321; --muted: #66706c; --line: #e2e0d9;
-  --accent: #2f6f5e; --accent-ink: #ffffff; --accent-soft: #e3efea; --danger: #b23b2e;
-  --radius: 14px; --shadow: 0 1px 2px rgb(0 0 0 / 0.05), 0 4px 16px rgb(0 0 0 / 0.04);
+  --bg: #ffffff; --soft: #f5f6f4; --chip: #eef1ef; --line: #eef0ee; --border: #e3e7e4; --border-strong: #d5dad6;
+  --text: #16201b; --muted: #5f6b65; --faint: #8c978f;
+  --accent: #24614f; --accent-hover: #1a4a3c; --accent-soft: #e4f0eb; --accent-ink: #1a4a3c; --on-accent: #ffffff;
+  --amber-bg: #fdf3e1; --amber-ink: #7a4a00; --amber-dot: #c77c00; --amber-line: #e8c27a;
+  --p1-bg: #dce8f5; --p1-ink: #1f3b63; --p2-bg: #f3e3ec; --p2-ink: #6b2448;
+  --shared-bg: #e4f0eb; --shared-ink: #1a4a3c; --none-bg: #f1f2f1; --none-ink: #5f6b65;
+  --danger: #b23b2e; --toast-bg: #16201b; --toast-ink: #ffffff; --toast-link: #9dc3b6; --scrim: rgb(22 32 27 / 0.45);
+  --font: 'Manrope', 'Segoe UI', system-ui, -apple-system, sans-serif;
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #131615; --surface: #1c201e; --text: #e8ebe9; --muted: #9aa49f; --line: #2d3330;
-    --accent: #6cc3a6; --accent-ink: #0d1a15; --accent-soft: #1f3530; --danger: #ef7d70; color-scheme: dark;
+    --bg: #121715; --soft: #0d1210; --chip: #1e2622; --line: #222a26; --border: #2c3631; --border-strong: #3a4540;
+    --text: #e8ede9; --muted: #a3aea8; --faint: #6f7a74;
+    --accent: #5db597; --accent-hover: #7cc9ae; --accent-soft: #1b3029; --accent-ink: #bfe3d5; --on-accent: #08130f;
+    --amber-bg: #3a2c12; --amber-ink: #f3cf8a; --amber-dot: #e0a23a; --amber-line: #7a5a1e;
+    --p1-bg: #1e2b3d; --p1-ink: #b9cdea; --p2-bg: #3a2230; --p2-ink: #ebc0d5;
+    --shared-bg: #1b3029; --shared-ink: #bfe3d5; --none-bg: #222a26; --none-ink: #a3aea8;
+    --danger: #ef7d70; --toast-bg: #e8ede9; --toast-ink: #121715; --toast-link: #24614f; --scrim: rgb(0 0 0 / 0.6);
+    color-scheme: dark;
   }
 }
 * { box-sizing: border-box; }
-body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+html, body { margin: 0; background: var(--bg); color: var(--text); font: 500 16px/1.45 var(--font); -webkit-tap-highlight-color: transparent; }
 [hidden] { display: none !important; }
-h1, h2, h3 { margin: 0; line-height: 1.2; }
-h1 { font-size: 1.3rem; } h2 { font-size: 1.12rem; } h3 { font-size: 0.95rem; margin: 18px 0 6px; }
-p { margin: 0; }
-.muted { color: var(--muted); } .small { font-size: 0.85rem; }
-.error { color: var(--danger); margin: 8px 0; }
+h1, h2, h3, p { margin: 0; }
+button, input, textarea, select { font: inherit; color: inherit; }
+button { cursor: pointer; border: none; background: none; padding: 0; }
+button:disabled { opacity: 0.55; cursor: progress; }
 a { color: var(--accent); }
-button, input, select, textarea { font: inherit; color: inherit; }
-button { border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 9px 14px; cursor: pointer; white-space: nowrap; }
-button:disabled { opacity: 0.6; cursor: progress; }
-button.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600; }
-button.link { border: none; background: none; color: var(--accent); padding: 6px 4px; }
-button.danger { color: var(--danger); }
-.icon-btn { display: inline-grid; place-items: center; width: 40px; height: 40px; padding: 0; border-radius: 50%; border: none; background: transparent; }
-.icon-btn svg { width: 22px; height: 22px; fill: currentColor; }
-.icon-btn.close { font-size: 1.6rem; color: var(--muted); }
-input, select, textarea { width: 100%; border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 9px 11px; min-width: 0; }
-textarea { resize: vertical; }
-:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
-label { display: block; font-size: 0.9rem; font-weight: 500; margin: 10px 0; }
-label > input, label > select, label > textarea { margin-top: 4px; font-weight: 400; }
-.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+[tabindex="-1"]:focus { outline: none; }
+svg { flex: 0 0 auto; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
-.center { min-height: 80vh; display: grid; place-items: center; padding: 16px; }
-.panel { width: min(420px, 100%); padding: 24px; display: flex; flex-direction: column; gap: 12px; }
+/* Layout */
+.screen { min-height: 100dvh; max-width: 480px; margin: 0 auto; display: flex; flex-direction: column; }
+.pad { padding: 0 20px; }
+.eyebrow { font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.title-xl { font-size: 26px; line-height: 1.15; font-weight: 800; }
+.title-l { font-size: 22px; line-height: 1.2; font-weight: 800; }
+.muted { color: var(--muted); }
+.small { font-size: 14px; }
+.head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; padding: 28px 20px 0; }
+.head > div { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.topnav { display: flex; justify-content: space-between; align-items: center; padding: 16px 12px 0; }
+.textbtn { display: inline-flex; align-items: center; gap: 2px; padding: 10px 8px; font-size: 15px; font-weight: 700; color: var(--accent); border-radius: 10px; }
+.textbtn:hover { color: var(--accent-hover); }
+.round { width: 44px; height: 44px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; color: var(--text); }
+.round.outline { border: 1px solid var(--border); }
+.pillbtn { height: 44px; padding: 0 16px; border-radius: 22px; border: 1px solid var(--border); display: inline-flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 700; flex: 0 0 auto; }
+.primary { height: 56px; border-radius: 16px; background: var(--accent); color: var(--on-accent); font-size: 16px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; }
+.primary:hover { background: var(--accent-hover); }
+.secondary { height: 52px; border-radius: 14px; border: 1px solid var(--border-strong); font-size: 16px; font-weight: 700; display: flex; align-items: center; justify-content: center; width: 100%; }
+.error { color: var(--danger); font-size: 14px; }
 
-.topbar { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; justify-content: space-between; gap: 8px;
-  padding: 10px 16px; background: color-mix(in srgb, var(--bg) 90%, transparent); backdrop-filter: blur(8px); }
-.topbar h1 { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.topbar-actions { display: flex; gap: 2px; flex: 0 0 auto; }
-.content { max-width: 760px; margin: 0 auto; padding: 4px 16px 40px; }
+/* Chips and pills */
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chips.scroll { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin: 0 -20px; padding: 0 20px; }
+.chips.scroll::-webkit-scrollbar { display: none; }
+.chip { height: 40px; padding: 0 16px; border-radius: 20px; background: var(--chip); font-size: 14px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; flex: 0 0 auto; }
+.chip.sm { height: 36px; padding: 0 14px; border-radius: 18px; }
+.chip.outline { background: var(--bg); border: 1px solid var(--border); }
+.chip[aria-pressed="true"], .chip.on { background: var(--accent); color: var(--on-accent); font-weight: 700; border-color: var(--accent); }
+.chip.dashed { background: var(--bg); border: 1px dashed var(--faint); color: var(--muted); }
+.chip.amber { background: var(--amber-bg); color: var(--amber-ink); font-weight: 700; }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--amber-dot); flex: 0 0 auto; }
+.pill { padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 700; flex: 0 0 auto; white-space: nowrap; }
+.o-p1 { background: var(--p1-bg); color: var(--p1-ink); }
+.o-p2 { background: var(--p2-bg); color: var(--p2-ink); }
+.o-shared { background: var(--shared-bg); color: var(--shared-ink); }
+.o-none { background: var(--none-bg); color: var(--none-ink); }
+.seg { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 4px; padding: 4px; border-radius: 22px; background: var(--chip); }
+.seg button { height: 36px; border-radius: 18px; font-size: 14px; font-weight: 600; color: var(--muted); padding: 0 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.seg button[aria-checked="true"] { background: var(--accent); color: var(--on-accent); font-weight: 700; }
+.seg.sm button { height: 32px; font-size: 13px; padding: 0 12px; }
+.attention { display: flex; align-items: center; gap: 10px; padding: 14px 16px; border-radius: 14px; background: var(--amber-bg); color: var(--amber-ink); font-size: 15px; font-weight: 600; text-align: left; width: 100%; }
+.attention span:nth-child(2) { flex: 1; }
 
-.composer { padding: 14px; }
-.composer label { margin: 0 0 6px; font-weight: 600; }
-.composer-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 10px; justify-content: flex-end; }
-.composer-actions .grow { margin-right: auto; white-space: nowrap; }
-/* On phones the sheet link moves to its own line so the buttons keep their room. */
-@media (max-width: 480px) { .composer-actions .grow { order: 3; flex-basis: 100%; margin: 0; } }
+/* Capture (home) */
+.capture-main { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px; padding: 24px 20px; text-align: center; }
+.bigmic { width: 132px; height: 132px; border-radius: 50%; background: var(--accent); color: var(--on-accent); display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 30px rgb(36 97 79 / 0.25); transition: transform 0.15s; }
+.bigmic:hover { background: var(--accent-hover); }
+.bigmic:active { transform: scale(0.96); }
+.capture-copy { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.capture-copy strong { font-size: 20px; font-weight: 700; }
+.capture-copy span { font-size: 15px; color: var(--muted); max-width: 260px; }
+.capture-foot { padding: 0 20px 32px; display: flex; flex-direction: column; gap: 10px; }
+.today-card { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 14px; background: var(--soft); text-align: left; width: 100%; }
+.today-card > span { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.today-card b { font-size: 15px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-.filters { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; margin: 18px 0 6px; }
-.chips { display: flex; gap: 6px; flex-wrap: wrap; }
-.chip { border-radius: 999px; padding: 5px 12px; font-size: 0.88rem; }
-.chip.active { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
-.tabs { display: flex; gap: 4px; background: var(--surface); border: 1px solid var(--line); padding: 3px; border-radius: 12px; }
-.tab { border: none; background: transparent; border-radius: 9px; padding: 5px 12px; color: var(--muted); font-size: 0.9rem; }
-.tab.active { background: var(--accent-soft); color: var(--text); font-weight: 600; }
+/* Task list */
+.list-top { display: flex; flex-direction: column; gap: 16px; padding: 28px 20px 0; }
+.list { padding: 4px 20px 120px; }
+.group { margin: 18px 0 0; }
+.group:first-child { margin-top: 4px; }
+.group.late .eyebrow { color: var(--danger); }
+.row { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.check { width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--faint); flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center; color: transparent; }
+.check:hover { border-color: var(--accent); }
+.check.on { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.row-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; text-align: left; }
+.row-title { font-size: 16px; font-weight: 600; overflow-wrap: anywhere; }
+.row.done .row-title { text-decoration: line-through; color: var(--muted); }
+.row-meta { font-size: 13px; color: var(--muted); }
+.row-meta .late { color: var(--danger); font-weight: 700; }
+.empty { padding: 48px 8px; text-align: center; color: var(--muted); }
+.bar { position: fixed; left: 0; right: 0; bottom: 0; background: var(--bg); border-top: 1px solid var(--line); }
+.bar-inner { max-width: 480px; margin: 0 auto; padding: 14px 20px calc(20px + env(safe-area-inset-bottom)); display: flex; align-items: center; justify-content: space-between; }
+.bar .round { width: 52px; height: 52px; border: 1px solid var(--border); }
+.midmic { width: 68px; height: 68px; border-radius: 50%; background: var(--accent); color: var(--on-accent); display: flex; align-items: center; justify-content: center; }
+.midmic:hover { background: var(--accent-hover); }
 
-.group-title { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin: 20px 4px 8px; }
-.group-title.overdue { color: var(--danger); }
-.task { padding: 12px 14px; margin-bottom: 8px; display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; }
-.task .check { width: 24px; height: 24px; margin: 1px 0 0; accent-color: var(--accent); cursor: pointer; }
-.task-title { font-weight: 600; cursor: pointer; overflow-wrap: anywhere; }
-.task.done .task-title { text-decoration: line-through; color: var(--muted); }
-.task-meta { grid-column: 2; display: flex; flex-wrap: wrap; gap: 6px 10px; font-size: 0.85rem; color: var(--muted); align-items: center; }
-.task-meta .late { color: var(--danger); font-weight: 600; }
-.pill { background: var(--accent-soft); color: var(--accent); border-radius: 999px; padding: 1px 9px; font-weight: 600; }
-.pill.none { background: var(--bg); color: var(--muted); }
-.repeat { color: var(--accent); }
-.task-notes { grid-column: 2; font-size: 0.9rem; color: var(--muted); white-space: pre-wrap; overflow-wrap: anywhere; }
-.prep { grid-column: 2; list-style: none; margin: 6px 0 0; padding: 8px 10px; background: var(--bg); border-radius: 10px; }
-.prep li { display: flex; gap: 8px; align-items: flex-start; font-size: 0.9rem; padding: 3px 0; }
-.prep input { width: 18px; height: 18px; margin: 2px 0 0; flex: 0 0 auto; accent-color: var(--accent); }
-.prep .when { color: var(--muted); margin-left: auto; white-space: nowrap; padding-left: 8px; }
-.prep .done-step span:first-of-type { text-decoration: line-through; color: var(--muted); }
-.prep-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
-.empty { text-align: center; color: var(--muted); padding: 40px 16px; }
+/* Detail */
+.detail { flex: 1; padding: 8px 24px 24px; display: flex; flex-direction: column; gap: 24px; }
+.detail-title { display: flex; align-items: flex-start; gap: 14px; }
+.detail-title .check { width: 28px; height: 28px; margin-top: 4px; }
+.detail-title h1 { font-size: 28px; line-height: 1.2; font-weight: 800; overflow-wrap: anywhere; }
+.facts { margin: 0; display: flex; flex-direction: column; }
+.fact { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 0; border-bottom: 1px solid var(--line); }
+.fact dt { font-size: 14px; color: var(--muted); display: flex; flex-direction: column; gap: 2px; }
+.fact dt small { font-size: 12px; color: var(--amber-ink); font-weight: 700; }
+.fact dd { margin: 0; display: flex; align-items: center; gap: 8px; min-width: 0; }
+.fact.changed { background: var(--accent-soft); margin: 0 -12px; padding: 14px 12px; border-radius: 10px; border-color: transparent; }
+.updated { font-size: 12px; font-weight: 700; color: var(--accent); }
+.section-h { margin: 0 0 4px; }
+.step { display: flex; align-items: center; gap: 12px; padding: 10px 0; width: 100%; text-align: left; }
+.step .box { width: 22px; height: 22px; border-radius: 6px; border: 2px solid var(--faint); flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center; color: transparent; }
+.step.on .box { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.step.on .step-title { text-decoration: line-through; color: var(--muted); }
+.step-title { flex: 1; font-size: 16px; }
+.step-when { font-size: 13px; color: var(--muted); white-space: nowrap; }
+.step.changed { background: var(--accent-soft); margin: 0 -12px; padding: 10px 12px; border-radius: 10px; width: calc(100% + 24px); }
+.addline { align-self: flex-start; height: 40px; font-size: 15px; font-weight: 700; color: var(--accent); }
+.inline-add { display: flex; gap: 8px; }
+.field { width: 100%; border: 1px solid var(--border-strong); background: var(--bg); border-radius: 12px; padding: 10px 12px; font-size: 16px; min-width: 0; }
+.field:focus { border-color: var(--accent); outline: none; }
+textarea.field { resize: vertical; min-height: 88px; }
+.notes { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 15px; text-align: left; }
+.saybtn { height: 60px; border-radius: 30px; background: var(--accent); color: var(--on-accent); display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 16px; font-weight: 700; width: 100%; }
+.saybtn:hover { background: var(--accent-hover); }
+.detail-foot { padding: 0 20px calc(24px + env(safe-area-inset-bottom)); position: sticky; bottom: 0; background: linear-gradient(transparent, var(--bg) 24px); padding-top: 24px; }
+.voice-card { border-radius: 20px; background: var(--toast-bg); color: var(--toast-ink); padding: 16px 16px 14px; display: flex; flex-direction: column; gap: 12px; }
+.voice-card q { font-size: 16px; line-height: 1.4; }
+.voice-card .result { flex: 1; display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--toast-link); font-weight: 700; }
+.voice-card .actions { display: flex; align-items: center; gap: 10px; }
+.voice-card .ghost { color: var(--toast-link); font-weight: 700; padding: 10px 6px; }
+.voice-card .done { height: 40px; padding: 0 18px; border-radius: 20px; background: var(--toast-ink); color: var(--toast-bg); font-size: 15px; font-weight: 700; }
 
-dialog { width: min(560px, calc(100vw - 16px)); max-height: calc(100dvh - 16px); border: 1px solid var(--line); border-radius: var(--radius);
-  background: var(--surface); color: var(--text); padding: 16px 18px; box-shadow: 0 10px 40px rgb(0 0 0 / 0.25); }
-dialog::backdrop { background: rgb(0 0 0 / 0.35); }
-.dialog-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
-.dialog-foot { display: flex; align-items: center; gap: 8px; margin-top: 16px; }
-.spacer { flex: 1; }
-.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; }
-fieldset { border: 1px solid var(--line); border-radius: 12px; margin: 12px 0; padding: 6px 12px 10px; }
-legend { font-weight: 600; font-size: 0.9rem; padding: 0 4px; }
-.prep-edit { list-style: none; padding: 0; margin: 0; }
-.prep-edit li { display: grid; grid-template-columns: 1fr auto 32px; gap: 6px; align-items: center; margin: 6px 0; }
-.prep-edit .days { display: flex; align-items: center; gap: 4px; font-size: 0.8rem; color: var(--muted); white-space: nowrap; }
-.prep-edit .days input { width: 60px; padding: 7px 6px; text-align: center; }
-.checks { display: flex; flex-wrap: wrap; gap: 4px 14px; }
-.checks label { display: flex; gap: 6px; align-items: center; margin: 4px 0; font-weight: 400; }
-.checks input { width: auto; margin: 0; accent-color: var(--accent); }
-.questions { background: var(--accent-soft); border-radius: 12px; padding: 10px 12px; margin: 8px 0; }
-.questions p { font-weight: 600; font-size: 0.9rem; }
-.list { list-style: none; padding: 0; margin: 8px 0 0; }
-.list li { padding: 10px 2px; border-bottom: 1px solid var(--line); }
-.list time { display: block; font-size: 0.8rem; color: var(--muted); }
-.toggle { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 8px 0; margin: 0; font-weight: 400; border-bottom: 1px solid var(--line); }
-.toggle input { width: 22px; height: 22px; margin: 0; flex: 0 0 auto; accent-color: var(--accent); }
-.copyrow { display: flex; gap: 8px; align-items: center; }
-.copyrow input { font-size: 0.85rem; }
-.steps { padding-left: 20px; margin: 6px 0; display: flex; flex-direction: column; gap: 4px; font-size: 0.92rem; }
+/* Review */
+.review { background: var(--soft); }
+.review-list { flex: 1; padding: 4px 16px 0; display: flex; flex-direction: column; gap: 10px; }
+.rcard { background: var(--bg); border-radius: 16px; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
+.rcard.needs { box-shadow: inset 0 0 0 2px var(--amber-line); }
+.rcard-title { font-size: 17px; font-weight: 700; text-align: left; overflow-wrap: anywhere; }
+.rcard .chip { height: 32px; padding: 0 12px; border-radius: 16px; font-size: 13px; }
+.badge { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; color: var(--accent); }
 
-.chat-dialog[open] { display: flex; flex-direction: column; height: min(620px, calc(100dvh - 16px)); }
-.chat-log { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding: 8px 2px; }
-.bubble { max-width: 85%; padding: 8px 12px; border-radius: 14px; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 0.95rem; }
-.bubble.in { align-self: flex-end; background: var(--accent); color: var(--accent-ink); border-bottom-right-radius: 4px; }
-.bubble.out { align-self: flex-start; background: var(--bg); border-bottom-left-radius: 4px; }
-.bubble.pending { opacity: 0.6; }
-.chat-form { display: flex; gap: 6px; align-items: center; padding-top: 8px; border-top: 1px solid var(--line); }
-.mic { background: var(--accent-soft); color: var(--accent); flex: 0 0 auto; }
-.mic.listening { background: var(--danger); color: #fff; animation: pulse 1.2s infinite; }
-@keyframes pulse { 50% { opacity: 0.6; } }
-.dialog-title small { display: block; font-weight: 400; }
-.chat-dialog .toggle { margin: 4px 0 6px; }
-.toast { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); background: var(--text); color: var(--bg);
-  padding: 10px 16px; border-radius: 10px; z-index: 20; max-width: calc(100vw - 32px); }
-@media (max-width: 380px) { .grid2 { grid-template-columns: 1fr; } }
+/* Dialogs: bottom sheets and full screens */
+dialog { border: none; padding: 0; background: var(--bg); color: var(--text); max-width: 480px; width: 100%; }
+dialog::backdrop { background: var(--scrim); }
+dialog.sheet { margin: auto auto 0; border-radius: 24px 24px 0 0; max-height: 92dvh; overflow-y: auto; }
+dialog.sheet[open] { animation: up 0.2s ease-out; }
+@keyframes up { from { transform: translateY(24px); opacity: 0.6; } }
+dialog.full { margin: 0 auto; height: 100dvh; max-height: 100dvh; }
+dialog.full[open] { display: flex; flex-direction: column; }
+.sheet-body { padding: 12px 20px calc(28px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: 18px; }
+.grab { align-self: center; width: 40px; height: 5px; border-radius: 3px; background: var(--border-strong); }
+.sheet-head { display: flex; flex-direction: column; gap: 4px; }
+.two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.heard-list { list-style: none; margin: 0; padding: 0; }
+.heard-list li { display: flex; justify-content: space-between; gap: 12px; padding: 11px 0; border-bottom: 1px solid var(--line); font-size: 15px; }
+.heard-list li:last-child { border-bottom: none; }
+.heard-list b { font-weight: 600; overflow-wrap: anywhere; }
+.heard-list span { color: var(--muted); white-space: nowrap; display: inline-flex; align-items: center; gap: 6px; }
+.heard-list .needs { color: var(--amber-ink); font-weight: 600; }
+.ring { width: 22px; height: 22px; transform: rotate(-90deg); }
+.ring circle { fill: none; stroke-width: 3; }
+.ring .track { stroke: rgb(255 255 255 / 0.35); }
+.ring .fill { stroke: var(--on-accent); stroke-dasharray: 56.5; stroke-dashoffset: 0; }
+.ring.go .fill { animation: drain 5s linear forwards; }
+@keyframes drain { to { stroke-dashoffset: 56.5; } }
+.quoted { font-size: 15px; color: var(--muted); font-style: italic; overflow-wrap: anywhere; }
+.linkbtn { align-self: center; padding: 8px 12px; font-size: 15px; font-weight: 700; color: var(--accent); }
+.linkbtn.quiet { color: var(--muted); font-weight: 600; }
+
+/* Recording */
+.rec { padding: 20px 24px calc(40px + env(safe-area-inset-bottom)); flex: 1; display: flex; flex-direction: column; }
+.rec-top { display: flex; justify-content: space-between; align-items: center; }
+.rec-top span { font-size: 14px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.rec-mid { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 28px; }
+.rec-label { font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+.rec-text { font-size: 26px; line-height: 1.35; font-weight: 600; min-height: 2.7em; overflow-wrap: anywhere; }
+.rec-text .interim { color: var(--faint); }
+.rec-text.placeholder { color: var(--faint); }
+.bars { display: flex; align-items: center; gap: 5px; height: 48px; }
+.bars span { width: 5px; border-radius: 3px; background: var(--accent); height: 10px; animation: bar 1s ease-in-out infinite; }
+.bars span:nth-child(3n) { animation-delay: -0.3s; } .bars span:nth-child(3n+1) { animation-delay: -0.6s; } .bars span:nth-child(4n) { animation-delay: -0.15s; }
+@keyframes bar { 50% { height: 42px; } }
+@media (prefers-reduced-motion: reduce) { .bars span { animation: none; height: 20px; } .ring.go .fill { animation: none; } }
+.rec-bottom { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.stop { width: 80px; height: 80px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; }
+.stop span { width: 26px; height: 26px; border-radius: 6px; background: var(--on-accent); }
+
+/* Typed add / edit form */
+.form { flex: 1; overflow-y: auto; padding: 16px 20px 0; display: flex; flex-direction: column; gap: 24px; }
+.form-head { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: center; padding: 16px 12px 0; }
+.form-head h2 { justify-self: center; font-size: 16px; font-weight: 800; }
+.label { font-size: 13px; font-weight: 700; color: var(--muted); margin-bottom: 10px; display: block; }
+.bigtitle { width: 100%; border: none; border-bottom: 2px solid var(--accent); padding: 6px 0 10px; font-size: 22px; font-weight: 700; background: transparent; outline: none; border-radius: 0; }
+fieldset { border: none; margin: 0; padding: 0; min-width: 0; }
+legend { padding: 0; }
+.stack { display: flex; flex-direction: column; gap: 10px; }
+.extras { display: flex; flex-wrap: wrap; gap: 4px 18px; }
+.extras button { height: 40px; font-size: 15px; font-weight: 700; color: var(--accent); }
+.prep-row { display: grid; grid-template-columns: 1fr auto 36px; gap: 6px; align-items: center; }
+.prep-row select { border: 1px solid var(--border-strong); border-radius: 12px; padding: 10px 8px; background: var(--bg); font-size: 14px; }
+.form-foot { padding: 16px 20px calc(24px + env(safe-area-inset-bottom)); }
+.hidden-input { position: absolute; opacity: 0; pointer-events: none; width: 1px; height: 1px; }
+
+/* Time picker */
+.times { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.times button { height: 60px; border-radius: 14px; border: 1px solid var(--border-strong); font-size: 17px; font-weight: 700; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; }
+.times button small { font-size: 12px; font-weight: 500; color: var(--muted); }
+.times button:hover { border-color: var(--accent); }
+.mic-row { display: flex; gap: 8px; }
+.mic-row .micbtn { width: 52px; height: 52px; border-radius: 50%; background: var(--accent); color: var(--on-accent); display: flex; align-items: center; justify-content: center; flex: 0 0 auto; }
+.mic-row .secondary { flex: 1; }
+
+/* Settings */
+.settings { flex: 1; overflow-y: auto; padding: 8px 20px 32px; display: flex; flex-direction: column; gap: 26px; }
+.toggle { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 12px 0; border-bottom: 1px solid var(--line); font-size: 15px; }
+.toggle input { width: 22px; height: 22px; accent-color: var(--accent); flex: 0 0 auto; margin: 0; }
+.members { list-style: none; padding: 0; margin: 0; }
+.members li { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--line); font-size: 15px; }
+.members li span:last-child { color: var(--muted); font-size: 13px; overflow: hidden; text-overflow: ellipsis; }
+.steps { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; font-size: 15px; }
+.copyrow { display: flex; gap: 8px; }
+.copyrow .field { font-size: 13px; }
+.copyrow button { padding: 0 16px; border-radius: 12px; border: 1px solid var(--border-strong); font-weight: 700; font-size: 14px; }
+.activity { list-style: none; padding: 0; margin: 0; }
+.activity li { padding: 10px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
+.activity time { display: block; font-size: 12px; color: var(--muted); }
+.menu { display: flex; flex-direction: column; }
+.menu button { height: 52px; text-align: left; font-size: 16px; font-weight: 600; border-bottom: 1px solid var(--line); }
+.menu button.danger { color: var(--danger); }
+.options { display: flex; flex-direction: column; }
+.options button { height: 52px; display: flex; align-items: center; justify-content: space-between; font-size: 16px; font-weight: 600; border-bottom: 1px solid var(--line); text-align: left; }
+.options button[aria-checked="true"] { color: var(--accent); }
+
+/* Join / blocked */
+.center { min-height: 100dvh; display: grid; place-items: center; padding: 24px; }
+.panel { width: min(400px, 100%); display: flex; flex-direction: column; gap: 14px; }
+
+/* Toast */
+.toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom)); transform: translateX(-50%); width: min(440px, calc(100vw - 32px));
+  background: var(--toast-bg); color: var(--toast-ink); border-radius: 14px; padding: 8px 8px 8px 16px; display: flex; align-items: center; gap: 4px; font-size: 15px; z-index: 50; box-shadow: 0 8px 30px rgb(0 0 0 / 0.2); }
+.toast.lift { bottom: calc(110px + env(safe-area-inset-bottom)); }
+.toast svg { color: var(--toast-link); }
+.toast .msg { flex: 1; margin-left: 6px; font-weight: 600; padding: 8px 0; }
+.toast button { color: var(--toast-link); font-weight: 700; padding: 10px; }
 </style>
 </head>
 <body>
 
-<div id="loading" class="center"><p class="muted">Loading your household...</p></div>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-mic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></symbol>
+  <symbol id="i-list" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1"/><circle cx="4.5" cy="12" r="1"/><circle cx="4.5" cy="18" r="1"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-sliders" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 6-6 6 6 6"/></symbol>
+  <symbol id="i-tick" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5 9-10"/></symbol>
+  <symbol id="i-more" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></symbol>
+  <symbol id="i-cal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/></symbol>
+</svg>
 
-<div id="blocked" class="center" hidden>
-  <div class="panel card"><h2>Can't open the household</h2><p id="blocked-msg"></p></div>
+<div id="v-loading" class="center"><p class="muted">Opening your household…</p></div>
+
+<div id="v-blocked" class="center" hidden>
+  <div class="panel"><h1 class="title-l">Can't open the household</h1><p id="blocked-msg" class="muted"></p></div>
 </div>
 
-<div id="join" class="center" hidden>
-  <form id="join-form" class="panel card">
-    <h2>Welcome</h2>
+<div id="v-join" class="center" hidden>
+  <form id="join-form" class="panel">
+    <h1 class="title-l">Welcome</h1>
     <p class="muted">You're signed in as <strong id="join-email"></strong>. What should the household call you?</p>
-    <label for="join-name">Your first name<input id="join-name" required maxlength="40" autocomplete="given-name"></label>
+    <label class="label" for="join-name">Your first name</label>
+    <input id="join-name" class="field" required maxlength="40" autocomplete="given-name">
     <p class="error" id="join-error" hidden></p>
     <button class="primary" type="submit">Join the household</button>
   </form>
 </div>
 
-<div id="app" hidden>
-  <header class="topbar">
-    <h1 id="household-name">Household</h1>
-    <div class="topbar-actions">
-      <button type="button" class="icon-btn" id="chat-btn" aria-label="Chat with the assistant">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H9l-5 4v-4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Zm3 6.5a1.5 1.5 0 1 0 0 .01Zm5 0a1.5 1.5 0 1 0 0 .01Zm5 0a1.5 1.5 0 1 0 0 .01Z"/></svg>
-      </button>
-      <button type="button" class="icon-btn" id="activity-btn" aria-label="Recent activity">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 3a9 9 0 1 0 8.95 10h-2.02A7 7 0 1 1 13 5V3Zm-1 4v6l5 3 .9-1.5-3.9-2.3V7Z"/></svg>
-      </button>
-      <button type="button" class="icon-btn" id="settings-btn" aria-label="Settings">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.4 13a7.6 7.6 0 0 0 0-2l2.1-1.6-2-3.5-2.5 1a7.5 7.5 0 0 0-1.7-1L15 3h-4l-.4 2.9a7.5 7.5 0 0 0-1.7 1l-2.5-1-2 3.5L6.6 11a7.6 7.6 0 0 0 0 2l-2.1 1.6 2 3.5 2.5-1a7.5 7.5 0 0 0 1.7 1L11 21h4l.4-2.9a7.5 7.5 0 0 0 1.7-1l2.5 1 2-3.5ZM13 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Z" transform="translate(-1 0)"/></svg>
-      </button>
-    </div>
+<!-- Opens here: quick capture -->
+<div id="v-capture" class="screen" hidden>
+  <header class="head">
+    <div><span class="eyebrow" id="cap-household">Our household</span><h1 class="title-l" id="cap-date"></h1></div>
+    <button type="button" class="pillbtn" data-go="tasks"><svg width="18" height="18"><use href="#i-list"/></svg>Tasks</button>
   </header>
-  <main class="content">
-    <section class="composer card">
-      <form id="compose-form">
-        <label for="compose-text">What needs doing?</label>
-        <textarea id="compose-text" rows="2" placeholder="e.g. Plumber coming Thursday at 10am to fix the kitchen leak, Sara to handle it. We need to empty the cupboard under the sink first."></textarea>
-        <div class="composer-actions">
-          <a class="small grow" id="sheet-link" href="#" target="_blank" rel="noopener">Open the sheet</a>
-          <button type="button" class="icon-btn mic" id="compose-mic" aria-label="Speak your task" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v7a3 3 0 0 0 3 3Zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V22h2v-3.08A7 7 0 0 0 19 12Z"/></svg></button>
-          <button type="button" class="link" id="manual-btn">Add manually</button>
-          <button type="submit" class="primary" id="compose-submit">Create task</button>
-        </div>
-      </form>
-    </section>
-    <nav class="filters" aria-label="Filter tasks">
-      <div class="chips" id="owner-filter"></div>
-      <div class="tabs">
-        <button type="button" class="tab active" data-status="open">To do</button>
-        <button type="button" class="tab" data-status="done">Done</button>
-      </div>
-    </nav>
-    <div id="task-list" aria-live="polite"></div>
+  <main class="capture-main">
+    <button type="button" class="bigmic" id="cap-mic" aria-label="Record a task"><svg width="52" height="52"><use href="#i-mic"/></svg></button>
+    <div class="capture-copy">
+      <strong>Tap to speak</strong>
+      <span>Say what needs doing, when, and who.</span>
+    </div>
+    <button type="button" class="linkbtn quiet" id="cap-type">or type it</button>
   </main>
+  <div class="capture-foot">
+    <button type="button" class="attention" id="cap-attention" hidden></button>
+    <button type="button" class="today-card" id="cap-today" data-go="tasks"></button>
+  </div>
 </div>
 
-<dialog id="task-dialog">
-  <form id="task-form">
-    <header class="dialog-head">
-      <h2 id="task-dialog-title">New task</h2>
-      <button type="button" class="icon-btn close" data-close aria-label="Close">&times;</button>
+<!-- Task list -->
+<div id="v-tasks" class="screen" hidden>
+  <div class="list-top">
+    <header style="display:flex;justify-content:space-between;align-items:flex-end;gap:12px">
+      <div style="display:flex;flex-direction:column;gap:4px"><span class="eyebrow" id="list-household">Our household</span><h1 class="title-xl">Tasks</h1></div>
+      <button type="button" class="round outline" data-go="capture" aria-label="Back to quick capture"><svg width="20" height="20"><use href="#i-x"/></svg></button>
     </header>
-    <div id="questions" class="questions" hidden></div>
-    <label for="f-title">Title<input id="f-title" required maxlength="200"></label>
-    <div class="grid2">
-      <label for="f-date">Date<input id="f-date" type="date"></label>
-      <label for="f-time">Time<input id="f-time" type="time"></label>
+    <nav class="chips scroll" id="filters" aria-label="Whose tasks"></nav>
+    <button type="button" class="attention" id="list-attention" hidden></button>
+  </div>
+  <main class="list" id="list" aria-live="polite"></main>
+  <div class="bar">
+    <div class="bar-inner">
+      <button type="button" class="round" id="add-btn" aria-label="Add a task by typing"><svg width="24" height="24"><use href="#i-plus"/></svg></button>
+      <button type="button" class="midmic" id="list-mic" aria-label="Record a task"><svg width="28" height="28"><use href="#i-mic"/></svg></button>
+      <button type="button" class="round" id="settings-btn" aria-label="Settings"><svg width="22" height="22"><use href="#i-sliders"/></svg></button>
     </div>
-    <div class="grid2">
-      <label for="f-owner">Owner<select id="f-owner"></select></label>
-      <label for="f-repeats">Repeats<select id="f-repeats"></select></label>
+  </div>
+</div>
+
+<!-- One task -->
+<div id="v-detail" class="screen" hidden>
+  <nav class="topnav">
+    <button type="button" class="textbtn" id="detail-back"><svg width="20" height="20"><use href="#i-back"/></svg>Back</button>
+    <button type="button" class="round" id="detail-more" aria-label="More options"><svg width="22" height="22"><use href="#i-more"/></svg></button>
+  </nav>
+  <main class="detail" id="detail"></main>
+  <div class="detail-foot" id="detail-foot"></div>
+</div>
+
+<!-- Review what was just saved -->
+<div id="v-review" class="screen review" hidden>
+  <header class="head" style="padding-bottom:12px">
+    <div><h1 class="title-xl">Review</h1><p class="muted small">Already saved. Tap anything to change it.</p></div>
+    <span class="badge" style="margin-top:8px"><svg width="16" height="16"><use href="#i-tick"/></svg>Saved</span>
+  </header>
+  <main class="review-list" id="review-list"></main>
+  <div class="form-foot"><button type="button" class="primary" data-go="capture">Done</button></div>
+</div>
+
+<!-- Recording (capture, voice edit, saying a time) -->
+<dialog id="d-record" class="full" aria-label="Recording">
+  <div class="rec">
+    <div class="rec-top"><button type="button" class="textbtn" id="rec-cancel" style="padding-left:0">Cancel</button><span id="rec-clock">0:00</span></div>
+    <div class="rec-mid">
+      <span class="rec-label" id="rec-label">Listening</span>
+      <p class="rec-text placeholder" id="rec-text" aria-live="polite">Go ahead…</p>
+      <div class="bars" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
     </div>
-    <label for="f-category">Category<select id="f-category"></select></label>
-    <fieldset>
-      <legend>Preparation</legend>
-      <p class="muted small">Things to do beforehand. Each one gets a reminder.</p>
-      <ul id="prep-list" class="prep-edit"></ul>
-      <button type="button" class="link" id="add-prep">+ Add a prep step</button>
-    </fieldset>
-    <fieldset>
-      <legend>Remind everyone</legend>
-      <div class="checks" id="reminder-checks"></div>
-    </fieldset>
-    <label for="f-notes">Notes<textarea id="f-notes" rows="3" placeholder="Contractor name, phone number, quote..."></textarea></label>
-    <p id="task-error" class="error" hidden></p>
-    <footer class="dialog-foot">
-      <button type="button" class="link danger" id="delete-task" hidden>Delete</button>
-      <span class="spacer"></span>
-      <button type="button" data-close>Cancel</button>
-      <button type="submit" class="primary" id="save-task">Save task</button>
-    </footer>
+    <div class="rec-bottom">
+      <button type="button" class="stop" id="rec-stop" aria-label="Stop recording"><span></span></button>
+      <span class="muted small">Tap to stop, or just pause</span>
+    </div>
+  </div>
+</dialog>
+
+<!-- What was heard: Save or Review -->
+<dialog id="d-heard" class="sheet" aria-labelledby="heard-title">
+  <div class="sheet-body">
+    <span class="grab" aria-hidden="true"></span>
+    <div class="sheet-head"><h2 class="title-l" id="heard-title" tabindex="-1" autofocus>Working it out…</h2><p class="muted small" id="heard-sub"></p></div>
+    <p class="quoted" id="heard-quote"></p>
+    <ul class="heard-list" id="heard-list"></ul>
+    <div class="two" id="heard-actions" hidden>
+      <button type="button" class="secondary" id="heard-review">Review</button>
+      <button type="button" class="primary" style="height:52px;border-radius:14px" id="heard-save">Save
+        <svg class="ring" viewBox="0 0 22 22" aria-hidden="true"><circle class="track" cx="11" cy="11" r="9"/><circle class="fill" cx="11" cy="11" r="9"/></svg>
+      </button>
+    </div>
+    <button type="button" class="linkbtn quiet" id="heard-discard" hidden>Discard</button>
+  </div>
+</dialog>
+
+<!-- Typing instead of speaking -->
+<dialog id="d-type" class="sheet" aria-labelledby="type-title">
+  <form class="sheet-body" id="type-form">
+    <span class="grab" aria-hidden="true"></span>
+    <h2 class="title-l" id="type-title">What needs doing?</h2>
+    <textarea class="field" id="type-text" rows="3" required></textarea>
+    <p class="muted small" id="type-hint"></p>
+    <div class="two"><button type="button" class="secondary" data-close>Cancel</button><button type="submit" class="primary" style="height:52px;border-radius:14px">Save</button></div>
   </form>
 </dialog>
 
-<dialog id="chat-dialog" class="chat-dialog">
-  <header class="dialog-head">
-    <h2 class="dialog-title">Assistant<small class="muted" id="assistant-mode"></small></h2>
-    <button type="button" class="icon-btn close" data-close aria-label="Close">&times;</button>
-  </header>
-  <label class="toggle" for="speak-replies">Read replies aloud<input type="checkbox" id="speak-replies"></label>
-  <div id="chat-log" class="chat-log" aria-live="polite"></div>
-  <form id="chat-form" class="chat-form">
-    <input id="chat-text" autocomplete="off" placeholder="e.g. move the boiler service to Friday" aria-label="Message">
-    <button type="button" class="icon-btn mic" id="chat-mic" aria-label="Speak your message" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v7a3 3 0 0 0 3 3Zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V22h2v-3.08A7 7 0 0 0 19 12Z"/></svg></button>
-    <button type="submit" class="primary">Send</button>
+<!-- Adding or editing by typing -->
+<dialog id="d-form" class="full" aria-labelledby="form-title">
+  <div class="form-head"><button type="button" class="textbtn" data-close style="justify-self:start">Cancel</button><h2 id="form-title">New task</h2><span></span></div>
+  <form class="form" id="task-form" novalidate>
+    <div>
+      <label class="label" for="f-title">What needs doing</label>
+      <input id="f-title" class="bigtitle" maxlength="200" autocomplete="off" placeholder="e.g. Renew the car insurance">
+    </div>
+    <fieldset class="stack"><legend class="label">When</legend>
+      <div class="chips" id="f-dates"></div>
+      <div class="chips" id="f-times"></div>
+    </fieldset>
+    <fieldset><legend class="label">Who</legend><div class="seg" role="radiogroup" aria-label="Who" id="f-who"></div></fieldset>
+    <div id="f-prep-wrap" class="stack" hidden><span class="label" style="margin:0">Prep steps</span><div class="stack" id="f-prep"></div><button type="button" class="addline" id="f-prep-add">+ Another step</button></div>
+    <div id="f-notes-wrap" hidden><label class="label" for="f-notes">Note</label><textarea id="f-notes" class="field" rows="3" placeholder="Names, phone numbers, quotes…"></textarea></div>
+    <fieldset id="f-repeat-wrap" hidden><legend class="label">Repeats</legend><div class="chips" id="f-repeats"></div></fieldset>
+    <div class="extras" id="f-extras">
+      <button type="button" data-extra="prep">+ Prep step</button>
+      <button type="button" data-extra="notes">+ Note</button>
+      <button type="button" data-extra="repeat">+ Repeat</button>
+    </div>
+    <p class="error" id="form-error" hidden></p>
   </form>
+  <div class="form-foot"><button type="submit" form="task-form" class="primary" id="form-save">Save</button></div>
 </dialog>
 
-<dialog id="activity-dialog">
-  <header class="dialog-head">
-    <h2>Recent activity</h2>
-    <button type="button" class="icon-btn close" data-close aria-label="Close">&times;</button>
-  </header>
-  <ul id="activity-list" class="list"></ul>
+<!-- Date and time -->
+<dialog id="d-when" class="sheet" aria-labelledby="when-title">
+  <div class="sheet-body">
+    <span class="grab" aria-hidden="true"></span>
+    <div class="sheet-head"><span class="small muted" id="when-sub"></span><h2 class="title-l" id="when-title" tabindex="-1" autofocus></h2></div>
+    <div id="when-full" class="stack">
+      <span class="label" style="margin:0">Day</span><div class="chips" id="w-dates"></div>
+      <span class="label" style="margin:8px 0 0">Time</span><div class="chips" id="w-times"></div>
+      <button type="button" class="primary" id="when-save" style="margin-top:8px">Save</button>
+    </div>
+    <div id="when-quick" class="stack" style="gap:16px">
+      <div class="times" id="q-times"></div>
+      <div class="mic-row">
+        <button type="button" class="micbtn" id="q-say" aria-label="Say a time"><svg width="22" height="22"><use href="#i-mic"/></svg></button>
+        <button type="button" class="secondary" id="q-other">Other time</button>
+      </div>
+      <button type="button" class="linkbtn" id="q-any">Any time is fine</button>
+    </div>
+  </div>
+</dialog>
+<input type="date" class="hidden-input" id="date-picker" tabindex="-1" aria-hidden="true">
+<input type="time" class="hidden-input" id="time-picker" tabindex="-1" aria-hidden="true">
+
+<!-- Simple choice lists (who, repeats, more) -->
+<dialog id="d-choose" class="sheet" aria-labelledby="choose-title">
+  <div class="sheet-body">
+    <span class="grab" aria-hidden="true"></span>
+    <h2 class="title-l" id="choose-title" tabindex="-1" autofocus></h2>
+    <div class="options" id="choose-options" role="radiogroup"></div>
+  </div>
 </dialog>
 
-<dialog id="settings-dialog">
-  <header class="dialog-head">
-    <h2>Settings</h2>
-    <button type="button" class="icon-btn close" data-close aria-label="Close">&times;</button>
-  </header>
-  <h3>How you want to hear from the app</h3>
-  <label class="toggle" for="p-reminders">Email me reminders<input type="checkbox" id="p-reminders"></label>
-  <label class="toggle" for="p-updates">Email me when someone else changes a task<input type="checkbox" id="p-updates"></label>
-  <label class="toggle" for="p-summary">Morning summary email<input type="checkbox" id="p-summary"></label>
-  <label class="toggle" for="p-calendar">Add tasks to my Google Calendar<input type="checkbox" id="p-calendar"></label>
-  <p class="muted small" style="margin-top:8px">Tip: turn on Gmail notifications on your phone so reminder emails pop up.</p>
-
-  <h3>Members</h3>
-  <ul id="member-list" class="list"></ul>
-
-  <h3>Invite your partner</h3>
-  <ol class="steps">
-    <li><a id="share-sheet" href="#" target="_blank" rel="noopener">Open the Google Sheet</a>, tap <strong>Share</strong> and add their Gmail address as an <strong>Editor</strong>.</li>
-    <li>Send them this app link:</li>
-  </ol>
-  <div class="copyrow"><input id="app-link" readonly aria-label="App link"><button type="button" id="copy-link">Copy</button></div>
-
-  <h3>Everything else</h3>
-  <p class="small muted">Household name, default reminders, morning summary time and calendar sync are in the sheet's <strong>Settings</strong> tab. You can also add or edit tasks straight in the <strong>Tasks</strong> tab.</p>
-  <footer class="dialog-foot"><span class="muted small" id="signed-in-as"></span></footer>
+<dialog id="d-settings" class="full" aria-labelledby="settings-title">
+  <nav class="topnav"><span></span><button type="button" class="round outline" data-close aria-label="Close settings"><svg width="20" height="20"><use href="#i-x"/></svg></button></nav>
+  <div class="settings">
+    <h1 class="title-xl" id="settings-title">Settings</h1>
+    <section>
+      <h2 class="eyebrow" style="margin-bottom:4px">Email me</h2>
+      <label class="toggle" for="p-reminders">Reminders for tasks<input type="checkbox" id="p-reminders"></label>
+      <label class="toggle" for="p-updates">When someone else changes a task<input type="checkbox" id="p-updates"></label>
+      <label class="toggle" for="p-summary">A morning summary<input type="checkbox" id="p-summary"></label>
+      <label class="toggle" for="p-calendar">Add tasks to my Google Calendar<input type="checkbox" id="p-calendar"></label>
+      <p class="muted small" style="margin-top:10px">Turn on Gmail notifications on your phone so reminders pop up.</p>
+    </section>
+    <section>
+      <h2 class="eyebrow" style="margin-bottom:4px">Household</h2>
+      <ul class="members" id="member-list"></ul>
+    </section>
+    <section class="stack">
+      <h2 class="eyebrow">Invite your partner</h2>
+      <ol class="steps">
+        <li><a id="share-sheet" href="#" target="_blank" rel="noopener">Open the Google Sheet</a>, tap Share and add their Gmail address as an Editor.</li>
+        <li>Send them this link:</li>
+      </ol>
+      <div class="copyrow"><input id="app-link" class="field" readonly aria-label="App link"><button type="button" id="copy-link">Copy</button></div>
+    </section>
+    <section class="stack">
+      <h2 class="eyebrow">More</h2>
+      <a id="sheet-link" href="#" target="_blank" rel="noopener" class="small" style="font-weight:700">Open the Google Sheet</a>
+      <button type="button" class="addline" id="activity-btn" style="height:auto">Recent activity</button>
+      <ul class="activity" id="activity-list" hidden></ul>
+      <p class="muted small">The household name, quick times and evening nudge time are in the sheet's Settings tab. You can also edit tasks straight in the Tasks tab.</p>
+      <p class="muted small" id="assistant-mode"></p>
+      <p class="muted small" id="signed-in-as"></p>
+    </section>
+  </div>
 </dialog>
 
 <div id="toast" class="toast" role="status" hidden></div>
@@ -281,43 +509,107 @@ legend { font-weight: 600; font-size: 0.9rem; padding: 0 4px; }
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-const REMINDER_CHOICES = [[10080, '1 week before'], [2880, '2 days before'], [1440, '1 day before'], [120, '2 hours before'], [60, '1 hour before'], [30, '30 min before'], [0, 'At the time']];
+const icon = (id, size) => `<svg width="${size}" height="${size}" aria-hidden="true"><use href="#i-${id}"/></svg>`;
+const SHARED = 'Shared';
+const AUTO_SAVE_SECONDS = 5;
 
 // google.script.run as promises.
 function run(fn, ...args) {
   return new Promise((resolve, reject) => {
-    google.script.run.withSuccessHandler(resolve).withFailureHandler((err) => reject(err instanceof Error ? err : new Error(String(err && err.message || err))))[fn](...args);
+    google.script.run.withSuccessHandler(resolve)
+      .withFailureHandler((err) => reject(err instanceof Error ? err : new Error(String((err && err.message) || err))))[fn](...args);
   });
 }
 
-const state = { data: null, status: 'open', owner: 'all', editing: null, draft: null };
+const state = { data: null, view: 'capture', filter: 'all', detailId: null, reviewIds: [], lastEdit: null, deepLinked: false };
 
-function toast(msg) {
+// ---------------------------------------------------------------- Dates
+
+const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const utc = (d) => { const [y, m, dd] = d.split('-').map(Number); return new Date(Date.UTC(y, m - 1, dd)); };
+const today = () => state.data.now.slice(0, 10);
+const addDays = (d, n) => { const x = utc(d); x.setUTCDate(x.getUTCDate() + n); return x.toISOString().slice(0, 10); };
+const daysFrom = (d) => Math.round((utc(d) - utc(today())) / 86400000);
+const weekday = (d) => WEEKDAYS[utc(d).getUTCDay()];
+function shortDate(d) {
+  const x = utc(d);
+  const year = x.getUTCFullYear() !== utc(today()).getUTCFullYear() ? ` ${x.getUTCFullYear()}` : '';
+  return `${weekday(d).slice(0, 3)} ${x.getUTCDate()} ${MONTHS[x.getUTCMonth()]}${year}`;
+}
+function dayLabel(d) {
+  const n = daysFrom(d);
+  if (n === 0) return 'Today';
+  if (n === 1) return 'Tomorrow';
+  if (n > 1 && n < 7) return weekday(d);
+  return shortDate(d);
+}
+function nextWeekendDay() {
+  for (let i = 1; i <= 7; i++) { const d = addDays(today(), i); if (['Saturday', 'Sunday'].includes(weekday(d))) return d; }
+  return addDays(today(), 6);
+}
+const timeLabel = (t) => t || 'Any time';
+function partOfDay(t) {
+  const h = Number(t.slice(0, 2));
+  return h < 12 ? 'Morning' : h < 15 ? 'Lunch' : h < 18 ? 'Afternoon' : 'Evening';
+}
+function isLate(t) {
+  if (t.done || !t.dueDate) return false;
+  if (t.dueDate < today()) return true;
+  return t.dueDate === today() && t.time && t.time < state.data.now.slice(11, 16);
+}
+
+// ---------------------------------------------------------------- Owners
+
+function ownerClass(owner) {
+  if (owner === SHARED) return 'o-shared';
+  if (!owner) return 'o-none';
+  const i = state.data.members.findIndex((m) => m.name === owner);
+  return i % 2 === 1 ? 'o-p2' : 'o-p1';
+}
+const ownerText = (owner) => owner || 'Unassigned';
+const pill = (owner) => `<span class="pill ${ownerClass(owner)}">${esc(ownerText(owner))}</span>`;
+const whoChoices = () => state.data.members.map((m) => m.name).concat(SHARED);
+
+// ---------------------------------------------------------------- Showing things
+
+function show(view) {
+  ['v-loading', 'v-blocked', 'v-join', 'v-capture', 'v-tasks', 'v-detail', 'v-review'].forEach((id) => { $('#' + id).hidden = id !== view; });
+}
+
+function go(view) {
+  state.view = view;
+  if (view !== 'detail') state.lastEdit = null;
+  render();
+  window.scrollTo(0, 0);
+}
+
+let toastTimer;
+function toast(msg, actions = [], ms = 3500) {
   const el = $('#toast');
-  el.textContent = msg;
+  el.innerHTML = `${icon('tick', 20)}<span class="msg">${esc(msg)}</span>${actions.map((a, i) => `<button type="button" data-t="${i}">${esc(a.label)}</button>`).join('')}`;
+  actions.forEach((a, i) => el.querySelector(`[data-t="${i}"]`).addEventListener('click', () => { el.hidden = true; a.fn(); }));
+  el.classList.toggle('lift', state.view === 'tasks');
   el.hidden = false;
-  clearTimeout(toast.t);
-  toast.t = setTimeout(() => { el.hidden = true; }, 3000);
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { el.hidden = true; }, actions.length ? Math.max(ms, 6000) : ms);
 }
-
-function show(id) {
-  ['loading', 'blocked', 'join', 'app'].forEach((v) => { $('#' + v).hidden = v !== id; });
-}
+const fail = (err) => toast(err.message || String(err));
 
 function apply(data) {
   state.data = data;
   if (data.error) {
     $('#blocked-msg').textContent = data.message;
-    show('blocked');
+    show('v-blocked');
     return;
   }
   if (!data.me) {
     $('#join-email').textContent = data.email;
-    show('join');
+    show('v-join');
     return;
   }
-  show('app');
   render();
+  if (!state.deepLinked) openDeepLink();
 }
 
 async function load() {
@@ -325,353 +617,739 @@ async function load() {
     apply(await run('getState'));
   } catch (err) {
     $('#blocked-msg').textContent = err.message;
-    show('blocked');
+    show('v-blocked');
   }
 }
 
-// ---------------------------------------------------------------- Rendering
+const taskById = (id) => state.data.tasks.find((t) => t.id === Number(id));
+const openTasks = () => state.data.tasks.filter((t) => !t.done);
+const needsDate = () => openTasks().filter((t) => !t.dueDate);
 
 function render() {
   const d = state.data;
-  $('#household-name').textContent = d.household.name;
-  $('#sheet-link').href = d.household.sheetUrl;
-  const filters = [['all', 'Everyone'], ['me', 'Mine']]
-    .concat(d.members.filter((m) => m.name !== d.me.name).map((m) => [m.name, m.name]))
-    .concat([['none', 'Unassigned']]);
-  $('#owner-filter').innerHTML = filters.map(([k, label]) =>
-    `<button type="button" class="chip ${state.owner === k ? 'active' : ''}" data-owner="${esc(k)}">${esc(label)}</button>`).join('');
-  renderTasks();
+  if (!d || !d.me) return;
+  $('#cap-household').textContent = d.household.name;
+  $('#list-household').textContent = d.household.name;
+  if (state.view === 'detail' && !taskById(state.detailId)) state.view = 'tasks';
+  if (state.view === 'capture') renderCapture();
+  if (state.view === 'tasks') renderTasks();
+  if (state.view === 'detail') renderDetail();
+  if (state.view === 'review') renderReview();
+  show('v-' + state.view);
 }
 
-function today() { return state.data.now.slice(0, 10); }
-function addDays(dateStr, n) {
-  const [y, m, d] = dateStr.split('-').map(Number);
-  return new Date(Date.UTC(y, m - 1, d + n)).toISOString().slice(0, 10);
+function attentionHtml(list) {
+  return `<span class="dot"></span><span>${list.length === 1 ? `${esc(list[0].title)} needs a date` : `${list.length} tasks need a date`}</span>${icon('chev', 18)}`;
+}
+function openAttention(list) {
+  if (list.length === 1) openDetail(list[0].id);
+  else { state.filter = 'nodate'; go('tasks'); }
 }
 
-function visibleTasks() {
-  const me = state.data.me.name;
-  return state.data.tasks.filter((t) => {
-    if ((state.status === 'done') !== t.done) return false;
-    if (state.owner === 'all') return true;
-    if (state.owner === 'me') return t.owner === me;
-    if (state.owner === 'none') return !t.owner;
-    return t.owner === state.owner;
-  });
-}
+// ---------------------------------------------------------------- Quick capture (home)
 
-function groups(tasks) {
-  if (state.status === 'done') {
-    return [['Recently done', tasks.slice().sort((a, b) => (b.completed || '').localeCompare(a.completed || '')).slice(0, 50)]];
-  }
+function renderCapture() {
   const t0 = today();
-  const out = { Overdue: [], Today: [], Tomorrow: [], 'Next 7 days': [], Later: [], 'No date': [] };
-  tasks.slice().sort((a, b) => (a.dueAt || '9').localeCompare(b.dueAt || '9')).forEach((t) => {
-    if (!t.dueDate) out['No date'].push(t);
-    else if (new Date(t.dueAt) < new Date() && t.dueDate <= t0) out[t.dueDate < t0 ? 'Overdue' : 'Today'].push(t);
-    else if (t.dueDate === t0) out.Today.push(t);
-    else if (t.dueDate === addDays(t0, 1)) out.Tomorrow.push(t);
-    else if (t.dueDate < addDays(t0, 7)) out['Next 7 days'].push(t);
-    else out.Later.push(t);
-  });
-  return Object.entries(out).filter(([, l]) => l.length);
+  $('#cap-date').textContent = `${weekday(t0)} ${utc(t0).getUTCDate()} ${new Intl.DateTimeFormat('en-GB', { month: 'long', timeZone: 'UTC' }).format(utc(t0))}`;
+  const missing = needsDate();
+  $('#cap-attention').hidden = !missing.length;
+  $('#cap-attention').innerHTML = attentionHtml(missing);
+  const due = openTasks().filter((t) => t.dueDate && t.dueDate <= t0).sort(byWhen);
+  const next = openTasks().filter((t) => t.dueDate && t.dueDate > t0).sort(byWhen)[0];
+  let label;
+  let line;
+  if (due.length) {
+    label = `Today · ${due.length} task${due.length > 1 ? 's' : ''}`;
+    line = `${due[0].title}${due[0].time ? ` · ${due[0].time}` : ''}`;
+  } else if (next) {
+    label = 'Nothing else today';
+    line = `Next: ${next.title} · ${dayLabel(next.dueDate)}`;
+  } else {
+    label = 'All clear';
+    line = 'Nothing coming up';
+  }
+  $('#cap-today').innerHTML = `<span><span class="eyebrow">${esc(label)}</span><b>${esc(line)}</b></span>${icon('chev', 18)}`;
 }
 
-function renderTask(t) {
-  const late = !t.done && t.dueAt && new Date(t.dueAt) < new Date();
-  const prep = t.prep.map((s, i) => `
-    <li class="${s.done ? 'done-step' : ''}">
-      <input type="checkbox" data-prep="${t.id}:${i}" ${s.done ? 'checked' : ''} aria-label="Prep step done">
-      <span>${esc(s.title)}</span>${s.when ? `<span class="when">${esc(s.when)}</span>` : ''}
-    </li>`).join('');
-  return `<article class="task card ${t.done ? 'done' : ''}">
-    <input type="checkbox" class="check" data-done="${t.id}" ${t.done ? 'checked' : ''} aria-label="Task done">
-    <div class="task-title" data-edit="${t.id}">${esc(t.title)}</div>
-    <div class="task-meta">
-      ${t.when ? `<span class="${late ? 'late' : ''}">${esc(t.when)}</span>` : ''}
-      <span class="pill ${t.owner ? '' : 'none'}">${esc(t.owner || 'Anyone')}</span>
-      <span>${esc(t.category)}</span>
-      ${t.repeats !== 'Never' ? `<span class="repeat">&#8635; ${esc(t.repeats.toLowerCase())}</span>` : ''}
-    </div>
-    ${t.notes ? `<p class="task-notes">${esc(t.notes)}</p>` : ''}
-    ${prep ? `<ul class="prep"><li class="prep-label">Prep</li>${prep}</ul>` : ''}
-  </article>`;
+function byWhen(a, b) {
+  return `${a.dueDate || '9999'}${a.time || '24'}`.localeCompare(`${b.dueDate || '9999'}${b.time || '24'}`) || a.id - b.id;
+}
+
+// ---------------------------------------------------------------- Task list
+
+function filters() {
+  const me = state.data.me.name;
+  return [['all', 'All'], ['mine', 'Mine']]
+    .concat(state.data.members.filter((m) => m.name !== me).map((m) => [`p:${m.name}`, `${m.name}'s`]))
+    .concat([['shared', SHARED], ['done', 'Done']]);
+}
+
+function visible() {
+  const me = state.data.me.name;
+  const f = state.filter;
+  return state.data.tasks.filter((t) => {
+    if (f === 'done') return t.done;
+    if (t.done) return false;
+    if (f === 'nodate') return !t.dueDate;
+    if (!t.dueDate) return false; // shown in the amber strip instead
+    if (f === 'mine') return t.owner === me;
+    if (f === 'shared') return t.owner === SHARED;
+    if (f.startsWith('p:')) return t.owner === f.slice(2);
+    return true;
+  });
+}
+
+function groupsOf(tasks) {
+  if (state.filter === 'done') return [['Recently done', tasks.sort((a, b) => (b.completed || '').localeCompare(a.completed || '')).slice(0, 40)]];
+  if (state.filter === 'nodate') return [['Needs a date', tasks]];
+  const out = new Map();
+  tasks.sort(byWhen).forEach((t) => {
+    const n = daysFrom(t.dueDate);
+    const key = n < 0 ? 'Overdue' : n < 7 ? dayLabel(t.dueDate) : 'Later';
+    if (!out.has(key)) out.set(key, []);
+    out.get(key).push(t);
+  });
+  return [...out.entries()];
+}
+
+function rowMeta(t, group) {
+  const bits = [];
+  if (t.dueDate && (group === 'Later' || group === 'Overdue' || group === 'Recently done')) bits.push(shortDate(t.dueDate));
+  if (t.dueDate) bits.push(timeLabel(t.time));
+  if (t.prep.length) bits.push(`Prep ${t.prep.filter((s) => s.done).length}/${t.prep.length}`);
+  if (t.repeats !== 'Never') bits.push(REPEAT_WORDS[t.repeats] || t.repeats);
+  const text = esc(bits.join(' · '));
+  return isLate(t) ? `<span class="late">${text}</span>` : text;
+}
+
+const REPEAT_WORDS = { Daily: 'Every day', Weekly: 'Every week', Monthly: 'Every month', Quarterly: 'Every quarter', Yearly: 'Every year' };
+
+function taskRow(t, group) {
+  return `<div class="row ${t.done ? 'done' : ''}">
+    <button type="button" class="check ${t.done ? 'on' : ''}" data-done="${t.id}" aria-label="${t.done ? 'Mark not done' : 'Mark done'}: ${esc(t.title)}">${icon('tick', 14)}</button>
+    <button type="button" class="row-main" data-open="${t.id}"><span class="row-title">${esc(t.title)}</span><span class="row-meta">${rowMeta(t, group)}</span></button>
+    ${pill(t.owner)}
+  </div>`;
 }
 
 function renderTasks() {
-  const g = groups(visibleTasks());
-  $('#task-list').innerHTML = g.length
-    ? g.map(([name, list]) => `<h2 class="group-title ${name === 'Overdue' ? 'overdue' : ''}">${esc(name)}</h2>${list.map(renderTask).join('')}`).join('')
-    : `<p class="empty">${state.status === 'open' ? 'Nothing to do. Add a task above.' : 'No finished tasks yet.'}</p>`;
+  if (state.filter.startsWith('p:') && !state.data.members.some((m) => `p:${m.name}` === state.filter)) state.filter = 'all';
+  $('#filters').innerHTML = filters().map(([k, label]) =>
+    `<button type="button" class="chip sm ${state.filter === k ? 'on' : 'outline'}" data-filter="${esc(k)}" aria-pressed="${state.filter === k}">${esc(label)}</button>`).join('')
+    + (state.filter === 'nodate' ? '<button type="button" class="chip sm on" data-filter="nodate" aria-pressed="true">Needs a date</button>' : '');
+  const missing = needsDate();
+  $('#list-attention').hidden = !missing.length || state.filter === 'nodate' || state.filter === 'done';
+  $('#list-attention').innerHTML = attentionHtml(missing);
+  const groups = groupsOf(visible());
+  $('#list').innerHTML = groups.length
+    ? groups.map(([name, list]) => `<section class="group ${name === 'Overdue' ? 'late' : ''}"><h2 class="eyebrow">${esc(name)}</h2>${list.map((t) => taskRow(t, name)).join('')}</section>`).join('')
+    : `<p class="empty">${state.filter === 'done' ? 'Nothing finished yet.' : 'Nothing here. Tap the microphone or + to add a task.'}</p>`;
 }
 
-// ---------------------------------------------------------------- List actions
-
-$('#owner-filter').addEventListener('click', (e) => {
-  const b = e.target.closest('[data-owner]');
-  if (!b) return;
-  state.owner = b.dataset.owner;
-  render();
-});
-
-$$('[data-status]').forEach((b) => b.addEventListener('click', () => {
-  state.status = b.dataset.status;
-  $$('[data-status]').forEach((x) => x.classList.toggle('active', x === b));
-  renderTasks();
-}));
-
-$('#task-list').addEventListener('change', async (e) => {
-  const el = e.target;
+async function toggleDone(id) {
+  const t = taskById(id);
+  const done = !t.done;
   try {
-    if (el.dataset.done) {
-      const res = await run('setTaskDone', Number(el.dataset.done), el.checked);
-      apply(res);
-      toast(res.next ? `Done. Next one: ${res.next.when}` : el.checked ? 'Nice, task done' : 'Task reopened');
-    } else if (el.dataset.prep) {
-      const [id, i] = el.dataset.prep.split(':').map(Number);
-      apply(await run('setPrepDone', id, i, el.checked));
-    }
-  } catch (err) {
-    toast(err.message);
-    load();
-  }
-});
+    const res = await run('setTaskDone', t.id, done);
+    apply(res);
+    if (!done) toast('Reopened');
+    else if (res.next) toast(`Done. Next one ${dayLabel(res.next.dueDate).toLowerCase().startsWith('to') ? dayLabel(res.next.dueDate).toLowerCase() : `on ${shortDate(res.next.dueDate)}`}`);
+    else toast('Done', [{ label: 'Undo', fn: () => run('setTaskDone', t.id, false).then(apply, fail) }]);
+  } catch (err) { fail(err); }
+}
 
-$('#task-list').addEventListener('click', (e) => {
-  const id = e.target.closest('[data-edit]') && Number(e.target.closest('[data-edit]').dataset.edit);
-  if (id) openEditor(state.data.tasks.find((t) => t.id === id));
-});
+// ---------------------------------------------------------------- One task
 
-// ---------------------------------------------------------------- Composer
+function openDetail(id) {
+  if (state.view !== 'detail') state.cameFrom = state.view === 'review' ? 'review' : 'tasks';
+  state.detailId = Number(id);
+  go('detail');
+}
 
-$('#compose-form').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const text = $('#compose-text').value.trim();
-  if (!text) { $('#compose-text').focus(); return; }
-  state.draft = { text, history: [] };
-  await runParse();
-});
+const changedClass = (key) => (state.lastEdit && state.lastEdit.id === state.detailId && state.lastEdit.changed.some((c) => key.includes(c)) ? ' changed' : '');
+const updatedTag = (key) => (changedClass(key) ? '<span class="updated">Updated</span>' : '');
 
-async function runParse() {
-  const btn = $('#compose-submit');
-  btn.disabled = true;
-  btn.textContent = 'Reading...';
+function whenChip(t, cls = '') {
+  if (!t.dueDate) return `<button type="button" class="chip sm amber ${cls}" data-when="${t.id}"><span class="dot"></span>Add a date</button>`;
+  return `<button type="button" class="chip sm ${cls}" data-when="${t.id}">${esc(shortDate(t.dueDate))} · ${esc(timeLabel(t.time))}</button>`;
+}
+
+function stepWhen(s) {
+  return s.daysBefore === 0 ? 'Same day' : s.daysBefore === 1 ? 'Day before' : `${s.daysBefore} days before`;
+}
+
+function renderDetail() {
+  const t = taskById(state.detailId);
+  const done = t.prep.filter((s) => s.done).length;
+  const newPrep = state.lastEdit && state.lastEdit.id === t.id && state.lastEdit.changed.includes('prep') ? state.lastEdit.before.prep.length : Infinity;
+  $('#detail').innerHTML = `
+    <div class="detail-title">
+      <button type="button" class="check ${t.done ? 'on' : ''}" data-done="${t.id}" aria-label="${t.done ? 'Mark not done' : 'Mark done'}">${icon('tick', 16)}</button>
+      <h1>${esc(t.title)}</h1>
+    </div>
+    <dl class="facts">
+      <div class="fact${changedClass(['date', 'time'])}"><dt>When</dt><dd>${updatedTag(['date', 'time'])}${whenChip(t)}</dd></div>
+      <div class="fact${changedClass(['owner'])}"><dt>Who${t.owner ? '' : '<small>Nobody yet</small>'}</dt><dd>${updatedTag(['owner'])}
+        <div class="seg sm" role="radiogroup" aria-label="Who">${whoChoices().map((n) => `<button type="button" role="radio" aria-checked="${t.owner === n}" data-who="${esc(n)}">${esc(n)}</button>`).join('')}</div></dd></div>
+      <div class="fact${changedClass(['repeats'])}"><dt>Repeats</dt><dd>${updatedTag(['repeats'])}<button type="button" class="chip sm" id="detail-repeat">${esc(t.repeats)}</button></dd></div>
+    </dl>
+    <section class="stack" style="gap:4px">
+      <h2 class="eyebrow section-h">Prep${t.prep.length ? ` · ${done} of ${t.prep.length}` : ''}</h2>
+      ${t.prep.map((s, i) => `<button type="button" class="step ${s.done ? 'on' : ''}${i >= newPrep ? ' changed' : ''}" data-step="${i}" aria-pressed="${s.done}">
+        <span class="box">${icon('tick', 13)}</span><span class="step-title">${esc(s.title)}</span><span class="step-when">${esc(t.dueDate ? stepWhen(s) : '')}</span></button>`).join('')}
+      <div class="inline-add" id="step-add" hidden><input class="field" id="step-text" placeholder="e.g. Find the insurance card" maxlength="200"><button type="button" class="chip on" id="step-save">Add</button></div>
+      <button type="button" class="addline" id="step-open">+ Add a step</button>
+    </section>
+    <section class="stack" style="gap:6px">
+      <h2 class="eyebrow">Notes${changedClass(['notes']) ? ' · <span class="updated">Updated</span>' : ''}</h2>
+      ${t.notes ? `<button type="button" class="notes" id="notes-open">${esc(t.notes)}</button>` : '<button type="button" class="addline" id="notes-open" style="color:var(--muted);font-weight:600">Add a note</button>'}
+      <div class="stack" id="notes-edit" hidden><textarea class="field" id="notes-text" rows="4"></textarea><button type="button" class="chip on" id="notes-save" style="align-self:flex-start">Save note</button></div>
+    </section>`;
+  renderDetailFoot();
+}
+
+function renderDetailFoot() {
+  const e = state.lastEdit && state.lastEdit.id === state.detailId ? state.lastEdit : null;
+  $('#detail-foot').innerHTML = e
+    ? `<section class="voice-card" aria-label="Voice edit">
+        <q>${esc(e.said)}</q>
+        <div class="actions"><span class="result">${e.changed.length ? icon('tick', 18) : ''}${esc(e.summary)}</span>
+        ${e.changed.length ? '<button type="button" class="ghost" id="edit-undo">Undo</button>' : '<button type="button" class="ghost" id="edit-again">Try again</button>'}
+        <button type="button" class="done" id="edit-done">Done</button></div>
+      </section>`
+    : `<button type="button" class="saybtn" id="say-change">${icon('mic', 24)}Say what to change</button>`;
+}
+
+async function saveFields(id, patch, message) {
+  const t = taskById(id);
+  const data = { ...t, ...patch, id: t.id };
   try {
-    const draft = await run('parseText', state.draft.text, state.draft.history);
-    state.draft.questions = draft.questions;
-    openEditor(null, draft);
+    apply(await run('saveTask', data));
+    if (message) toast(message);
+  } catch (err) { fail(err); }
+}
+
+async function voiceEdit(id, said) {
+  try {
+    const res = await run('editByVoice', id, said);
+    apply(res);
+    state.lastEdit = { ...res.edit, said };
+    state.detailId = id;
+    if (state.view !== 'detail') go('detail'); else render();
+  } catch (err) { fail(err); }
+}
+
+async function undoVoiceEdit() {
+  const e = state.lastEdit;
+  state.lastEdit = null;
+  const b = e.before;
+  try {
+    let res = await run('saveTask', { id: b.id, title: b.title, dueDate: b.dueDate, time: b.time, owner: b.owner, repeats: b.repeats, notes: b.notes, category: b.category, reminders: b.reminders, prep: b.prep });
+    if (e.changed.includes('done')) res = await run('setTaskDone', b.id, b.done);
+    apply(res);
+    toast('Change undone');
+  } catch (err) { fail(err); }
+}
+
+// ---------------------------------------------------------------- Review (already saved)
+
+function renderReview() {
+  const tasks = state.reviewIds.map(taskById).filter(Boolean);
+  if (!tasks.length) { state.view = 'capture'; renderCapture(); show('v-capture'); return; }
+  $('#review-list').innerHTML = tasks.map((t) => `<article class="rcard ${t.dueDate ? '' : 'needs'}">
+    <button type="button" class="rcard-title" data-open="${t.id}">${esc(t.title)}</button>
+    <div class="chips" style="gap:6px">
+      ${t.dueDate ? `<button type="button" class="chip" data-when="${t.id}">${esc(shortDate(t.dueDate))}</button>` : `<button type="button" class="chip amber" data-when="${t.id}"><span class="dot"></span>Add a date</button>`}
+      ${t.dueDate ? (t.time ? `<button type="button" class="chip" data-time="${t.id}">${esc(t.time)}</button>` : `<button type="button" class="chip dashed" data-time="${t.id}">+ Time</button>`) : ''}
+      <button type="button" class="chip ${ownerClass(t.owner)}" data-owner="${t.id}">${esc(ownerText(t.owner))}</button>
+      ${t.prep.length ? `<button type="button" class="chip" data-open="${t.id}">Prep ${t.prep.length}</button>` : ''}
+      ${t.repeats !== 'Never' ? `<button type="button" class="chip" data-open="${t.id}">${esc(t.repeats)}</button>` : ''}
+    </div>
+  </article>`).join('');
+}
+
+// ---------------------------------------------------------------- Listening
+
+const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+let rec = null;
+let recClock = null;
+
+/** Records one spoken message. Calls onText with what was said, or onUnavailable if the microphone can't be used. */
+function listen({ label = 'Listening', onText, onUnavailable }) {
+  if (!SpeechRec) { onUnavailable('none'); return; }
+  const dlg = $('#d-record');
+  const out = $('#rec-text');
+  let finalText = '';
+  let interim = '';
+  let cancelled = false;
+  let failed = false;
+  $('#rec-label').textContent = label;
+  out.textContent = 'Go ahead…';
+  out.classList.add('placeholder');
+  const started = Date.now();
+  $('#rec-clock').textContent = '0:00';
+  clearInterval(recClock);
+  recClock = setInterval(() => {
+    const s = Math.floor((Date.now() - started) / 1000);
+    $('#rec-clock').textContent = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+  }, 500);
+  if (!dlg.open) dlg.showModal();
+
+  rec = new SpeechRec();
+  rec.lang = navigator.language || 'en-GB';
+  rec.interimResults = true;
+  rec.continuous = false;
+  rec.onresult = (ev) => {
+    finalText = '';
+    interim = '';
+    Array.from(ev.results).forEach((r) => { if (r.isFinal) finalText += r[0].transcript; else interim += r[0].transcript; });
+    out.classList.remove('placeholder');
+    out.innerHTML = `${esc(finalText)}<span class="interim">${esc(interim)}</span>`;
+  };
+  rec.onerror = (ev) => {
+    if (ev.error === 'aborted') return;
+    failed = true;
+    if (['not-allowed', 'service-not-allowed', 'audio-capture'].includes(ev.error)) onUnavailable('blocked');
+    else if (ev.error !== 'no-speech') toast("Didn't catch that. Try again.");
+  };
+  rec.onend = () => {
+    clearInterval(recClock);
+    rec = null;
+    if (dlg.open) dlg.close();
+    const said = `${finalText} ${interim}`.trim();
+    if (cancelled || failed) return;
+    if (said) onText(said);
+    else toast("Didn't hear anything. Tap the microphone and speak.");
+  };
+  $('#rec-cancel').onclick = () => { cancelled = true; if (rec) rec.abort(); else dlg.close(); };
+  $('#rec-stop').onclick = () => { if (rec) rec.stop(); };
+  dlg.oncancel = (e) => { e.preventDefault(); $('#rec-cancel').onclick(); };
+  try {
+    rec.start();
   } catch (err) {
-    toast(err.message);
-  } finally {
-    btn.disabled = false;
-    btn.textContent = 'Create task';
+    failed = true;
+    dlg.close();
+    onUnavailable('blocked');
   }
 }
 
-$('#manual-btn').addEventListener('click', () => { state.draft = null; openEditor(null); });
-
-// ---------------------------------------------------------------- Editor
-
-function prepRow(s) {
-  const li = document.createElement('li');
-  li.dataset.done = s && s.done ? '1' : '';
-  li.innerHTML = `<input class="prep-title" value="${esc(s ? s.title : '')}" placeholder="e.g. Clear access to the boiler" aria-label="Prep step">
-    <span class="days"><input class="prep-days" type="number" min="0" max="60" value="${s ? Number(s.daysBefore) || 0 : 1}" aria-label="Days before"> days before</span>
-    <button type="button" class="icon-btn close" aria-label="Remove step">&times;</button>`;
-  li.querySelector('button').addEventListener('click', () => li.remove());
-  return li;
+function typeInstead({ title, hint, placeholder, value = '', onText }) {
+  $('#type-title').textContent = title;
+  $('#type-hint').textContent = hint;
+  $('#type-text').placeholder = placeholder;
+  $('#type-text').value = value;
+  $('#type-form').onsubmit = (e) => {
+    e.preventDefault();
+    const text = $('#type-text').value.trim();
+    if (!text) return;
+    $('#d-type').close();
+    onText(text);
+  };
+  $('#d-type').showModal();
+  setTimeout(() => $('#type-text').focus(), 50);
 }
 
-$('#add-prep').addEventListener('click', () => {
-  const li = prepRow(null);
-  $('#prep-list').append(li);
-  li.querySelector('input').focus();
-});
+const MIC_HELP = {
+  none: "This browser can't listen here. Type instead, or tap the microphone on your keyboard.",
+  blocked: "The microphone is blocked for this page. Type instead, or tap the microphone on your keyboard. (Or allow the microphone for this site in your browser settings.)",
+};
 
-function renderQuestions() {
-  const qs = (state.draft && state.draft.questions) || [];
-  const box = $('#questions');
-  box.hidden = !qs.length;
-  if (!qs.length) return;
-  box.innerHTML = `<p>A couple of things to check:</p>${qs.map((q, i) => `<label for="q${i}">${esc(q)}<input id="q${i}" data-q="${i}" placeholder="Your answer"></label>`).join('')}
-    <button type="button" id="answer-btn">Update draft</button> <span class="muted small">or fill in the form below</span>`;
-  $('#answer-btn').addEventListener('click', () => {
-    const answers = $$('[data-q]', box).map((i) => ({ question: qs[Number(i.dataset.q)], answer: i.value.trim() })).filter((a) => a.answer);
-    if (!answers.length) return;
-    state.draft.history = state.draft.history.concat(answers);
-    runParse();
+function startCapture() {
+  listen({
+    onText: handleCapture,
+    onUnavailable: (why) => openTypeCapture(MIC_HELP[why]),
   });
 }
 
-function openEditor(task, draft) {
-  const d = state.data;
-  state.editing = task || null;
-  if (!draft && !task) state.draft = null;
-  $('#task-error').hidden = true;
-  $('#task-dialog-title').textContent = task ? 'Edit task' : draft ? 'Check the details' : 'New task';
-  $('#delete-task').hidden = !task;
-  $('#f-owner').innerHTML = `<option value="">Anyone</option>${d.members.map((m) => `<option>${esc(m.name)}</option>`).join('')}`;
-  $('#f-repeats').innerHTML = d.repeats.map((r) => `<option>${esc(r)}</option>`).join('');
-  $('#f-category').innerHTML = d.categories.map((c) => `<option>${esc(c)}</option>`).join('');
-  const v = task || draft || { title: '', dueDate: '', time: '', owner: d.me.name, repeats: 'Never', category: 'other', notes: '', prep: [], reminders: d.defaultReminders };
-  $('#f-title').value = v.title;
-  $('#f-date').value = v.dueDate || '';
-  $('#f-time').value = v.time || '';
-  $('#f-owner').value = v.owner || '';
-  $('#f-repeats').value = v.repeats || 'Never';
-  $('#f-category').value = v.category || 'other';
-  $('#f-notes').value = v.notes || '';
-  $('#prep-list').replaceChildren(...(v.prep || []).map(prepRow));
-  const reminders = v.reminders && v.reminders.length ? v.reminders : d.defaultReminders;
-  const choices = REMINDER_CHOICES.concat(reminders.filter((m) => !REMINDER_CHOICES.some(([c]) => c === m)).map((m) => [m, `${m} min before`]));
-  $('#reminder-checks').innerHTML = choices.map(([m, label]) =>
-    `<label><input type="checkbox" value="${m}" ${reminders.includes(m) ? 'checked' : ''}> ${esc(label)}</label>`).join('');
-  renderQuestions();
-  if (!$('#task-dialog').open) $('#task-dialog').showModal();
+function openTypeCapture(hint) {
+  typeInstead({
+    title: 'What needs doing?',
+    hint: hint || 'Say several things at once and each becomes its own task. Your keyboard\'s microphone works here too.',
+    placeholder: 'e.g. Friday I need to pick up the dry cleaning. Also we need to book the dentist',
+    onText: handleCapture,
+  });
 }
 
-$('#task-form').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const data = {
-    id: state.editing ? state.editing.id : null,
-    title: $('#f-title').value.trim(),
-    dueDate: $('#f-date').value,
-    time: $('#f-time').value,
-    owner: $('#f-owner').value,
-    repeats: $('#f-repeats').value,
-    category: $('#f-category').value,
-    notes: $('#f-notes').value,
-    reminders: $$('#reminder-checks input:checked').map((i) => Number(i.value)),
-    prep: $$('#prep-list li').map((li) => ({
-      title: li.querySelector('.prep-title').value.trim(),
-      daysBefore: Number(li.querySelector('.prep-days').value) || 0,
-      done: li.dataset.done === '1',
-    })).filter((s) => s.title),
-  };
-  $('#save-task').disabled = true;
+// ---------------------------------------------------------------- After recording: Save or Review
+
+let heardTimer = null;
+let captured = [];
+
+function heardRow(t) {
+  const who = ownerText(t.owner);
+  if (!t.dueDate) return `<li><b>${esc(t.title)}</b><span class="needs"><span class="dot"></span>${esc(who)} · needs a date</span></li>`;
+  return `<li><b>${esc(t.title)}</b><span>${esc(dayLabel(t.dueDate).replace(/^(Mon|Tues|Wednes|Thurs|Fri|Satur|Sun)day$/, (m) => m.slice(0, 3)))}${t.time ? ` ${esc(t.time)}` : ''} · ${esc(who)}</span></li>`;
+}
+
+async function handleCapture(text) {
+  const dlg = $('#d-heard');
+  clearTimeout(heardTimer);
+  captured = [];
+  $('#heard-title').textContent = 'Working it out…';
+  $('#heard-sub').textContent = '';
+  $('#heard-quote').textContent = `“${text}”`;
+  $('#heard-quote').hidden = false;
+  $('#heard-list').innerHTML = '';
+  $('#heard-actions').hidden = true;
+  $('#heard-discard').hidden = true;
+  if (!dlg.open) dlg.showModal();
   try {
-    apply(await run('saveTask', data));
-    $('#task-dialog').close();
-    if (!state.editing) $('#compose-text').value = '';
-    toast(state.editing ? 'Task updated' : 'Task added');
-    state.draft = null;
+    const res = await run('capture', text);
+    apply(res);
+    captured = res.captured;
+    const tasks = captured.map(taskById).filter(Boolean);
+    $('#heard-title').textContent = `Got it: ${tasks.length} task${tasks.length === 1 ? '' : 's'}`;
+    $('#heard-sub').textContent = res.notice || `Saving in ${AUTO_SAVE_SECONDS} seconds unless you tap Review.`;
+    $('#heard-quote').hidden = true;
+    $('#heard-list').innerHTML = tasks.map(heardRow).join('');
+    $('#heard-actions').hidden = false;
+    $('#heard-discard').hidden = false;
+    const ring = $('#heard-save .ring');
+    ring.classList.remove('go');
+    void ring.getBoundingClientRect();
+    ring.classList.add('go');
+    heardTimer = setTimeout(finishCapture, AUTO_SAVE_SECONDS * 1000);
   } catch (err) {
-    $('#task-error').textContent = err.message;
-    $('#task-error').hidden = false;
-  } finally {
-    $('#save-task').disabled = false;
+    dlg.close();
+    toast(`Couldn't save that: ${err.message}`);
+    openTypeCapture('Nothing was saved. Check the words and tap Save.');
+    $('#type-text').value = text;
   }
+}
+
+// The tasks are already in the sheet; "Save" just closes and offers Undo.
+function finishCapture() {
+  clearTimeout(heardTimer);
+  const dlg = $('#d-heard');
+  if (!dlg.open || !captured.length) return;
+  dlg.close();
+  const ids = captured.slice();
+  state.reviewIds = ids;
+  state.view = 'capture';
+  render();
+  const n = ids.length;
+  toast(`Saved ${n} task${n === 1 ? '' : 's'}`, [
+    { label: 'Review', fn: () => { state.reviewIds = ids; go('review'); } },
+    { label: 'Undo', fn: () => discard(ids) },
+  ]);
+}
+
+async function discard(ids) {
+  try {
+    apply(await run('discardCapture', ids));
+    toast('Not saved');
+  } catch (err) { fail(err); }
+}
+
+$('#heard-save').addEventListener('click', finishCapture);
+$('#heard-review').addEventListener('click', () => {
+  clearTimeout(heardTimer);
+  $('#d-heard').close();
+  state.reviewIds = captured.slice();
+  go('review');
+});
+$('#heard-discard').addEventListener('click', () => {
+  clearTimeout(heardTimer);
+  $('#d-heard').close();
+  discard(captured.slice());
+});
+$('#d-heard').addEventListener('cancel', (e) => { e.preventDefault(); if (captured.length) finishCapture(); });
+// Phone put away mid-countdown: the tasks are saved already, so just settle the screen.
+document.addEventListener('visibilitychange', () => { if (document.hidden && $('#d-heard').open && captured.length) finishCapture(); });
+
+// ---------------------------------------------------------------- Date and time sheet
+
+const whenState = { id: null, date: '', time: '', onSave: null };
+
+function dateChips(container, current, onPick) {
+  const t0 = today();
+  const weekend = nextWeekendDay();
+  const fixed = [[t0, 'Today'], [addDays(t0, 1), 'Tomorrow'], [weekend, weekday(weekend)]];
+  const custom = current && !fixed.some(([d]) => d === current);
+  container.innerHTML = fixed.map(([d, label]) => `<button type="button" class="chip" data-date="${d}" aria-pressed="${current === d}">${label}</button>`).join('')
+    + `<button type="button" class="chip outline" data-date="pick" aria-pressed="${custom}">${icon('cal', 16)}${custom ? esc(shortDate(current)) : 'Pick a date'}</button>`;
+  container.onclick = (e) => {
+    const b = e.target.closest('[data-date]');
+    if (!b) return;
+    if (b.dataset.date === 'pick') {
+      pickNative('#date-picker', current || addDays(t0, 7), (v) => onPick(v));
+      return;
+    }
+    onPick(b.getAttribute('aria-pressed') === 'true' ? '' : b.dataset.date); // tap again to clear
+  };
+}
+
+function timeChips(container, current, onPick) {
+  const quick = state.data.quickTimes;
+  const custom = current && !quick.includes(current);
+  container.innerHTML = `<button type="button" class="chip" data-time-pick="" aria-pressed="${!current}">Any time</button>`
+    + quick.map((t) => `<button type="button" class="chip" data-time-pick="${t}" aria-pressed="${current === t}">${t}</button>`).join('')
+    + `<button type="button" class="chip outline" data-time-pick="other" aria-pressed="${custom}">${custom ? esc(current) : 'Other'}</button>`;
+  container.onclick = (e) => {
+    const b = e.target.closest('[data-time-pick]');
+    if (!b) return;
+    if (b.dataset.timePick === 'other') pickNative('#time-picker', current || '12:00', onPick);
+    else onPick(b.dataset.timePick);
+  };
+}
+
+// The phone's own date or time wheel.
+function pickNative(sel, value, onPick) {
+  const input = $(sel);
+  input.value = value;
+  input.onchange = () => { if (input.value) onPick(input.value); };
+  try { input.showPicker(); } catch (err) { input.focus(); input.click(); }
+}
+
+function openWhen(id, mode) {
+  const t = taskById(id);
+  whenState.id = t.id;
+  whenState.date = t.dueDate;
+  whenState.time = t.time;
+  const quick = mode === 'time' && t.dueDate;
+  $('#when-title').textContent = t.title;
+  $('#when-sub').textContent = quick ? `${shortDate(t.dueDate)} · ${ownerText(t.owner)}` : 'When';
+  $('#when-full').hidden = quick;
+  $('#when-quick').hidden = !quick;
+  if (quick) {
+    $('#q-times').innerHTML = state.data.quickTimes.slice(0, 3).map((q) => `<button type="button" data-q="${q}">${q}<small>${partOfDay(q)}</small></button>`).join('');
+  } else {
+    drawWhen();
+  }
+  if (!$('#d-when').open) $('#d-when').showModal();
+}
+
+function drawWhen() {
+  dateChips($('#w-dates'), whenState.date, (d) => { whenState.date = d; if (!d) whenState.time = ''; drawWhen(); });
+  timeChips($('#w-times'), whenState.time, (t) => { whenState.time = t; if (t && !whenState.date) whenState.date = today(); drawWhen(); });
+}
+
+async function setTime(time) {
+  $('#d-when').close();
+  await saveFields(whenState.id, { time }, time ? `Set for ${time}` : 'Any time it is');
+}
+
+$('#when-save').addEventListener('click', async () => {
+  $('#d-when').close();
+  await saveFields(whenState.id, { dueDate: whenState.date, time: whenState.date ? whenState.time : '' }, 'Saved');
+});
+$('#q-times').addEventListener('click', (e) => { const b = e.target.closest('[data-q]'); if (b) setTime(b.dataset.q); });
+$('#q-other').addEventListener('click', () => pickNative('#time-picker', '12:00', setTime));
+$('#q-any').addEventListener('click', () => setTime(''));
+$('#q-say').addEventListener('click', () => {
+  const id = whenState.id;
+  $('#d-when').close();
+  sayChange(id, 'Say a time', 'e.g. half past four');
 });
 
-let deleteArmed = false;
-$('#delete-task').addEventListener('click', async () => {
-  if (!deleteArmed) {
-    deleteArmed = true;
-    $('#delete-task').textContent = 'Tap again to delete';
-    setTimeout(() => { deleteArmed = false; $('#delete-task').textContent = 'Delete'; }, 4000);
-    return;
-  }
-  deleteArmed = false;
-  $('#delete-task').textContent = 'Delete';
-  apply(await run('deleteTask', state.editing.id));
-  $('#task-dialog').close();
-  toast('Task deleted');
-});
+// ---------------------------------------------------------------- Choice sheet (who, repeats, more)
 
-$$('[data-close]').forEach((b) => b.addEventListener('click', () => b.closest('dialog').close()));
+function choose(title, options, onPick) {
+  $('#choose-title').textContent = title;
+  $('#choose-options').innerHTML = options.map((o, i) =>
+    `<button type="button" role="radio" aria-checked="${!!o.on}" data-i="${i}" class="${o.danger ? 'danger' : ''}" style="${o.danger ? 'color:var(--danger)' : ''}">${esc(o.label)}${o.on ? icon('tick', 18) : ''}</button>`).join('');
+  $('#choose-options').onclick = (e) => {
+    const b = e.target.closest('[data-i]');
+    if (!b) return;
+    $('#d-choose').close();
+    onPick(options[Number(b.dataset.i)].value);
+  };
+  $('#d-choose').showModal();
+}
 
-// ---------------------------------------------------------------- Chat
+function chooseOwner(id) {
+  const t = taskById(id);
+  choose('Who', whoChoices().concat('').map((n) => ({ label: ownerText(n), value: n, on: t.owner === n })),
+    (owner) => saveFields(t.id, { owner }, owner ? (owner === SHARED ? 'Shared' : `${owner} has it`) : 'Unassigned'));
+}
 
-function bubble(dir, text, extra) {
+function chooseRepeat(id) {
+  const t = taskById(id);
+  choose('Repeats', state.data.repeats.map((r) => ({ label: r, value: r, on: t.repeats === r })), (repeats) => {
+    if (repeats !== 'Never' && !t.dueDate) { toast('Add a date first, so it knows when to start'); return; }
+    saveFields(t.id, { repeats }, repeats === 'Never' ? 'Not repeating' : `Repeats ${repeats.toLowerCase()}`);
+  });
+}
+
+// ---------------------------------------------------------------- Changing a task by voice
+
+function sayChange(id, label = 'What should change?', example = 'e.g. make it Tuesday at 4, give it to Sara') {
+  listen({
+    label,
+    onText: (said) => voiceEdit(id, said),
+    onUnavailable: (why) => typeInstead({
+      title: label, hint: MIC_HELP[why], placeholder: example, onText: (said) => voiceEdit(id, said),
+    }),
+  });
+}
+
+// ---------------------------------------------------------------- Typed add / edit
+
+const form = { id: null, date: '', time: '', owner: '', repeats: 'Never' };
+const PREP_DAYS = [[0, 'Same day'], [1, 'Day before'], [2, '2 days before'], [7, 'Week before']];
+
+function prepRow(s) {
   const div = document.createElement('div');
-  div.className = `bubble ${dir} ${extra || ''}`;
-  div.textContent = text;
-  $('#chat-log').append(div);
-  $('#chat-log').scrollTop = $('#chat-log').scrollHeight;
+  div.className = 'prep-row';
+  const days = s ? Number(s.daysBefore) || 0 : 0;
+  const choices = PREP_DAYS.some(([d]) => d === days) ? PREP_DAYS : PREP_DAYS.concat([[days, `${days} days before`]]);
+  div.dataset.done = s && s.done ? '1' : '';
+  div.innerHTML = `<input class="field" placeholder="e.g. Find the policy number" value="${esc(s ? s.title : '')}" aria-label="Prep step">
+    <select aria-label="When">${choices.map(([d, l]) => `<option value="${d}" ${d === days ? 'selected' : ''}>${l}</option>`).join('')}</select>
+    <button type="button" class="round" style="width:36px;height:36px" aria-label="Remove step">${icon('x', 16)}</button>`;
+  div.querySelector('button').addEventListener('click', () => div.remove());
   return div;
 }
 
-$('#chat-btn').addEventListener('click', () => {
-  $('#assistant-mode').textContent = state.data && state.data.assistant === 'claude'
-    ? 'Powered by Claude' : 'Simple rules (Claude isn\'t set up yet)';
-  if (!$('#chat-log').children.length) {
-    bubble('out', 'Hi! Tell me what to change, e.g. "the plumber task is done", "move the boiler service to next Friday", "I\'ll take the bins" or "add: water the plants every Sunday".');
-  }
-  $('#chat-dialog').showModal();
-  $('#chat-text').focus();
-});
-
-// Spoken replies are a per-phone preference.
-const SPEAK_KEY = 'householdSpeakReplies';
-try { $('#speak-replies').checked = localStorage.getItem(SPEAK_KEY) === '1'; } catch (e) { /* private browsing */ }
-$('#speak-replies').addEventListener('change', (e) => {
-  try { localStorage.setItem(SPEAK_KEY, e.target.checked ? '1' : '0'); } catch (err) { /* not remembered */ }
-  if (!e.target.checked && 'speechSynthesis' in window) speechSynthesis.cancel();
-});
-
-function speak(text) {
-  if (!$('#speak-replies').checked || !('speechSynthesis' in window)) return;
-  speechSynthesis.cancel();
-  const u = new SpeechSynthesisUtterance(text);
-  u.lang = navigator.language || 'en-GB';
-  speechSynthesis.speak(u);
+function drawForm() {
+  dateChips($('#f-dates'), form.date, (d) => { form.date = d; if (!d) form.time = ''; drawForm(); });
+  timeChips($('#f-times'), form.time, (t) => { form.time = t; if (t && !form.date) form.date = today(); drawForm(); });
+  $('#f-who').innerHTML = whoChoices().map((n) => `<button type="button" role="radio" aria-checked="${form.owner === n}" data-fwho="${esc(n)}">${esc(n)}</button>`).join('');
+  $('#f-repeats').innerHTML = state.data.repeats.map((r) => `<button type="button" class="chip sm" data-frep="${esc(r)}" aria-pressed="${form.repeats === r}">${esc(r)}</button>`).join('');
 }
 
-// Dictation: speech becomes text in the box. The person checks it and taps Send.
-const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
-function attachDictation(button, field) {
-  if (!SpeechRec) return;
-  button.hidden = false;
-  let rec = null;
-  button.addEventListener('click', () => {
-    if (rec) { rec.stop(); return; }
-    rec = new SpeechRec();
-    rec.lang = navigator.language || 'en-GB';
-    rec.interimResults = true;
-    rec.continuous = false;
-    const base = field.value.trim();
-    rec.onresult = (ev) => {
-      const said = Array.from(ev.results).map((r) => r[0].transcript).join('');
-      field.value = base ? `${base} ${said}` : said;
-    };
-    rec.onerror = (ev) => toast(ev.error === 'not-allowed' || ev.error === 'service-not-allowed'
-      ? 'Microphone is blocked. Allow it for this site in your browser settings, or use your keyboard\'s microphone.'
-      : 'Didn\'t catch that. Try again, or use your keyboard\'s microphone.');
-    rec.onend = () => { button.classList.remove('listening'); rec = null; };
-    button.classList.add('listening');
-    rec.start();
+function openForm(task) {
+  const t = task || null;
+  form.id = t ? t.id : null;
+  form.task = t;
+  form.date = t ? t.dueDate : '';
+  form.time = t ? t.time : '';
+  form.owner = t ? t.owner : '';
+  form.repeats = t ? t.repeats : 'Never';
+  $('#form-title').textContent = t ? 'Edit task' : 'New task';
+  $('#f-title').value = t ? t.title : '';
+  $('#f-notes').value = t ? t.notes : '';
+  $('#f-prep').replaceChildren(...(t ? t.prep : []).map(prepRow));
+  $('#f-prep-wrap').hidden = !(t && t.prep.length);
+  $('#f-notes-wrap').hidden = !(t && t.notes);
+  $('#f-repeat-wrap').hidden = !(t && t.repeats !== 'Never');
+  $$('#f-extras [data-extra]').forEach((b) => {
+    b.hidden = !{ prep: $('#f-prep-wrap'), notes: $('#f-notes-wrap'), repeat: $('#f-repeat-wrap') }[b.dataset.extra].hidden;
   });
+  $('#form-error').hidden = true;
+  drawForm();
+  $('#d-form').showModal();
+  if (!t) setTimeout(() => $('#f-title').focus(), 50);
 }
-attachDictation($('#compose-mic'), $('#compose-text'));
-attachDictation($('#chat-mic'), $('#chat-text'));
 
-$('#chat-form').addEventListener('submit', async (e) => {
+$('#f-who').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-fwho]');
+  if (!b) return;
+  form.owner = form.owner === b.dataset.fwho ? '' : b.dataset.fwho; // tap again: nobody yet
+  drawForm();
+});
+$('#f-repeats').addEventListener('click', (e) => { const b = e.target.closest('[data-frep]'); if (b) { form.repeats = b.dataset.frep; drawForm(); } });
+$('#f-extras').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-extra]');
+  if (!b) return;
+  b.hidden = true;
+  if (b.dataset.extra === 'prep') { $('#f-prep-wrap').hidden = false; const r = prepRow(null); $('#f-prep').append(r); r.querySelector('input').focus(); }
+  if (b.dataset.extra === 'notes') { $('#f-notes-wrap').hidden = false; $('#f-notes').focus(); }
+  if (b.dataset.extra === 'repeat') $('#f-repeat-wrap').hidden = false;
+});
+$('#f-prep-add').addEventListener('click', () => { const r = prepRow(null); $('#f-prep').append(r); r.querySelector('input').focus(); });
+
+$('#task-form').addEventListener('submit', async (e) => {
   e.preventDefault();
-  const text = $('#chat-text').value.trim();
-  if (!text) return;
-  $('#chat-text').value = '';
-  bubble('in', text);
-  const pending = bubble('out', '...', 'pending');
+  const title = $('#f-title').value.trim();
+  const err = $('#form-error');
+  if (!title) { err.textContent = 'Say what needs doing.'; err.hidden = false; $('#f-title').focus(); return; }
+  if (form.repeats !== 'Never' && !form.date) { err.textContent = 'A repeating task needs a day to start from.'; err.hidden = false; return; }
+  const t = form.task;
+  const data = {
+    id: form.id, title, dueDate: form.date, time: form.date ? form.time : '', owner: form.owner, repeats: form.repeats,
+    notes: $('#f-notes').value, category: t ? t.category : 'other', reminders: t ? t.reminders : undefined,
+    prep: $$('#f-prep .prep-row').map((r) => ({ title: r.querySelector('input').value.trim(), daysBefore: Number(r.querySelector('select').value), done: r.dataset.done === '1' })).filter((s) => s.title),
+  };
+  $('#form-save').disabled = true;
   try {
-    pending.textContent = await run('chat', text);
-    pending.classList.remove('pending');
-    speak(pending.textContent);
-    load();
-  } catch (err) {
-    pending.textContent = err.message;
+    apply(await run('saveTask', data));
+    $('#d-form').close();
+    toast(t ? 'Saved' : 'Task added');
+  } catch (ex) {
+    err.textContent = ex.message;
+    err.hidden = false;
+  } finally {
+    $('#form-save').disabled = false;
   }
 });
 
-// ---------------------------------------------------------------- Activity & settings
+// ---------------------------------------------------------------- Wiring
 
-$('#activity-btn').addEventListener('click', async () => {
-  $('#activity-list').innerHTML = '<li class="muted">Loading...</li>';
-  $('#activity-dialog').showModal();
-  const items = await run('getActivity');
-  $('#activity-list').innerHTML = items.length
-    ? items.map((a) => `<li>${esc(a.text)}<time>${esc(a.when)}</time></li>`).join('')
-    : '<li class="muted">Nothing yet.</li>';
+document.addEventListener('click', (e) => {
+  const goBtn = e.target.closest('[data-go]');
+  if (goBtn) { if (goBtn.dataset.go === 'tasks' && state.view !== 'tasks') state.filter = 'all'; go(goBtn.dataset.go); return; }
+  const close = e.target.closest('[data-close]');
+  if (close) { close.closest('dialog').close(); return; }
+  const done = e.target.closest('[data-done]');
+  if (done) { toggleDone(done.dataset.done); return; }
+  const open = e.target.closest('[data-open]');
+  if (open) { openDetail(open.dataset.open); return; }
+  const when = e.target.closest('[data-when]');
+  if (when) { openWhen(when.dataset.when, 'when'); return; }
+  const time = e.target.closest('[data-time]');
+  if (time) { openWhen(time.dataset.time, 'time'); return; }
+  const owner = e.target.closest('[data-owner]');
+  if (owner) chooseOwner(owner.dataset.owner);
 });
+
+$('#cap-mic').addEventListener('click', startCapture);
+$('#list-mic').addEventListener('click', startCapture);
+$('#cap-type').addEventListener('click', () => openTypeCapture());
+$('#cap-attention').addEventListener('click', () => openAttention(needsDate()));
+$('#list-attention').addEventListener('click', () => openAttention(needsDate()));
+$('#filters').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-filter]');
+  if (!b) return;
+  state.filter = b.dataset.filter === state.filter && b.dataset.filter === 'nodate' ? 'all' : b.dataset.filter;
+  renderTasks();
+});
+$('#add-btn').addEventListener('click', () => openForm(null));
+$('#detail-back').addEventListener('click', () => go(state.cameFrom || 'tasks'));
+$('#detail-more').addEventListener('click', () => {
+  const t = taskById(state.detailId);
+  choose(t.title, [{ label: 'Edit by typing', value: 'edit' }, { label: 'Delete task', value: 'delete', danger: true }], (v) => {
+    if (v === 'edit') openForm(t);
+    if (v === 'delete') {
+      choose('Delete this task?', [{ label: 'Delete', value: 'yes', danger: true }, { label: 'Keep it', value: 'no' }], async (ok) => {
+        if (ok !== 'yes') return;
+        try { apply(await run('deleteTask', t.id)); go('tasks'); toast('Deleted'); } catch (err) { fail(err); }
+      });
+    }
+  });
+});
+
+$('#v-detail').addEventListener('click', async (e) => {
+  const t = taskById(state.detailId);
+  if (!t) return;
+  const who = e.target.closest('[data-who]');
+  if (who) {
+    const owner = t.owner === who.dataset.who ? '' : who.dataset.who;
+    await saveFields(t.id, { owner }, owner ? (owner === SHARED ? 'Shared' : `${owner} has it`) : 'Nobody has it yet');
+    return;
+  }
+  const step = e.target.closest('[data-step]');
+  if (step) {
+    try { apply(await run('setPrepDone', t.id, Number(step.dataset.step), step.getAttribute('aria-pressed') !== 'true')); } catch (err) { fail(err); }
+    return;
+  }
+  const id = e.target.closest('button') && e.target.closest('button').id;
+  if (id === 'detail-repeat') chooseRepeat(t.id);
+  if (id === 'step-open') { $('#step-add').hidden = false; e.target.hidden = true; $('#step-text').focus(); }
+  if (id === 'step-save') {
+    const title = $('#step-text').value.trim();
+    if (title) await saveFields(t.id, { prep: t.prep.concat({ title, daysBefore: 0, done: false }) }, 'Step added');
+  }
+  if (id === 'notes-open') { $('#notes-edit').hidden = false; $('#notes-open').hidden = true; $('#notes-text').value = t.notes; $('#notes-text').focus(); }
+  if (id === 'notes-save') await saveFields(t.id, { notes: $('#notes-text').value }, 'Note saved');
+  if (id === 'say-change') sayChange(t.id);
+  if (id === 'edit-undo') undoVoiceEdit();
+  if (id === 'edit-again') { state.lastEdit = null; renderDetailFoot(); sayChange(t.id); }
+  if (id === 'edit-done') { state.lastEdit = null; render(); }
+});
+$('#v-detail').addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.id === 'step-text') { e.preventDefault(); $('#step-save').click(); } });
+
+// ---------------------------------------------------------------- Settings
 
 $('#settings-btn').addEventListener('click', () => {
   const d = state.data;
@@ -679,24 +1357,37 @@ $('#settings-btn').addEventListener('click', () => {
   $('#p-updates').checked = d.me.prefs.emailUpdates;
   $('#p-summary').checked = d.me.prefs.morningSummary;
   $('#p-calendar').checked = d.me.prefs.calendarInvites;
-  $('#member-list').innerHTML = d.members.map((m) => `<li>${esc(m.name)} <span class="muted small">${esc(m.email)}</span></li>`).join('');
+  $('#member-list').innerHTML = d.members.map((m) => `<li>${pill(m.name)}<span>${esc(m.email)}${m.email === d.me.email ? ' (you)' : ''}</span></li>`).join('');
   $('#share-sheet').href = d.household.sheetUrl;
+  $('#sheet-link').href = d.household.sheetUrl;
   $('#app-link').value = d.household.appUrl || '';
   $('#signed-in-as').textContent = `Signed in as ${d.me.email}`;
-  $('#settings-dialog').showModal();
+  $('#assistant-mode').textContent = d.assistant === 'claude'
+    ? 'Understanding speech: Claude.' : "Understanding speech: simple rules (Claude isn't set up). Say one thing per sentence for best results.";
+  $('#activity-list').hidden = true;
+  $('#d-settings').showModal();
 });
 
-$$('#settings-dialog .toggle input').forEach((box) => box.addEventListener('change', async () => {
+$$('#d-settings .toggle input').forEach((box) => box.addEventListener('change', async () => {
   try {
     apply(await run('savePreferences', {
       emailReminders: $('#p-reminders').checked, emailUpdates: $('#p-updates').checked,
       morningSummary: $('#p-summary').checked, calendarInvites: $('#p-calendar').checked,
     }));
     toast('Saved');
-  } catch (err) {
-    toast(err.message);
-  }
+  } catch (err) { fail(err); }
 }));
+
+$('#activity-btn').addEventListener('click', async () => {
+  const list = $('#activity-list');
+  if (!list.hidden) { list.hidden = true; return; }
+  list.hidden = false;
+  list.innerHTML = '<li class="muted">Loading…</li>';
+  try {
+    const items = await run('getActivity');
+    list.innerHTML = items.length ? items.map((a) => `<li>${esc(a.text)}<time>${esc(a.when)}</time></li>`).join('') : '<li class="muted">Nothing yet.</li>';
+  } catch (err) { list.innerHTML = `<li class="error">${esc(err.message)}</li>`; }
+});
 
 $('#copy-link').addEventListener('click', () => {
   const input = $('#app-link');
@@ -716,9 +1407,22 @@ $('#join-form').addEventListener('submit', async (e) => {
   }
 });
 
-// Keep both phones in sync while the app is open.
-setInterval(() => { if (!document.hidden && !$('dialog[open]')) load(); }, 30000);
-document.addEventListener('visibilitychange', () => { if (!document.hidden) load(); });
+// Links in reminder emails: ...?task=12 opens that task; &pick=time goes straight to choosing a time.
+function openDeepLink() {
+  state.deepLinked = true;
+  if (!(window.google && google.script && google.script.url)) return;
+  google.script.url.getLocation((loc) => {
+    const p = (loc && loc.parameter) || {};
+    const t = p.task && taskById(p.task);
+    if (!t) return;
+    openDetail(t.id);
+    if (p.pick === 'time' && !t.done) openWhen(t.id, 'time');
+  });
+}
+
+// Keep both phones in step while the app is open.
+setInterval(() => { if (!document.hidden && !$('dialog[open]') && state.data && state.data.me) load(); }, 30000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden && !$('dialog[open]') && state.data) load(); });
 load();
 </script>
 </body>

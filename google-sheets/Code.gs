@@ -8,8 +8,7 @@
  *   Activity  a log of every change; used to email the other person
  *
  * The script also serves:
- *   - a phone-friendly web app (doGet) for adding and managing tasks
- *   - an MCP endpoint (doPost) so Claude can read and change tasks for you
+ *   - a phone-friendly web app (doGet): speak or type tasks, then manage them
  *   - a timer (runScheduledJobs) that emails reminders and syncs Google Calendar
  *
  * Functions ending in "_" are private: the web page can't call them.
@@ -43,10 +42,15 @@ const DEFAULT_SETTINGS = [
   ['Default reminders', '1 day, 1 hour', 'Used for new tasks. Options: 1 week, 2 days, 1 day, 2 hours, 1 hour, 30 minutes, at the time.'],
   ['Morning summary time', '07:00', "When the daily summary email goes out (24-hour clock) to people who've turned it on."],
   ['Calendar sync', 'Yes', 'Yes = put tasks with a date in Google Calendar, with alerts, for members who turned on Calendar invites.'],
+  ['Quick times', '09:00, 13:00, 19:00', 'The one-tap times the app offers when you pick a time (24-hour clock, comma separated).'],
+  ['Evening nudge time', '18:00', 'A task with a date but no time gets an email at this time the day before, asking for a time.'],
   ['App link', '', 'Filled in automatically the first time someone opens the app.'],
 ];
 
-const OWNER_ANYONE = 'Anyone';
+// The Owner column holds a member's name, "Shared" or "Unassigned".
+const OWNER_SHARED = 'Shared';
+const OWNER_NONE = 'Unassigned';
+const LEGACY_NONE = ['', 'anyone', 'unassigned', 'nobody'];
 const NO_TIME_DEFAULT = '09:00';
 
 // ---------------------------------------------------------------- Setup
@@ -144,7 +148,7 @@ function columnLetter_(n) {
 
 /** Keeps the Owner dropdown in the Tasks tab in line with the Members tab. */
 function refreshOwnerChoices_() {
-  const names = members_().map((m) => m.name).concat(OWNER_ANYONE);
+  const names = members_().map((m) => m.name).concat(OWNER_SHARED, OWNER_NONE);
   const sh = sheet_(TASKS);
   sh.getRange(2, TASK_COLUMNS.indexOf('Owner') + 1, sh.getMaxRows() - 1, 1)
     .setDataValidation(SpreadsheetApp.newDataValidation().requireValueInList(names, true).build());
@@ -286,7 +290,8 @@ function parseReminders_(text) {
 }
 
 function formatReminders_(minutes) {
-  return (minutes || []).map((m) => {
+  if (!minutes || !minutes.length) return 'None'; // an empty cell means "the household default"
+  return minutes.map((m) => {
     const known = REMINDER_WORDS.find(([v]) => v === m);
     if (known) return known[1];
     if (m % 1440 === 0) return `${m / 1440} days`;
@@ -326,7 +331,7 @@ function toTask_(r) {
     title: String(r.Task || '').trim(),
     dueDate: dateStr_(r['Due date']),
     time: timeStr_(r.Time),
-    owner: owner && owner !== OWNER_ANYONE ? owner : '',
+    owner: ownerValue_(owner),
     repeats: REPEATS[String(r.Repeats || '').trim()] !== undefined ? String(r.Repeats).trim() : 'Never',
     prep: parsePrep_(r['Prep steps']),
     notes: String(r.Notes || ''),
@@ -348,7 +353,7 @@ function fromTask_(t) {
     Task: t.title,
     'Due date': t.dueDate ? parseLocal_(t.dueDate, 'yyyy-MM-dd') : '',
     Time: t.time || '',
-    Owner: t.owner || OWNER_ANYONE,
+    Owner: t.owner || OWNER_NONE,
     Repeats: t.repeats || 'Never',
     'Prep steps': formatPrep_(t.prep),
     Notes: t.notes || '',
@@ -361,6 +366,27 @@ function fromTask_(t) {
     'Calendar event': t.calendarEvent || '',
     'Next ID': t.nextId || '',
   };
+}
+
+/** '' (unassigned), 'Shared' or the text as written; the sheet may also say "Anyone" from older versions. */
+function ownerValue_(text) {
+  const s = String(text || '').trim();
+  if (LEGACY_NONE.includes(s.toLowerCase())) return '';
+  if (s.toLowerCase() === OWNER_SHARED.toLowerCase()) return OWNER_SHARED;
+  return s;
+}
+
+/** A valid owner for saving: a member's exact name, 'Shared' or '' (unassigned). Throws for unknown names. */
+function cleanOwner_(text) {
+  const v = ownerValue_(text);
+  if (!v || v === OWNER_SHARED) return v;
+  const m = memberByName_(v);
+  if (!m) throw new Error(`"${v}" isn't in the Members tab.`);
+  return m.name;
+}
+
+function ownerLabel_(owner) {
+  return owner || OWNER_NONE;
 }
 
 /** When the task happens (a Date), or null if it has no date. */
@@ -421,7 +447,7 @@ function nextId_() {
 }
 
 function log_(who, what, t, details) {
-  sheet_(ACTIVITY).appendRow([new Date(), who, what, t ? t.id : '', t ? t.title : '', t ? (t.owner || OWNER_ANYONE) : '', t ? when_(t) : '', details || '', '']);
+  sheet_(ACTIVITY).appendRow([new Date(), who, what, t ? t.id : '', t ? t.title : '', t ? ownerLabel_(t.owner) : '', t ? when_(t) : '', details || '', '']);
 }
 
 function cleanTask_(data) {
@@ -430,13 +456,11 @@ function cleanTask_(data) {
   const repeats = data.repeats && REPEATS[data.repeats] !== undefined ? data.repeats : 'Never';
   const dueDate = dateStr_(data.dueDate);
   if (repeats !== 'Never' && !dueDate) throw new Error('A repeating task needs a date to start from.');
-  const owner = data.owner && data.owner !== OWNER_ANYONE ? data.owner : '';
-  if (owner && !memberByName_(owner)) throw new Error(`"${owner}" isn't in the Members tab.`);
   return {
     title,
     dueDate,
     time: timeStr_(data.time),
-    owner: owner ? memberByName_(owner).name : '',
+    owner: cleanOwner_(data.owner),
     repeats,
     prep: (data.prep || []).filter((s) => s && String(s.title || '').trim())
       .map((s) => ({ title: String(s.title).trim(), daysBefore: Math.max(0, Number(s.daysBefore) || 0), done: Boolean(s.done) })),
@@ -538,8 +562,14 @@ function getState() {
     repeats: Object.keys(REPEATS),
     defaultReminders: parseReminders_(getSetting_('Default reminders')),
     assistant: claudeKey_() ? 'claude' : 'rules',
+    quickTimes: quickTimes_(),
     now: fmt_(new Date(), "yyyy-MM-dd'T'HH:mm"),
   };
+}
+
+function quickTimes_() {
+  const times = String(getSetting_('Quick times') || '09:00, 13:00, 19:00').split(/[,;\s]+/).map(timeStr_).filter(Boolean);
+  return times.length ? [...new Set(times)].slice(0, 4) : ['09:00', '13:00', '19:00'];
 }
 
 function clientTask_(t) {
@@ -582,20 +612,242 @@ function savePreferences(prefs) {
 }
 
 /** Turns a sentence into a draft task (nothing is saved). */
-function parseText(text, history) {
+function parseText(text) {
   const me = requireMember_();
-  const draft = parseWithRules({
-    text: String(text || ''), now: fmt_(new Date(), "yyyy-MM-dd'T'HH:mm"),
-    members: members_().map((m) => ({ name: m.name })), speaker: me.name, history: history || [],
+  return draftFromRules_(String(text || ''), me.name);
+}
+
+// ---------------------------------------------------------------- Speaking (or typing) tasks in
+
+const MAX_CAPTURED = 12;
+
+/**
+ * Saves everything said in one recording, as one or more tasks, straight away: nothing is
+ * lost if the phone is put away. The app then offers Review, and Undo (discardCapture).
+ */
+function capture(text) {
+  const me = requireMember_();
+  const message = String(text || '').trim().slice(0, 3000);
+  if (!message) throw new Error('Nothing to save yet. Say or type what needs doing.');
+  let drafts = null;
+  let notice = '';
+  if (claudeKey_()) {
+    try {
+      drafts = askClaudeCapture_(message, me.name);
+    } catch (err) {
+      console.error('Claude capture failed:', err);
+      notice = 'Claude was unavailable, so the simple rules read this one.';
+    }
+  }
+  if (!drafts || !drafts.length) drafts = draftsFromRules_(message, me.name);
+  const saved = withLock_(() => drafts.slice(0, MAX_CAPTURED)
+    .map((d) => createTask_({ ...d, repeats: d.dueDate ? d.repeats : 'Never' }, me.name)));
+  const state = getState();
+  state.captured = saved.map((t) => t.id);
+  state.notice = notice;
+  return state;
+}
+
+/** Undo for capture: removes those tasks. If the other person hasn't been emailed yet, it's as if they never existed. */
+function discardCapture(ids) {
+  const me = requireMember_();
+  const wanted = new Set((ids || []).map(Number));
+  withLock_(() => {
+    const activity = table_(ACTIVITY);
+    const unsent = activity.rows.filter((a) => a.What === 'added' && !a.Emailed && wanted.has(Number(a['Task ID'])));
+    const silent = new Set(unsent.map((a) => Number(a['Task ID'])));
+    unsent.sort((a, b) => b._row - a._row).forEach((a) => activity.sh.deleteRow(a._row));
+    tasks_().filter((t) => wanted.has(t.id)).sort((a, b) => b.row - a.row).forEach((t) => {
+      if (silent.has(t.id)) sheet_(TASKS).deleteRow(t.row);
+      else deleteTask_(t.id, me.name);
+    });
   });
-  const repeats = Object.keys(REPEATS).find((k) => REPEATS[k] && draft.recurrence
-    && REPEATS[k].unit === draft.recurrence.unit && REPEATS[k].interval === draft.recurrence.interval) || 'Never';
-  return {
-    title: draft.title, notes: draft.notes, category: draft.category, dueDate: draft.due_date || '', time: draft.due_time || '',
-    owner: draft.owner || '', repeats, reminders: draft.reminder_offsets_minutes,
-    prep: draft.prep_steps.map((s) => ({ title: s.title, daysBefore: s.days_before, done: false })),
-    questions: draft.questions,
+  return getState();
+}
+
+// Verbs that usually start a new errand after "and": "pick up the dry cleaning and buy a present".
+const ERRAND_VERBS = 'buy|pick up|get|call|ring|phone|book|pay|order|send|email|text|collect|drop off|renew|cancel|post|wash|water|feed|walk|mow|tidy|clean|sort out|write|change|replace|arrange|schedule|return|fix';
+
+/**
+ * Splits one recording into separate tasks. Without Claude this relies on sentence breaks and
+ * words like "also" or "and buy"; a follow-on sentence about the same thing ("we need to clear
+ * it first", "Sara to handle it") stays with the task before it. Returns groups of
+ * [lead, ...more]: errands joined by "and" share the lead's day and owner unless they say their own.
+ */
+function splitCapture_(text) {
+  const sentences = String(text).split(/\n+|(?<=[.!?;])\s+|\s*,?\s*\b(?:and )?(?:also|plus|another thing is|and then)\b\s*,?\s*/i)
+    .map((p) => (p || '').trim()).filter((p) => p.replace(/[^a-z0-9]/gi, '').length > 1);
+  const groups = [];
+  sentences.forEach((p) => {
+    const followOn = EXPLICIT_PREP.test(p) || /^(before|make sure|remember|don't forget|dont forget|first|then)\b/i.test(p)
+      || /\b(it|them|that|this|they)\b[.!?]?$/i.test(p) || /^(it|that|this|they|he|she)\b/i.test(p);
+    if (groups.length && followOn) {
+      const g = groups[groups.length - 1];
+      g[g.length - 1] += `. ${p}`;
+      return;
+    }
+    groups.push(p.split(new RegExp(`\\s*,?\\s+and (?=(?:${ERRAND_VERBS})\\b)`, 'i')).map((x) => x.trim()).filter(Boolean));
+  });
+  return groups.length ? groups : [[String(text)]];
+}
+
+function draftsFromRules_(text, speaker) {
+  const drafts = [];
+  splitCapture_(text).forEach((group) => {
+    const lead = draftFromRules_(group[0], speaker);
+    drafts.push(lead);
+    group.slice(1).forEach((part) => {
+      const d = draftFromRules_(part, speaker);
+      if (!d.dueDate) { d.dueDate = lead.dueDate; d.time = d.time || lead.time; }
+      if (!d.owner) d.owner = lead.owner;
+      drafts.push(d);
+    });
+  });
+  return drafts;
+}
+
+/**
+ * Who a spoken task belongs to: a name wins; "you" means the other person (two-person
+ * household); "I"/"me" means whoever is speaking; "we"/"us" means Shared; otherwise nobody yet.
+ */
+function speechOwner_(text, speaker) {
+  const members = members_();
+  const lower = ` ${String(text || '').toLowerCase().replace(/\u2019/g, "'")} `;
+  const named = members
+    .map((m) => ({ name: m.name, idx: lower.search(new RegExp(`\\b${escapeRe(m.name.toLowerCase())}\\b`)) }))
+    .filter((m) => m.idx >= 0)
+    .sort((a, b) => a.idx - b.idx);
+  if (named.length) return named[0].name;
+  const others = members.filter((m) => m.name !== speaker);
+  if (others.length === 1 && /\b(can|could|would|will) you\b|\byou (need|have|should|must|can|could|to)\b|\bfor you\b|\byou'll\b|\byour job\b/.test(lower)) {
+    return others[0].name;
+  }
+  if (/\b(i|i'll|i'm|i've|i'd|me|myself)\b/.test(lower)) return speaker;
+  if (/\b(we|we'll|we're|we've|us|let's|together|both of us)\b/.test(lower)) return OWNER_SHARED;
+  return '';
+}
+
+// ---------------------------------------------------------------- Changing one task by voice
+
+/** Applies a spoken change ("make it Tuesday at 4", "give it to Sara") to one task. */
+function editByVoice(id, text) {
+  const me = requireMember_();
+  const message = String(text || '').trim().slice(0, 1000);
+  if (!message) throw new Error("Didn't catch anything. Try again.");
+  const before = taskById_(id);
+  let change = null;
+  let notice = '';
+  if (claudeKey_()) {
+    try {
+      change = askClaudeEdit_(message, before, me.name);
+    } catch (err) {
+      console.error('Claude edit failed:', err);
+      notice = ' (Claude was unavailable, so the simple rules read this one.)';
+    }
+  }
+  if (!change) change = editFromRules_(message, before, me.name);
+  const changed = withLock_(() => applyEdit_(before, change, me.name));
+  const state = getState();
+  state.edit = {
+    id: before.id,
+    changed,
+    before: clientTask_(before),
+    summary: (changed.length ? `Changed ${listWords_(changed.map((c) => EDIT_WORDS[c]))}.` : "Didn't catch a change. Try \"move it to Friday at 9\" or \"give it to Sara\".") + notice,
   };
+  return state;
+}
+
+const EDIT_WORDS = { date: 'the date', time: 'the time', owner: 'who', repeats: 'how often', title: 'the name', notes: 'the notes', prep: 'the steps', done: 'done' };
+
+function listWords_(words) {
+  return words.length < 2 ? words.join('') : `${words.slice(0, -1).join(', ')} and ${words[words.length - 1]}`;
+}
+
+/** The simple rules' reading of an edit. Only what's clearly said changes. */
+function editFromRules_(text, task, speaker) {
+  let rest = ` ${text.replace(/\u2019/g, "'")} `;
+  const change = { addPrep: [] };
+  const take = (re, fn) => {
+    const m = re.exec(rest);
+    if (m) { fn(m); rest = rest.slice(0, m.index) + ' ' + rest.slice(m.index + m[0].length); }
+  };
+  take(/\b(?:and )?(?:remind (?:me|us) to|add a (?:prep )?step(?: to)?|step:)\s+(.+?)(?:\s+(the day before|the night before|(\d+|two|three|a) days? before))?\s*[.!]?\s*$/i, (m) => {
+    const n = m[2] ? (m[3] ? ({ a: 1, two: 2, three: 3 }[m[3].toLowerCase()] || Number(m[3])) : 1) : 0;
+    change.addPrep.push({ title: sentenceCase(m[1]), daysBefore: n });
+  });
+  take(/\b(?:rename (?:it )?to|call it)\s+(.+?)\s*[.!]?\s*$/i, (m) => { change.title = sentenceCase(m[1]); });
+  take(/\b(?:add a note|note(?: that)?|notes?:)\s*[:,-]?\s*(.+?)\s*$/i, (m) => { change.addNote = m[1].trim(); });
+
+  const lower = rest.toLowerCase();
+  if (/\b(not done|reopen|undo done)\b/.test(lower)) change.done = false;
+  else if (/^\s*(done|finished|completed)\b|\bmark (it |this )?(as )?(done|complete|finished)\b|\b(it's|its|it is|that's|all) (done|finished|sorted)\b/.test(lower)) change.done = true;
+  if (/\b(no date|remove the date|clear the date)\b/.test(lower)) change.dueDate = '';
+  else {
+    const date = findDate(rest, parseNow(fmt_(new Date(), "yyyy-MM-dd'T'HH:mm")));
+    if (date) change.dueDate = date;
+  }
+  if (/\b(any ?time|no time|remove the time)\b/.test(lower)) change.time = '';
+  else {
+    const time = spokenTime_(rest);
+    if (time) change.time = time;
+  }
+  const names = members_().filter((m) => new RegExp(`\\b${escapeRe(m.name.toLowerCase())}\\b`).test(lower));
+  if (/\b(unassign|nobody|no one|anyone)\b/.test(lower)) change.owner = '';
+  else if (names.length) change.owner = names[0].name;
+  else if (/\b(shared|both of us|us both|together|we'll|we will)\b/.test(lower)) change.owner = OWNER_SHARED;
+  else if (/\b(mine|i'll (?:do|take|handle)|to me|me instead|i will (?:do|take))\b/.test(lower)) change.owner = speaker;
+  if (/\b(don't repeat|do not repeat|no repeat|stop repeating|just once|one[- ]off)\b/.test(lower)) change.repeats = 'Never';
+  else {
+    const r = findRecurrence(rest);
+    const key = r && Object.keys(REPEATS).find((k) => REPEATS[k] && REPEATS[k].unit === r.unit && REPEATS[k].interval === r.interval);
+    if (key) change.repeats = key;
+  }
+  return change;
+}
+
+/** Times as people say them: "at 4" means 16:00 (1 to 7 are afternoon), "at 10" means 10:00. */
+function spokenTime_(text) {
+  const t = findTime(text);
+  if (t) return t;
+  const m = /\b(?:at|for|around) (\d{1,2})(?:[.:](\d{2}))?\b(?!\s*(?:days?|weeks?|months?|minutes?|hours?))/i.exec(text);
+  if (!m || Number(m[1]) > 23) return '';
+  let h = Number(m[1]);
+  if (h >= 1 && h <= 7) h += 12;
+  return `${String(h).padStart(2, '0')}:${m[2] || '00'}`;
+}
+
+/** Saves a change and returns which parts changed, for the app to highlight. */
+function applyEdit_(before, change, actor) {
+  const patch = {};
+  const changed = [];
+  if (change.title && change.title !== before.title) { patch.title = change.title; changed.push('title'); }
+  if (change.dueDate !== undefined && change.dueDate !== before.dueDate) { patch.dueDate = change.dueDate; changed.push('date'); }
+  if (change.time !== undefined && change.time !== before.time) { patch.time = change.time; changed.push('time'); }
+  if (change.owner !== undefined && cleanOwnerOrKeep_(change.owner, before.owner) !== before.owner) {
+    patch.owner = cleanOwnerOrKeep_(change.owner, before.owner);
+    changed.push('owner');
+  }
+  if (change.repeats && change.repeats !== before.repeats) { patch.repeats = change.repeats; changed.push('repeats'); }
+  if (change.addNote) { patch.notes = before.notes ? `${before.notes}\n${change.addNote}` : change.addNote; changed.push('notes'); }
+  if (change.addPrep && change.addPrep.length) { patch.prep = before.prep.concat(change.addPrep.map((s) => ({ ...s, done: false }))); changed.push('prep'); }
+  if (patch.repeats && patch.repeats !== 'Never' && !(patch.dueDate !== undefined ? patch.dueDate : before.dueDate)) {
+    delete patch.repeats;
+    changed.splice(changed.indexOf('repeats'), 1);
+  }
+  if (Object.keys(patch).length) updateTask_(before.id, patch, actor);
+  if (change.done !== undefined && Boolean(change.done) !== before.done) {
+    setDone_(taskById_(before.id), Boolean(change.done), actor);
+    changed.push('done');
+  }
+  return changed;
+}
+
+function cleanOwnerOrKeep_(owner, current) {
+  try {
+    return cleanOwner_(owner);
+  } catch (err) {
+    return current;
+  }
 }
 
 function saveTask(data) {
@@ -644,20 +896,39 @@ const CLAUDE_MODEL = 'claude-opus-5-5';
 const CHAT_HISTORY_MESSAGES = 6;
 const OPERATION_TYPES = ['create', 'complete', 'reopen', 'reschedule', 'assign', 'unassign', 'rename', 'add_note', 'list'];
 
+// How a task is described to Claude; shared by the chat, capture and edit prompts.
+const DRAFT_FIELDS = `{"title" (short, starting with a verb), "due_date" (YYYY-MM-DD or null), "due_time" (HH:MM 24h, or null when no time was said), "owner" (see Owners), "repeats" (one of: Never, Daily, Weekly, Every 2 weeks, Monthly, Quarterly, Every 6 months, Yearly), "category" (one of: ${CATEGORIES.join(', ')}), "notes" (phone numbers, names, quotes from the message, or ""), "prep_steps" ([{"title", "days_before"}]: things to do beforehand, only when clearly needed, usually 0 to 4), "reminders_minutes_before" (e.g. [1440, 60])}`;
+
+const OWNER_RULES = `Owners: a member's exact name when they are named; "I", "me" or "I'll" means the person speaking; "you" means the other member (two-person household); "we", "us" or "let's" means "Shared"; when nothing says who, use null (unassigned). Possessives like "my mum" or "our car" don't decide the owner.`;
+
 const CHAT_SYSTEM_PROMPT = `You are the assistant inside a shared household task app. Household members message you to manage their shared tasks. Reply with ONLY a JSON object, no other text, in this shape:
 {"operations": [ ... ], "message": "..."}
 
 Operations (use only these types):
-- "create": a new task. Put its details in "draft": {"title", "due_date" (YYYY-MM-DD or null), "due_time" (HH:MM 24h or null), "owner" (exact member name or null), "repeats" (one of: Never, Daily, Weekly, Every 2 weeks, Monthly, Quarterly, Every 6 months, Yearly), "category" (one of: ${CATEGORIES.join(', ')}), "notes" (phone numbers, names, quotes from the message, or ""), "prep_steps" ([{"title", "days_before"}]: things to do beforehand, only when clearly needed, usually 0 to 4), "reminders_minutes_before" (e.g. [1440, 60])}.
+- "create": a new task. Put its details in "draft": ${DRAFT_FIELDS}.
 - "complete" or "reopen": task_id.
 - "reschedule": task_id, plus due_date and/or due_time for the new value (null keeps the current one).
-- "assign": task_id and owner (exact member name). "I", "me" and "mine" mean the person speaking.
+- "assign": task_id and owner (exact member name, or "Shared" for both of them). "I", "me" and "mine" mean the person speaking.
 - "unassign": task_id.
 - "rename" or "add_note": task_id and text.
+
+${OWNER_RULES}
 
 Use only the task ids listed. Resolve relative dates ("next Tuesday", "in two weeks") from the current local date. If the message refers to the task being discussed ("it", "that one", "the reminder"), use the current task. If you can't tell which task is meant, or a needed detail is missing (such as the date for a new task), return no operations and ask one short question in "message". For questions about the list, answer in "message" and return no operations.
 
 "message" is read on a phone and may be read aloud: keep it to one or two short, friendly sentences, addressed to the person who sent the message. Never invent tasks or members.`;
+
+const CAPTURE_SYSTEM_PROMPT = `You turn what a household member said (often dictated, without punctuation) into tasks for a shared household task app. Reply with ONLY a JSON object, no other text: {"tasks": [ ... ]}, each task being ${DRAFT_FIELDS}.
+
+Several separate things become separate tasks. Make one task with prep steps only when the person clearly describes one main task and the steps for it. Keep their wording for titles, tidied into a short instruction. Resolve relative dates from the current local date; leave due_date null if no day was said. Never ask questions and never invent details.
+
+${OWNER_RULES}`;
+
+const EDIT_SYSTEM_PROMPT = `A household member is changing one task in a shared task app by voice. Reply with ONLY a JSON object, no other text, holding only what they asked to change:
+{"title", "due_date" (YYYY-MM-DD, or "" to remove the date), "due_time" (HH:MM 24h, or "" for any time), "owner" (see Owners; "" to unassign), "repeats" (Never, Daily, Weekly, Every 2 weeks, Monthly, Quarterly, Every 6 months or Yearly), "add_note", "add_prep_steps" ([{"title", "days_before"}]), "done" (true or false)}
+Leave out everything they didn't mention. "Remind me to X the day before" is a prep step with days_before 1. "At 4" means 16:00 unless they say morning. Resolve relative dates from the current local date.
+
+${OWNER_RULES}`;
 
 function claudeKey_() {
   return PropertiesService.getScriptProperties().getProperty(CLAUDE_KEY_PROPERTY) || '';
@@ -725,7 +996,11 @@ function askClaude_({ text, speaker, members, tasks, contextTaskId, now, history
     history.length ? `Recent conversation:\n${history.map((h) => `${h.role === 'user' ? 'Person' : 'Assistant'}: ${h.content}`).join('\n')}` : '',
     `Message from ${speaker}:\n${text}`,
   ].filter(Boolean).join('\n\n');
+  return parseChatPlan_(callClaude_(CHAT_SYSTEM_PROMPT, content), tasks);
+}
 
+/** One request to Claude; returns its text. Throws on any failure so callers can fall back to the rules. */
+function callClaude_(system, content) {
   const res = UrlFetchApp.fetch('https://api.anthropic.com/v1/messages', {
     method: 'post',
     contentType: 'application/json',
@@ -739,22 +1014,70 @@ function askClaude_({ text, speaker, members, tasks, contextTaskId, now, history
       model: CLAUDE_MODEL,
       max_tokens: 2000,
       fallbacks: 'default',
-      system: CHAT_SYSTEM_PROMPT,
+      system,
       messages: [{ role: 'user', content }],
     }),
   });
   if (res.getResponseCode() !== 200) throw new Error(`service returned ${res.getResponseCode()}`);
   const body = JSON.parse(res.getContentText());
   if (body.stop_reason === 'refusal') throw new Error('the request was declined');
-  const reply = (body.content || []).filter((b) => b.type === 'text').map((b) => b.text).join('');
-  return parseChatPlan_(reply, tasks);
+  return (body.content || []).filter((b) => b.type === 'text').map((b) => b.text).join('');
+}
+
+function jsonIn_(reply) {
+  const match = /\{[\s\S]*\}/.exec(reply);
+  if (!match) throw new Error('no answer in the reply');
+  return JSON.parse(match[0]);
+}
+
+function claudeContext_(speaker) {
+  return [
+    `Current local date/time: ${fmt_(new Date(), "EEEE yyyy-MM-dd'T'HH:mm")}`,
+    `Household members: ${members_().map((m) => m.name).join(', ')}`,
+    `The person speaking: ${speaker}`,
+  ].join('\n');
+}
+
+/** Claude's split of a recording into task drafts. */
+function askClaudeCapture_(text, speaker) {
+  const raw = jsonIn_(callClaude_(CAPTURE_SYSTEM_PROMPT, `${claudeContext_(speaker)}\n\nWhat ${speaker} said:\n${text}`));
+  const drafts = (Array.isArray(raw.tasks) ? raw.tasks : []).map(cleanDraft_).filter((d) => d.title);
+  if (!drafts.length) throw new Error('no tasks in the reply');
+  return drafts;
+}
+
+/** Claude's reading of a spoken change to one task, in the shape editFromRules_ returns. */
+function askClaudeEdit_(text, task, speaker) {
+  const current = `Task: ${describeTask_(task)}${task.prep.length ? `. Prep steps: ${task.prep.map((p) => p.title).join('; ')}` : ''}`;
+  const raw = jsonIn_(callClaude_(EDIT_SYSTEM_PROMPT, `${claudeContext_(speaker)}\n\n${current}\n\nWhat ${speaker} said:\n${text}`));
+  const change = { addPrep: [] };
+  if (typeof raw.title === 'string' && raw.title.trim()) change.title = raw.title.trim().slice(0, 200);
+  if (typeof raw.due_date === 'string') change.dueDate = dateStr_(raw.due_date);
+  if (typeof raw.due_time === 'string') change.time = timeStr_(raw.due_time);
+  if (typeof raw.owner === 'string' || raw.owner === null) change.owner = ownerFromName_(raw.owner, speaker);
+  if (Object.keys(REPEATS).includes(raw.repeats)) change.repeats = raw.repeats;
+  if (typeof raw.add_note === 'string' && raw.add_note.trim()) change.addNote = raw.add_note.trim().slice(0, 1000);
+  if (Array.isArray(raw.add_prep_steps)) {
+    change.addPrep = raw.add_prep_steps.filter((p) => p && String(p.title || '').trim())
+      .map((p) => ({ title: String(p.title).trim().slice(0, 200), daysBefore: Math.max(0, Number(p.days_before) || 0) }));
+  }
+  if (typeof raw.done === 'boolean') change.done = raw.done;
+  return change;
+}
+
+/** Turns an owner as Claude wrote it into one the sheet accepts; unknown names become unassigned. */
+function ownerFromName_(name, speaker) {
+  const v = ownerValue_(name);
+  if (!v) return '';
+  if (v === OWNER_SHARED) return OWNER_SHARED;
+  if (/^(me|i|myself)$/i.test(v)) return speaker || '';
+  const m = memberByName_(v);
+  return m ? m.name : '';
 }
 
 /** Checks Claude's JSON before anything is changed: unknown types and unknown task ids are dropped. */
 function parseChatPlan_(reply, tasks) {
-  const match = /\{[\s\S]*\}/.exec(reply);
-  if (!match) throw new Error('no plan in the reply');
-  const raw = JSON.parse(match[0]);
+  const raw = jsonIn_(reply);
   const ids = new Set(tasks.map((t) => t.id));
   const proposed = (Array.isArray(raw.operations) ? raw.operations : []).filter((op) => op && OPERATION_TYPES.includes(op.type));
   // A task id that doesn't exist is dropped, not guessed at. A missing id means "the current task".
@@ -779,7 +1102,7 @@ function cleanDraft_(d) {
     title: String(d.title || '').trim().slice(0, 200),
     dueDate: dateStr_(d.due_date),
     time: timeStr_(d.due_time),
-    owner: typeof d.owner === 'string' ? d.owner : '',
+    owner: ownerFromName_(d.owner),
     repeats: Object.keys(REPEATS).includes(d.repeats) ? d.repeats : 'Never',
     category: CATEGORIES.includes(d.category) ? d.category : 'other',
     notes: String(d.notes || '').slice(0, 5000),
@@ -798,15 +1121,17 @@ function draftFromRules_(text, speaker) {
   });
   const repeats = Object.keys(REPEATS).find((k) => REPEATS[k] && draft.recurrence
     && REPEATS[k].unit === draft.recurrence.unit && REPEATS[k].interval === draft.recurrence.interval) || 'Never';
+  const time = draft.due_time || spokenTime_(text) || '';
   return {
-    title: draft.title, dueDate: draft.due_date || '', time: draft.due_time || '', owner: draft.owner || '', repeats,
+    title: time ? draft.title.replace(/\s+(?:at|around|for) \d{1,2}(?:[.:]\d{2})?\b/i, '') : draft.title,
+    dueDate: draft.due_date || '', time, owner: speechOwner_(text, speaker), repeats,
     category: draft.category, notes: '', reminders: draft.reminder_offsets_minutes,
     prep: draft.prep_steps.map((s) => ({ title: s.title, daysBefore: s.days_before })),
   };
 }
 
 function describeTask_(t) {
-  return `"${t.title}", ${when_(t) || 'no date'}, ${t.owner || 'unassigned'}${t.repeats !== 'Never' ? `, repeats ${t.repeats.toLowerCase()}` : ''}`;
+  return `"${t.title}", ${when_(t) || 'no date'}, ${t.owner ? t.owner.toLowerCase() === 'shared' ? 'shared' : t.owner : 'unassigned'}${t.repeats !== 'Never' ? `, repeats ${t.repeats.toLowerCase()}` : ''}`;
 }
 
 function applyOperation_(op, speaker, contextTaskId) {
@@ -837,6 +1162,10 @@ function applyOperation_(op, speaker, contextTaskId) {
       return { taskId: t.id, line: `Moved "${t.title}" to ${when_(updated)}.` };
     }
     case 'assign': {
+      if (ownerValue_(op.owner) === OWNER_SHARED) {
+        updateTask_(t.id, { owner: OWNER_SHARED }, speaker);
+        return { taskId: t.id, line: `"${t.title}" is shared now.` };
+      }
       const who = /^(me|i|myself)$/i.test(op.owner || '') ? memberByName_(speaker) : memberByName_(op.owner);
       if (!who) return { line: `I don't know who "${op.owner}" is.` };
       updateTask_(t.id, { owner: who.name }, speaker);
@@ -917,12 +1246,25 @@ function runScheduledJobs() {
     const members = members_();
     const tasks = tasks_();
     const inbox = {};
-    members.forEach((m) => { inbox[m.email] = { member: m, reminders: [], updates: [], summary: null }; });
+    members.forEach((m) => { inbox[m.email] = { member: m, reminders: [], nudges: [], updates: [], summary: null }; });
 
-    // 1. Reminders that fell due since the last run.
+    // 1. Reminders that fell due since the last run. A task with a date but no time gets one
+    //    evening-before nudge instead, asking for a time: to its owner, or to everyone if it's
+    //    shared or nobody has taken it.
+    const nudgeTime = timeStr_(getSetting_('Evening nudge time')) || '18:00';
     tasks.filter((t) => !t.done && t.dueDate).forEach((t) => {
       const due = dueAt_(t);
-      t.reminders.forEach((offset) => {
+      if (!t.time) {
+        const at = parseLocal_(`${shiftDate_(t.dueDate, 'day', -1)} ${nudgeTime}`, 'yyyy-MM-dd HH:mm');
+        if (at > since && at <= now) {
+          nudgeRecipients_(t, members).forEach((m) => inbox[m.email].nudges.push({
+            text: `"${t.title}" is tomorrow (${when_(t)}). No time set yet. ${ownerPhrase_(t, m)}`,
+            link: taskLink_(t.id, 'time'),
+            linkText: 'Pick a time',
+          }));
+        }
+      }
+      (t.time ? t.reminders : []).forEach((offset) => {
         const at = new Date(due.getTime() - offset * 60000);
         if (at > since && at <= now) members.forEach((m) => inbox[m.email].reminders.push(reminderText_(t, null, offset, m)));
       });
@@ -957,7 +1299,21 @@ function runScheduledJobs() {
   });
 }
 
+/** Who gets a task's nudge: its owner, or everyone when it's shared or nobody has taken it. */
+function nudgeRecipients_(t, members) {
+  const owner = members.find((m) => m.name === t.owner);
+  return owner ? [owner] : members;
+}
+
+/** A link that opens the app on one task (and, with pick = 'time', straight to choosing a time). */
+function taskLink_(id, pick) {
+  const app = getSetting_('App link');
+  if (!app) return '';
+  return `${app}${app.includes('?') ? '&' : '?'}task=${id}${pick ? `&pick=${pick}` : ''}`;
+}
+
 function ownerPhrase_(t, member) {
+  if (t.owner === OWNER_SHARED) return "It's shared.";
   if (!t.owner) return 'Nobody has taken it yet. Open the app to claim it.';
   return t.owner === member.name ? "You're on it." : `${t.owner} is on it.`;
 }
@@ -973,12 +1329,13 @@ function reminderText_(t, step, offset, member) {
 function describeActivity_(a, reader) {
   const who = a.Who;
   const task = `"${a.Task}"`;
-  const owner = a.Owner && a.Owner !== OWNER_ANYONE ? String(a.Owner) : '';
+  const owner = ownerValue_(a.Owner);
   switch (a.What) {
     case 'added':
-      return `${who} added ${task}${a.Due ? ` for ${a.Due}` : ''}. ${!owner ? 'Nobody has taken it yet.' : owner === reader ? "It's assigned to you." : `${owner} is on it.`}`;
+      return `${who} added ${task}${a.Due ? ` for ${a.Due}` : ''}. ${!owner ? 'Nobody has taken it yet.' : owner === OWNER_SHARED ? "It's shared." : owner === reader ? "It's assigned to you." : `${owner} is on it.`}`;
     case 'assigned':
       if (!owner) return `${who} unassigned ${task}.`;
+      if (owner === OWNER_SHARED) return `${who} made ${task} shared.`;
       if (owner === reader) return `${who} assigned ${task} to you.`;
       if (owner === who) return `${who} is taking care of ${task}.`;
       return `${task} is now with ${owner}.`;
@@ -999,26 +1356,31 @@ function summaryText_(tasks, member, today) {
 
 function sendDigest_(box) {
   const m = box.member;
-  const reminders = m.emailReminders ? box.reminders : [];
+  const reminders = m.emailReminders ? box.reminders.concat(box.nudges) : [];
   const updates = m.emailUpdates ? box.updates : [];
   const summary = m.morningSummary ? box.summary : '';
   if (!reminders.length && !updates.length && !summary) return;
 
   const household = getSetting_('Household name') || 'Household';
   const link = getSetting_('App link');
+  const textOf = (l) => (typeof l === 'string' ? l : l.text);
   const sections = [];
   if (reminders.length) sections.push(['Reminders', reminders]);
   if (summary) sections.push(['Today and tomorrow', summary.split('\n').map((l) => l.replace(/^• /, ''))]);
   if (updates.length) sections.push(['Updates', updates]);
 
-  const subject = reminders.length === 1 && !updates.length && !summary
-    ? `Reminder: ${reminders[0].split('.')[0]}`
+  const only = reminders.length === 1 && !updates.length && !summary ? reminders[0] : null;
+  const subject = only
+    ? (typeof only === 'string' ? `Reminder: ${only.split('.')[0]}` : `Tomorrow: ${textOf(only).split(' is tomorrow')[0]}. Pick a time`)
     : `${household}: ${[reminders.length && `${reminders.length} reminder${reminders.length > 1 ? 's' : ''}`,
       updates.length && `${updates.length} update${updates.length > 1 ? 's' : ''}`, summary && 'your day'].filter(Boolean).join(', ')}`;
-  const body = sections.map(([title, lines]) => `${title}\n${lines.map((l) => `• ${l}`).join('\n')}`).join('\n\n') + (link ? `\n\nOpen the app: ${link}` : '');
+  const linkOf = (l) => (typeof l === 'string' ? '' : l.link);
+  const plainLine = (l) => `• ${textOf(l)}${linkOf(l) ? `\n  ${l.linkText}: ${l.link}` : ''}`;
+  const body = sections.map(([title, lines]) => `${title}\n${lines.map(plainLine).join('\n')}`).join('\n\n') + (link ? `\n\nOpen the app: ${link}` : '');
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-  const html = sections.map(([title, lines]) => `<h3 style="margin:16px 0 6px;font:600 15px sans-serif;color:#2f6f5e">${esc(title)}</h3><ul style="margin:0;padding-left:18px;font:15px/1.5 sans-serif">${lines.map((l) => `<li>${esc(l)}</li>`).join('')}</ul>`).join('')
-    + (link ? `<p style="margin-top:18px"><a href="${esc(link)}" style="font:600 15px sans-serif;color:#2f6f5e">Open the app</a></p>` : '');
+  const htmlLine = (l) => `<li>${esc(textOf(l))}${linkOf(l) ? ` <a href="${esc(l.link)}" style="color:#24614F;font-weight:600">${esc(l.linkText)}</a>` : ''}</li>`;
+  const html = sections.map(([title, lines]) => `<h3 style="margin:16px 0 6px;font:600 15px sans-serif;color:#24614F">${esc(title)}</h3><ul style="margin:0;padding-left:18px;font:15px/1.5 sans-serif">${lines.map(htmlLine).join('')}</ul>`).join('')
+    + (link ? `<p style="margin-top:18px"><a href="${esc(link)}" style="font:600 15px sans-serif;color:#24614F">Open the app</a></p>` : '');
   MailApp.sendEmail({ to: m.email, subject, body, htmlBody: html, name: household });
 }
 

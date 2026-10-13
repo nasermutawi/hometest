@@ -14,7 +14,9 @@ const html = readFileSync(new URL('../Index.html', import.meta.url), 'utf8');
 
 const shim = `<script>
 const AS = new URLSearchParams(location.search).get('as') || '${owner}';
-window.google = { script: { get run() {
+window.google = { script: {
+  url: { getLocation: (cb) => cb({ parameter: Object.fromEntries(new URLSearchParams(location.search)) }) },
+  get run() {
   let ok = () => {}, fail = () => {};
   const runner = new Proxy({}, { get(_, name) {
     if (name === 'withSuccessHandler') return (f) => { ok = f; return runner; };

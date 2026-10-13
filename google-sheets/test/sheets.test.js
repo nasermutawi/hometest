@@ -35,7 +35,7 @@ test('setup builds the tabs, adds the owner as a member and installs the timers'
   gas.context.setup();
   assert.equal(gas.rows('Members').length, 1);
   assert.equal(gas.triggers.length, 2);
-  assert.equal(gas.rows('Settings').length, 5);
+  assert.equal(gas.rows('Settings').length, 7);
 });
 
 test('a second person joins from the app; people without sheet access are told why', () => {
@@ -290,6 +290,156 @@ test('the recent conversation is sent with each message, so follow-ups make sens
   assert.match(sent, /Assistant: Which day should it be\?/);
   assert.match(sent, /Person: add a bin collection reminder/);
   assert.match(sent, /Message from Naser:\nThursday/);
+});
+
+// ---- Speaking tasks in, owners, undo, voice edits and the evening nudge
+
+const captured = (state) => state.tasks.filter((t) => state.captured.includes(t.id));
+
+test('one recording becomes separate tasks; follow-on sentences stay with their task', () => {
+  const gas = household();
+  const tasks = captured(gas.call(NASER, 'capture',
+    'On Friday I need to pick up the dry cleaning and buy a present for Mum. Get a haircut on Saturday at 3. Also we need to book the dentist'));
+  assert.deepEqual(tasks.map((t) => [t.title, t.dueDate, t.time, t.owner]), [
+    ['Pick up the dry cleaning', '2026-10-16', '', 'Naser'],
+    ['Buy a present for Mum', '2026-10-16', '', 'Naser'],
+    ['Get a haircut', '2026-10-17', '15:00', ''],
+    ['Book the dentist', '', '', 'Shared'],
+  ]);
+  assert.equal(gas.rows('Tasks').length, 4, 'saved straight away');
+
+  const plumber = captured(gas.call(NASER, 'capture',
+    'Plumber coming Thursday at 10am to fix the kitchen leak, Sara to handle it. We need to empty the cupboard under the sink before they arrive'));
+  assert.equal(plumber.length, 1);
+  assert.equal(plumber[0].owner, 'Sara');
+  assert.equal(plumber[0].prep[0].title, 'Empty the cupboard under the sink');
+  assert.throws(() => gas.call(NASER, 'capture', '   '), /Nothing to save/);
+});
+
+test('who owns a spoken task: me, you, we, a name, or nobody yet', () => {
+  const gas = household();
+  const ownerOf = (who, text) => captured(gas.call(who, 'capture', text))[0].owner;
+  assert.equal(ownerOf(NASER, 'I need to renew the car insurance by Friday'), 'Naser');
+  assert.equal(ownerOf(NASER, 'remind me to call the bank tomorrow'), 'Naser');
+  assert.equal(ownerOf(NASER, 'can you call the council about the bins tomorrow'), 'Sara');
+  assert.equal(ownerOf(SARA, 'could you take the car for its MOT on Monday'), 'Naser');
+  assert.equal(ownerOf(SARA, "let's clean the garage this weekend"), 'Shared');
+  assert.equal(ownerOf(NASER, 'we need to book the dentist'), 'Shared');
+  assert.equal(ownerOf(SARA, 'Naser to fix the shelf on Sunday'), 'Naser');
+  assert.equal(ownerOf(SARA, 'go to the doctor next Monday'), '', 'nothing said: unassigned');
+  assert.equal(ownerOf(SARA, 'buy a present for my mum on Friday'), '', '"my" alone does not decide');
+
+  const rows = gas.rows('Tasks');
+  assert.equal(rows.find((r) => r.Task === 'Clean the garage').Owner, 'Shared');
+  assert.equal(rows.find((r) => r.Task === 'Go to the doctor').Owner, 'Unassigned');
+});
+
+test('the sheet accepts Shared and Unassigned, and older "Anyone" rows still read as unassigned', () => {
+  const gas = household();
+  gas.call(NASER, 'saveTask', { title: 'Paint the fence', dueDate: '2026-10-20', owner: 'Shared' });
+  assert.equal(gas.rows('Tasks')[0].Owner, 'Shared');
+  gas.edit(SARA, 'Tasks', 2, 'Owner', 'Anyone');
+  assert.equal(gas.call(NASER, 'getState').tasks[0].owner, '');
+  gas.edit(SARA, 'Tasks', 2, 'Owner', 'Unassigned');
+  assert.equal(gas.call(NASER, 'getState').tasks[0].owner, '');
+  assert.throws(() => gas.call(NASER, 'saveTask', { title: 'X', owner: 'Bob' }), /isn't in the Members tab/);
+});
+
+test('undo right after saving removes the tasks without telling the other person', () => {
+  const gas = household();
+  const state = gas.call(NASER, 'capture', 'Get a haircut on Saturday at 3. Also we need to book the dentist');
+  const after = gas.call(NASER, 'discardCapture', state.captured);
+  assert.equal(after.tasks.length, 0);
+  assert.equal(gas.rows('Tasks').length, 0);
+  gas.context.runScheduledJobs();
+  assert.equal(gas.outbox.length, 0, 'no "added" or "deleted" emails');
+
+  // Once the other person has heard about it, undo is an ordinary delete they hear about too.
+  const later = gas.call(NASER, 'capture', 'we need to book the dentist');
+  gas.context.runScheduledJobs();
+  gas.outbox.length = 0;
+  gas.call(NASER, 'discardCapture', later.captured);
+  gas.advance(5 * 60_000);
+  gas.context.runScheduledJobs();
+  assert.match(gas.outbox[0].body, /Naser deleted "Book the dentist"/);
+});
+
+test('changing a task by voice: only what is said changes, and the app is told what changed', () => {
+  const gas = household();
+  const [dentist] = captured(gas.call(NASER, 'capture', 'we need to book the dentist'));
+  const r = gas.call(NASER, 'editByVoice', dentist.id, 'Make it next Tuesday at 4, and remind me to find the insurance card the day before.');
+  assert.deepEqual(r.edit.changed, ['date', 'time', 'prep']);
+  assert.equal(r.edit.summary, 'Changed the date, the time and the steps.');
+  const t = r.tasks.find((x) => x.id === dentist.id);
+  assert.equal(t.dueDate, '2026-10-13'); // said on Sunday 11 Oct
+  assert.equal(t.time, '16:00');
+  assert.equal(t.owner, 'Shared', 'owner untouched');
+  assert.deepEqual(t.prep.at(-1), { ...t.prep.at(-1), title: 'Find the insurance card', daysBefore: 1 });
+
+  assert.deepEqual(gas.call(SARA, 'editByVoice', dentist.id, "I'll do it").edit.changed, ['owner']);
+  assert.equal(gas.rows('Tasks')[0].Owner, 'Sara');
+  assert.deepEqual(gas.call(SARA, 'editByVoice', dentist.id, 'give it to Naser and make it every month').edit.changed, ['owner', 'repeats']);
+  assert.deepEqual(gas.call(SARA, 'editByVoice', dentist.id, 'any time is fine').edit.changed, ['time']);
+  assert.match(gas.call(SARA, 'editByVoice', dentist.id, 'banana').edit.summary, /Didn't catch a change/);
+  assert.deepEqual(gas.call(SARA, 'editByVoice', dentist.id, "it's done").edit.changed, ['done']);
+});
+
+test('with a key, Claude splits the recording and reads voice edits', () => {
+  const gas = household();
+  withKey(gas);
+  gas.http.responder = () => ({ status: 200, body: JSON.stringify({ content: [{ type: 'text', text: JSON.stringify({ tasks: [
+    { title: 'Pick up the dry cleaning', due_date: '2026-10-16', owner: 'Naser' },
+    { title: 'Book the dentist', due_date: null, owner: 'Shared' },
+    { title: 'Mystery', owner: 'Bob' },
+  ] }) }] }) });
+  const tasks = captured(gas.call(NASER, 'capture', 'friday i pick up the dry cleaning we need to book the dentist'));
+  assert.deepEqual(tasks.map((t) => [t.title, t.owner]), [['Pick up the dry cleaning', 'Naser'], ['Book the dentist', 'Shared'], ['Mystery', '']]);
+  assert.match(JSON.parse(gas.http.calls[0].opts.payload).system, /"we", "us" or "let's" means "Shared"/);
+
+  gas.http.responder = () => ({ status: 200, body: JSON.stringify({ content: [{ type: 'text', text: JSON.stringify({ due_time: '16:00', add_prep_steps: [{ title: 'Find the insurance card', days_before: 1 }] }) }] }) });
+  const r = gas.call(NASER, 'editByVoice', tasks[1].id, 'make it 4pm and remind me to find the insurance card the day before');
+  assert.deepEqual(r.edit.changed, ['time', 'prep']);
+
+  gas.http.responder = () => ({ status: 500, body: 'down' });
+  const fallback = gas.call(NASER, 'capture', 'we need to clean the windows');
+  assert.equal(captured(fallback)[0].owner, 'Shared');
+  assert.match(fallback.notice, /simple rules/);
+});
+
+test('evening-before nudge: a dated task with no time asks its owner, or both people if shared or unassigned', () => {
+  const gas = household();
+  gas.call(NASER, 'saveTask', { title: 'Pick up the dry cleaning', dueDate: '2026-10-13', owner: 'Naser' });
+  gas.call(NASER, 'saveTask', { title: 'Book the dentist', dueDate: '2026-10-13', owner: 'Shared' });
+  gas.call(NASER, 'saveTask', { title: 'Buy stamps', dueDate: '2026-10-13', owner: '' });
+  gas.call(NASER, 'saveTask', { title: 'Haircut', dueDate: '2026-10-13', time: '15:00', owner: 'Naser', reminders: [] });
+  gas.context.runScheduledJobs();
+  gas.outbox.length = 0;
+
+  gas.clock.now = new Date('2026-10-12T17:01:00Z').getTime(); // Monday 18:01 London
+  gas.context.runScheduledJobs();
+  const toNaser = gas.outbox.find((m) => m.to === NASER);
+  const toSara = gas.outbox.find((m) => m.to === SARA);
+  assert.match(toNaser.body, /"Pick up the dry cleaning" is tomorrow \(Tue 13 Oct\)\. No time set yet\. You're on it\.\n  Pick a time: https:\/\/script\.google\.com\/macros\/s\/test\/exec\?task=1&pick=time/);
+  assert.match(toNaser.body, /"Book the dentist" is tomorrow/);
+  assert.match(toNaser.body, /"Buy stamps" is tomorrow/);
+  assert.doesNotMatch(toSara.body, /dry cleaning/, "only the owner hears about their own task");
+  assert.match(toSara.body, /"Book the dentist" is tomorrow \(Tue 13 Oct\)\. No time set yet\. It's shared\./);
+  assert.match(toSara.body, /"Buy stamps" is tomorrow/);
+  assert.match(toSara.htmlBody, /<a href="https:\/\/script\.google\.com\/macros\/s\/test\/exec\?task=2&amp;pick=time"[^>]*>Pick a time<\/a>/);
+  assert.doesNotMatch(toNaser.body, /Haircut/, 'tasks with a time are not nudged');
+
+  gas.outbox.length = 0;
+  gas.clock.now = new Date('2026-10-13T08:30:00Z').getTime();
+  gas.context.runScheduledJobs();
+  assert.equal(gas.outbox.length, 0, 'no other reminders for tasks without a time, and the nudge is not repeated');
+});
+
+test('quick times come from the Settings tab', () => {
+  const gas = household();
+  assert.deepEqual(gas.call(NASER, 'getState').quickTimes, ['09:00', '13:00', '19:00']);
+  const row = gas.rows('Settings').findIndex((r) => r.Setting === 'Quick times') + 2;
+  gas.sheet('Settings').getRange(row, 2).setValue('8:30, 12:00, 6pm');
+  assert.deepEqual(gas.call(NASER, 'getState').quickTimes, ['08:30', '12:00', '18:00']);
 });
 
 test('Parser.gs is up to date with the Node parsers', () => {
