@@ -101,6 +101,23 @@ function setup() {
   return 'Setup complete';
 }
 
+/** Run this from the script editor if the app won't open: the log says what the app would see. */
+function checkSetup() {
+  const state = getState();
+  if (state.error) {
+    console.log(`Problem: ${state.message}`);
+    return;
+  }
+  console.log(`Signed in as: ${state.email}`);
+  console.log(`In the Members tab: ${state.me ? `yes, as ${state.me.name}` : 'not yet (the app will ask for a name)'}`);
+  console.log(`Members: ${state.members.map((m) => `${m.name} <${m.email}>`).join(', ') || 'none'}`);
+  console.log(`Tasks: ${state.tasks.length}`);
+  console.log(`App link: ${state.household.appUrl || '(not deployed yet)'}`);
+  const triggers = ScriptApp.getProjectTriggers().map((t) => t.getHandlerFunction());
+  console.log(`Timers: ${triggers.join(', ') || 'none. Run setup.'}`);
+  console.log('The server side works. If the app still will not open, the problem is in the browser: see the guide.');
+}
+
 function ensureSheet_(ss, name, headers) {
   let sh = ss.getSheetByName(name);
   if (!sh) sh = ss.insertSheet(name);

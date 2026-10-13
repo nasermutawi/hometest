@@ -457,6 +457,16 @@ test('the script asks only for this spreadsheet, not all of them', () => {
   assert.ok(!manifest.oauthScopes.includes('https://www.googleapis.com/auth/spreadsheets'));
 });
 
+test('checkSetup reports what the app would see', () => {
+  const gas = household();
+  const lines = [];
+  const log = gas.context.console.log;
+  gas.context.console.log = (m) => lines.push(m);
+  try { gas.as(NASER); gas.context.checkSetup(); } finally { gas.context.console.log = log; }
+  assert.match(lines.join('\n'), /Signed in as: naser@example.com\nIn the Members tab: yes, as Naser\nMembers: Naser <naser@example.com>, Sara <sara@example.com>/);
+  assert.match(lines.join('\n'), /Timers: runScheduledJobs, onSheetEdit|Timers: onSheetEdit, runScheduledJobs/);
+});
+
 test('Parser.gs is up to date with the Node parsers', () => {
   const before = readFileSync(new URL('../Parser.gs', import.meta.url), 'utf8');
   execFileSync(process.execPath, ['--no-warnings', new URL('../build-parser.mjs', import.meta.url).pathname]);
