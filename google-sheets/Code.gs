@@ -899,16 +899,21 @@ const CLAUDE_MODEL = 'claude-opus-5-5';
 const CHAT_HISTORY_MESSAGES = 6;
 const OPERATION_TYPES = ['create', 'complete', 'reopen', 'reschedule', 'assign', 'unassign', 'rename', 'add_note', 'list'];
 
-// How a task is described to Claude; shared by the chat, capture and edit prompts.
-const DRAFT_FIELDS = `{"title" (short, starting with a verb), "due_date" (YYYY-MM-DD or null), "due_time" (HH:MM 24h, or null when no time was said), "owner" (see Owners), "repeats" (one of: Never, Daily, Weekly, Every 2 weeks, Monthly, Quarterly, Every 6 months, Yearly), "category" (one of: ${CATEGORIES.join(', ')}), "notes" (phone numbers, names, quotes from the message, or ""), "prep_steps" ([{"title", "days_before"}]: things to do beforehand, only when clearly needed, usually 0 to 4), "reminders_minutes_before" (e.g. [1440, 60])}`;
+// How a task is described to Claude; shared by the chat, capture and edit prompts. These are
+// functions, not constants, because they use CATEGORIES from Parser.gs, which Apps Script
+// loads after this file.
+function draftFields_() {
+  return `{"title" (short, starting with a verb), "due_date" (YYYY-MM-DD or null), "due_time" (HH:MM 24h, or null when no time was said), "owner" (see Owners), "repeats" (one of: Never, Daily, Weekly, Every 2 weeks, Monthly, Quarterly, Every 6 months, Yearly), "category" (one of: ${CATEGORIES.join(', ')}), "notes" (phone numbers, names, quotes from the message, or ""), "prep_steps" ([{"title", "days_before"}]: things to do beforehand, only when clearly needed, usually 0 to 4), "reminders_minutes_before" (e.g. [1440, 60])}`;
+}
 
 const OWNER_RULES = `Owners: a member's exact name when they are named; "I", "me" or "I'll" means the person speaking; "you" means the other member (two-person household); "we", "us" or "let's" means "Shared"; when nothing says who, use null (unassigned). Possessives like "my mum" or "our car" don't decide the owner.`;
 
-const CHAT_SYSTEM_PROMPT = `You are the assistant inside a shared household task app. Household members message you to manage their shared tasks. Reply with ONLY a JSON object, no other text, in this shape:
+function chatPrompt_() {
+  return `You are the assistant inside a shared household task app. Household members message you to manage their shared tasks. Reply with ONLY a JSON object, no other text, in this shape:
 {"operations": [ ... ], "message": "..."}
 
 Operations (use only these types):
-- "create": a new task. Put its details in "draft": ${DRAFT_FIELDS}.
+- "create": a new task. Put its details in "draft": ${draftFields_()}.
 - "complete" or "reopen": task_id.
 - "reschedule": task_id, plus due_date and/or due_time for the new value (null keeps the current one).
 - "assign": task_id and owner (exact member name, or "Shared" for both of them). "I", "me" and "mine" mean the person speaking.
@@ -920,18 +925,23 @@ ${OWNER_RULES}
 Use only the task ids listed. Resolve relative dates ("next Tuesday", "in two weeks") from the current local date. If the message refers to the task being discussed ("it", "that one", "the reminder"), use the current task. If you can't tell which task is meant, or a needed detail is missing (such as the date for a new task), return no operations and ask one short question in "message". For questions about the list, answer in "message" and return no operations.
 
 "message" is read on a phone and may be read aloud: keep it to one or two short, friendly sentences, addressed to the person who sent the message. Never invent tasks or members.`;
+}
 
-const CAPTURE_SYSTEM_PROMPT = `You turn what a household member said (often dictated, without punctuation) into tasks for a shared household task app. Reply with ONLY a JSON object, no other text: {"tasks": [ ... ]}, each task being ${DRAFT_FIELDS}.
+function capturePrompt_() {
+  return `You turn what a household member said (often dictated, without punctuation) into tasks for a shared household task app. Reply with ONLY a JSON object, no other text: {"tasks": [ ... ]}, each task being ${draftFields_()}.
 
 Several separate things become separate tasks. Make one task with prep steps only when the person clearly describes one main task and the steps for it. Keep their wording for titles, tidied into a short instruction. Resolve relative dates from the current local date; leave due_date null if no day was said. Never ask questions and never invent details.
 
 ${OWNER_RULES}`;
+}
 
-const EDIT_SYSTEM_PROMPT = `A household member is changing one task in a shared task app by voice. Reply with ONLY a JSON object, no other text, holding only what they asked to change:
+function editPrompt_() {
+  return `A household member is changing one task in a shared task app by voice. Reply with ONLY a JSON object, no other text, holding only what they asked to change:
 {"title", "due_date" (YYYY-MM-DD, or "" to remove the date), "due_time" (HH:MM 24h, or "" for any time), "owner" (see Owners; "" to unassign), "repeats" (Never, Daily, Weekly, Every 2 weeks, Monthly, Quarterly, Every 6 months or Yearly), "add_note", "add_prep_steps" ([{"title", "days_before"}]), "done" (true or false)}
 Leave out everything they didn't mention. "Remind me to X the day before" is a prep step with days_before 1. "At 4" means 16:00 unless they say morning. Resolve relative dates from the current local date.
 
 ${OWNER_RULES}`;
+}
 
 function claudeKey_() {
   return PropertiesService.getScriptProperties().getProperty(CLAUDE_KEY_PROPERTY) || '';
@@ -999,7 +1009,7 @@ function askClaude_({ text, speaker, members, tasks, contextTaskId, now, history
     history.length ? `Recent conversation:\n${history.map((h) => `${h.role === 'user' ? 'Person' : 'Assistant'}: ${h.content}`).join('\n')}` : '',
     `Message from ${speaker}:\n${text}`,
   ].filter(Boolean).join('\n\n');
-  return parseChatPlan_(callClaude_(CHAT_SYSTEM_PROMPT, content), tasks);
+  return parseChatPlan_(callClaude_(chatPrompt_(), content), tasks);
 }
 
 /** One request to Claude; returns its text. Throws on any failure so callers can fall back to the rules. */
@@ -1043,7 +1053,7 @@ function claudeContext_(speaker) {
 
 /** Claude's split of a recording into task drafts. */
 function askClaudeCapture_(text, speaker) {
-  const raw = jsonIn_(callClaude_(CAPTURE_SYSTEM_PROMPT, `${claudeContext_(speaker)}\n\nWhat ${speaker} said:\n${text}`));
+  const raw = jsonIn_(callClaude_(capturePrompt_(), `${claudeContext_(speaker)}\n\nWhat ${speaker} said:\n${text}`));
   const drafts = (Array.isArray(raw.tasks) ? raw.tasks : []).map(cleanDraft_).filter((d) => d.title);
   if (!drafts.length) throw new Error('no tasks in the reply');
   return drafts;
@@ -1052,7 +1062,7 @@ function askClaudeCapture_(text, speaker) {
 /** Claude's reading of a spoken change to one task, in the shape editFromRules_ returns. */
 function askClaudeEdit_(text, task, speaker) {
   const current = `Task: ${describeTask_(task)}${task.prep.length ? `. Prep steps: ${task.prep.map((p) => p.title).join('; ')}` : ''}`;
-  const raw = jsonIn_(callClaude_(EDIT_SYSTEM_PROMPT, `${claudeContext_(speaker)}\n\n${current}\n\nWhat ${speaker} said:\n${text}`));
+  const raw = jsonIn_(callClaude_(editPrompt_(), `${claudeContext_(speaker)}\n\n${current}\n\nWhat ${speaker} said:\n${text}`));
   const change = { addPrep: [] };
   if (typeof raw.title === 'string' && raw.title.trim()) change.title = raw.title.trim().slice(0, 200);
   if (typeof raw.due_date === 'string') change.dueDate = dateStr_(raw.due_date);

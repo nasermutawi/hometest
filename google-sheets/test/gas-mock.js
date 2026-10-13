@@ -214,8 +214,10 @@ export function createGas({ timeZone = 'Europe/London', owner = 'naser@example.c
     HtmlService: { createHtmlOutputFromFile: () => chainable({}) },
   };
   vm.createContext(context);
-  vm.runInContext(readFileSync(join(dir, 'Parser.gs'), 'utf8'), context, { filename: 'Parser.gs' });
+  // Same order as the Apps Script editor: Code.gs first, so nothing at the top level of Code.gs
+  // may use names from Parser.gs.
   vm.runInContext(readFileSync(join(dir, 'Code.gs'), 'utf8'), context, { filename: 'Code.gs' });
+  vm.runInContext(readFileSync(join(dir, 'Parser.gs'), 'utf8'), context, { filename: 'Parser.gs' });
 
   const gas = {
     context,

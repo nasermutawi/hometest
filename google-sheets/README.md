@@ -50,7 +50,7 @@ Use two Google accounts, each in its own browser profile or one in a private (in
 2. In the script editor, click the gear icon (Project Settings), then **Script Properties → Add script property**. Name it `ANTHROPIC_API_KEY` and paste the key.
 3. Open the app and approve the "connect to an external service" permission when Google asks. **Settings → More** says which one is in use.
 
-Claude's instructions are the `CAPTURE_SYSTEM_PROMPT`, `EDIT_SYSTEM_PROMPT` and `CHAT_SYSTEM_PROMPT` constants in `Code.gs`. Its answers are checked before anything changes (unknown people become Unassigned, unknown tasks and actions are dropped), and a failed request falls back to the simple rules. The model is set in `CLAUDE_MODEL`.
+Claude's instructions are in `capturePrompt_`, `editPrompt_` and `chatPrompt_` in `Code.gs`. Its answers are checked before anything changes (unknown people become Unassigned, unknown tasks and actions are dropped), and a failed request falls back to the simple rules. The model is set in `CLAUDE_MODEL`.
 
 ## Limits
 
