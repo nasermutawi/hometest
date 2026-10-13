@@ -50,6 +50,9 @@ test('personal links: the owner gets one, adds a partner, and each key acts as i
   assert.match(link, /^https:\/\/nasermutawi\.github\.io\/hometest\/#s=https%3A%2F%2Fscript\.google\.com%2Fmacros%2Fs%2Fabc%2Fexec&k=[0-9a-f]{64}$/);
   const naserKey = link.split('&k=')[1];
   assert.equal(gas.context.myLink(), link, 'the same link each time');
+  const mail = gas.outbox.find((m) => /your personal app link/.test(m.subject));
+  assert.equal(mail.to, NASER);
+  assert.ok(mail.body.includes(link) && mail.htmlBody.includes(`href="${link}"`), 'the link is emailed too');
 
   const state = gas.api(naserKey, 'getState');
   assert.equal(state.ok, true);

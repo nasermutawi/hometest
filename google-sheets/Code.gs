@@ -669,6 +669,18 @@ function myLink() {
   if (!me) throw new Error('Run setup first.');
   const link = personalLink_(me.email, false);
   console.log(`Your personal link. Open it on your phone, and keep it to yourself: it works like a password.\n\n${link}`);
+  // Also emailed to you, because copying from the log is fiddly on a phone.
+  const household = getSetting_('Household name') || 'Household';
+  MailApp.sendEmail({
+    to: me.email,
+    subject: `${household}: your personal app link`,
+    body: `Tap this link on your phone to open the app as ${me.name}:\n\n${link}\n\nThen add it to your home screen. Keep it to yourself: it works like a password.`,
+    htmlBody: `<p style="font:15px/1.5 sans-serif">Tap this button on your phone to open the app as ${me.name}:</p>`
+      + `<p><a href="${link}" style="display:inline-block;padding:12px 20px;border-radius:12px;background:#24614F;color:#fff;font:600 16px sans-serif;text-decoration:none">Open ${household}</a></p>`
+      + '<p style="font:14px/1.5 sans-serif;color:#5F6B65">Then add it to your home screen. Keep this email to yourself: the link works like a password.</p>',
+    name: household,
+  });
+  console.log(`Also emailed to ${me.email}.`);
   return link;
 }
 
