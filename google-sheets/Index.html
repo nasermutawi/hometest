@@ -513,12 +513,26 @@ const icon = (id, size) => `<svg width="${size}" height="${size}" aria-hidden="t
 const SHARED = 'Shared';
 const AUTO_SAVE_SECONDS = 5;
 
-// google.script.run as promises.
-function run(fn, ...args) {
+// google.script.run as promises. A dropped connection ("NetworkError … HTTP0") is retried once.
+const isNetworkError = (err) => /NetworkError|HTTP ?0|Failed to fetch/i.test(err && err.message);
+function runOnce(fn, args) {
   return new Promise((resolve, reject) => {
     google.script.run.withSuccessHandler(resolve)
       .withFailureHandler((err) => reject(err instanceof Error ? err : new Error(String((err && err.message) || err))))[fn](...args);
   });
+}
+async function run(fn, ...args) {
+  try {
+    return await runOnce(fn, args);
+  } catch (err) {
+    if (!isNetworkError(err)) throw err;
+    await new Promise((r) => setTimeout(r, 1500));
+    try {
+      return await runOnce(fn, args);
+    } catch (again) {
+      throw isNetworkError(again) ? new Error("Couldn't reach Google. Check your connection and try again.") : again;
+    }
+  }
 }
 
 const state = { data: null, view: 'capture', filter: 'all', detailId: null, reviewIds: [], lastEdit: null, deepLinked: false };
@@ -621,11 +635,15 @@ window.addEventListener('error', (e) => {
   show('v-blocked');
 });
 
+const NETWORK_HELP = "Couldn't reach Google. If you opened this from a home-screen icon on an iPhone, open the link in Safari or Chrome instead (see the setup guide). Otherwise check your connection and reload.";
+
 async function load() {
   try {
     apply(await run('getState'));
   } catch (err) {
-    $('#blocked-msg').textContent = err.message;
+    // Once the app is showing, a failed background refresh just waits for the next one.
+    if (state.data && state.data.me) return;
+    $('#blocked-msg').textContent = /reach Google/.test(err.message) ? NETWORK_HELP : err.message;
     show('v-blocked');
   }
 }

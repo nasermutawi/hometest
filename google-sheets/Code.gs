@@ -60,6 +60,7 @@ const NO_TIME_DEFAULT = '09:00';
 
 /** Run this once from the Apps Script editor. Safe to run again. */
 function setup() {
+  fresh_();
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const tasks = ensureSheet_(ss, TASKS, TASK_COLUMNS);
   const members = ensureSheet_(ss, MEMBERS, MEMBER_COLUMNS);
@@ -78,6 +79,7 @@ function setup() {
   if (email && !findMember_(email)) {
     const name = email.split('@')[0].replace(/[._\d]+/g, ' ').trim().split(' ')[0] || 'Me';
     members.appendRow([name.charAt(0).toUpperCase() + name.slice(1), email, 'Yes', 'Yes', 'No', 'Yes']);
+    delete cache_.members;
   }
 
   formatTasks_(tasks);
@@ -103,6 +105,7 @@ function setup() {
 
 /** Run this from the script editor if the app won't open: the log says what the app would see. */
 function checkSetup() {
+  fresh_();
   const state = getState();
   if (state.error) {
     console.log(`Problem: ${state.message}`);
@@ -219,14 +222,22 @@ function withLock_(fn) {
 
 // ---------------------------------------------------------------- Settings & members
 
+// Each call from the app is a separate run of the script. Within one run, the Settings and
+// Members tabs are read once and remembered; every public function starts with a fresh slate.
+let cache_ = {};
+function fresh_() { cache_ = {}; }
+
 function getSetting_(key) {
-  const sh = ss_().getSheetByName(SETTINGS);
-  if (!sh || sh.getLastRow() < 2) return '';
-  const row = sh.getRange(2, 1, sh.getLastRow() - 1, 2).getValues().find((r) => String(r[0]) === key);
+  if (!cache_.settings) {
+    const sh = ss_().getSheetByName(SETTINGS);
+    cache_.settings = !sh || sh.getLastRow() < 2 ? [] : sh.getRange(2, 1, sh.getLastRow() - 1, 2).getValues();
+  }
+  const row = cache_.settings.find((r) => String(r[0]) === key);
   return row ? String(row[1]).trim() : '';
 }
 
 function removeSetting_(key) {
+  delete cache_.settings;
   const sh = sheet_(SETTINGS);
   const rows = sh.getLastRow() > 1 ? sh.getRange(2, 1, sh.getLastRow() - 1, 1).getValues() : [];
   const i = rows.findIndex((r) => String(r[0]) === key);
@@ -234,6 +245,7 @@ function removeSetting_(key) {
 }
 
 function setSetting_(key, value) {
+  delete cache_.settings;
   const sh = sheet_(SETTINGS);
   const rows = sh.getLastRow() > 1 ? sh.getRange(2, 1, sh.getLastRow() - 1, 1).getValues() : [];
   const i = rows.findIndex((r) => String(r[0]) === key);
@@ -244,6 +256,11 @@ function setSetting_(key, value) {
 const yes_ = (v) => /^(yes|y|true|1)$/i.test(String(v).trim());
 
 function members_() {
+  if (!cache_.members) cache_.members = readMembers_();
+  return cache_.members;
+}
+
+function readMembers_() {
   return table_(MEMBERS).rows.filter((r) => String(r.Name).trim()).map((r) => ({
     row: r._row,
     name: String(r.Name).trim(),
@@ -557,6 +574,7 @@ function doGet() {
 
 /** Everything the app needs to draw itself. */
 function getState() {
+  fresh_();
   const email = Session.getActiveUser().getEmail();
   if (!email) {
     return { error: 'signin', message: 'Open this app from the link that ends in /exec while signed in to Google.' };
@@ -611,6 +629,7 @@ function prefsOf_(m) {
 
 /** Adds the signed-in person to the Members tab. */
 function joinHousehold(name) {
+  fresh_();
   const email = Session.getActiveUser().getEmail();
   const clean = String(name || '').trim().slice(0, 40);
   if (!clean) throw new Error('Enter your first name.');
@@ -618,6 +637,7 @@ function joinHousehold(name) {
     if (findMember_(email)) return getState();
     if (memberByName_(clean)) throw new Error(`Someone called ${clean} is already in the household. Add an initial, e.g. "${clean} B".`);
     sheet_(MEMBERS).appendRow([clean, email, 'Yes', 'Yes', 'No', 'Yes']);
+    delete cache_.members;
     refreshOwnerChoices_();
     log_(clean, 'joined', null, '');
     return getState();
@@ -625,14 +645,17 @@ function joinHousehold(name) {
 }
 
 function savePreferences(prefs) {
+  fresh_();
   const me = requireMember_();
   const yn = (v) => (v ? 'Yes' : 'No');
+  delete cache_.members;
   sheet_(MEMBERS).getRange(me.row, 3, 1, 4).setValues([[yn(prefs.emailReminders), yn(prefs.emailUpdates), yn(prefs.morningSummary), yn(prefs.calendarInvites)]]);
   return getState();
 }
 
 /** Turns a sentence into a draft task (nothing is saved). */
 function parseText(text) {
+  fresh_();
   const me = requireMember_();
   return draftFromRules_(String(text || ''), me.name);
 }
@@ -646,6 +669,7 @@ const MAX_CAPTURED = 12;
  * lost if the phone is put away. The app then offers Review, and Undo (discardCapture).
  */
 function capture(text) {
+  fresh_();
   const me = requireMember_();
   const message = String(text || '').trim().slice(0, 3000);
   if (!message) throw new Error('Nothing to save yet. Say or type what needs doing.');
@@ -670,6 +694,7 @@ function capture(text) {
 
 /** Undo for capture: removes those tasks. If the other person hasn't been emailed yet, it's as if they never existed. */
 function discardCapture(ids) {
+  fresh_();
   const me = requireMember_();
   const wanted = new Set((ids || []).map(Number));
   withLock_(() => {
@@ -751,6 +776,7 @@ function speechOwner_(text, speaker) {
 
 /** Applies a spoken change ("make it Tuesday at 4", "give it to Sara") to one task. */
 function editByVoice(id, text) {
+  fresh_();
   const me = requireMember_();
   const message = String(text || '').trim().slice(0, 1000);
   if (!message) throw new Error("Didn't catch anything. Try again.");
@@ -871,12 +897,14 @@ function cleanOwnerOrKeep_(owner, current) {
 }
 
 function saveTask(data) {
+  fresh_();
   const me = requireMember_();
   withLock_(() => (data.id ? updateTask_(data.id, data, me.name) : createTask_(data, me.name)));
   return getState();
 }
 
 function setTaskDone(id, done) {
+  fresh_();
   const me = requireMember_();
   const t = withLock_(() => setDone_(taskById_(id), Boolean(done), me.name));
   const state = getState();
@@ -885,6 +913,7 @@ function setTaskDone(id, done) {
 }
 
 function setPrepDone(id, index, done) {
+  fresh_();
   requireMember_();
   withLock_(() => {
     const t = taskById_(id);
@@ -897,12 +926,14 @@ function setPrepDone(id, index, done) {
 }
 
 function deleteTask(id) {
+  fresh_();
   const me = requireMember_();
   withLock_(() => deleteTask_(id, me.name));
   return getState();
 }
 
 function getActivity() {
+  fresh_();
   requireMember_();
   const rows = table_(ACTIVITY).rows.slice(-40).reverse();
   return rows.map((a) => ({ when: a.When instanceof Date ? fmt_(a.When, 'EEE d MMM, HH:mm') : '', text: describeActivity_(a, null) }));
@@ -966,6 +997,7 @@ function claudeKey_() {
 
 /** Handles a chat message such as "done", "I'll take the gutters" or "move it to Friday". */
 function chat(text) {
+  fresh_();
   const me = requireMember_();
   const userProps = PropertiesService.getUserProperties();
   const context = JSON.parse(userProps.getProperty('chatContext') || '{}');
@@ -1229,6 +1261,7 @@ function byDue_(a, b) {
 
 /** Installed by setup(): reacts to edits typed straight into the Tasks or Members tab. */
 function onSheetEdit(e) {
+  fresh_();
   const sh = e.range.getSheet();
   if (sh.getName() === MEMBERS) { refreshOwnerChoices_(); return; }
   if (sh.getName() !== TASKS) return;
@@ -1268,6 +1301,7 @@ function onSheetEdit(e) {
 
 /** Runs every 5 minutes (installed by setup). */
 function runScheduledJobs() {
+  fresh_();
   withLock_(() => {
     const props = PropertiesService.getScriptProperties();
     const now = new Date();
