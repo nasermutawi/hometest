@@ -50,7 +50,7 @@ function parseNow(now) {
 }
 
 function fmt(d) { return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}`; }
-function addDays(d, n) { return new Date(d.getTime() + n * 86400_000); }
+function addDays(d, n) { return new Date(d.getTime() + n * 86400000); }
 
 function findDate(text, today) {
   const t = text.toLowerCase();
@@ -60,7 +60,8 @@ function findDate(text, today) {
   if (/\b(today|tonight|this (morning|afternoon|evening))\b/.test(t)) return fmt(today);
   if (/\btomorrow\b/.test(t)) return fmt(addDays(today, 1));
   if ((m = /\bin (\d+|a|one|two|three) (day|week)s?\b/.exec(t))) {
-    const n = { a: 1, one: 1, two: 2, three: 3 }[m[1]] ?? +m[1];
+    const words = { a: 1, one: 1, two: 2, three: 3 };
+    const n = m[1] in words ? words[m[1]] : +m[1];
     return fmt(addDays(today, m[2] === 'week' ? n * 7 : n));
   }
   if (/\bnext week\b/.test(t)) return fmt(addDays(today, 7));
@@ -93,7 +94,7 @@ function findTime(text) {
   if ((m = /\b(\d{1,2})(?::(\d{2}))?\s*(am|pm)\b/.exec(t))) {
     let h = +m[1] % 12;
     if (m[3] === 'pm') h += 12;
-    return `${pad(h)}:${m[2] ?? '00'}`;
+    return `${pad(h)}:${m[2] !== undefined ? m[2] : '00'}`;
   }
   if ((m = /\bat (\d{1,2}):(\d{2})\b/.exec(t))) return `${pad(+m[1])}:${m[2]}`;
   if (/\bnoon|midday|lunchtime\b/.test(t)) return '12:00';
@@ -215,7 +216,7 @@ function parseWithRules({ text, now, members, speaker, history = [] }) {
 
   const sameDayErrand = ['shopping', 'cleaning'].includes(category);
   return {
-    title: cleanTitle(clauses[0] ?? text, members),
+    title: cleanTitle(clauses.length ? clauses[0] : text, members),
     notes: '',
     category: CATEGORIES.includes(category) ? category : 'other',
     due_date,
@@ -249,7 +250,7 @@ function matchTask(text, tasks) {
     const score = words(t.title).filter((w) => said.has(w) || said.has(w.replace(/s$/, ''))).length;
     if (score > bestScore) { best = t; bestScore = score; }
   }
-  return best?.id ?? null;
+  return best ? best.id : null;
 }
 
 function interpretWithRules({ text, speaker, members, tasks, contextTaskId, now }) {
@@ -264,7 +265,8 @@ function interpretWithRules({ text, speaker, members, tasks, contextTaskId, now 
   const create = /^(?:add|new(?: task)?|create|remind (?:me|us) to)\s*[:-]?\s*(.+)$/i.exec(t);
   if (create) return plan([op('create', { text: /^remind/i.test(t) ? t : create[1] })]);
 
-  const taskId = matchTask(t, tasks) ?? contextTaskId;
+  const matched = matchTask(t, tasks);
+  const taskId = matched !== null ? matched : contextTaskId;
   const needTask = (operation) => (taskId ? plan([{ ...operation, task_id: taskId }]) : plan([], 'Which task do you mean? Say part of its name, or reply to one of my reminders.'));
 
   if (/\b(not done|undo|reopen)\b/.test(lower)) return needTask(op('reopen'));

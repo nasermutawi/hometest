@@ -20,7 +20,7 @@ function matchTask(text, tasks) {
     const score = words(t.title).filter((w) => said.has(w) || said.has(w.replace(/s$/, ''))).length;
     if (score > bestScore) { best = t; bestScore = score; }
   }
-  return best?.id ?? null;
+  return best ? best.id : null;
 }
 
 export function interpretWithRules({ text, speaker, members, tasks, contextTaskId, now }) {
@@ -35,7 +35,8 @@ export function interpretWithRules({ text, speaker, members, tasks, contextTaskI
   const create = /^(?:add|new(?: task)?|create|remind (?:me|us) to)\s*[:-]?\s*(.+)$/i.exec(t);
   if (create) return plan([op('create', { text: /^remind/i.test(t) ? t : create[1] })]);
 
-  const taskId = matchTask(t, tasks) ?? contextTaskId;
+  const matched = matchTask(t, tasks);
+  const taskId = matched !== null ? matched : contextTaskId;
   const needTask = (operation) => (taskId ? plan([{ ...operation, task_id: taskId }]) : plan([], 'Which task do you mean? Say part of its name, or reply to one of my reminders.'));
 
   if (/\b(not done|undo|reopen)\b/.test(lower)) return needTask(op('reopen'));

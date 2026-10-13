@@ -442,6 +442,14 @@ test('quick times come from the Settings tab', () => {
   assert.deepEqual(gas.call(NASER, 'getState').quickTimes, ['08:30', '12:00', '18:00']);
 });
 
+test('the .gs files only use syntax the Apps Script editor accepts', () => {
+  for (const file of ['Parser.gs', 'Code.gs']) {
+    const code = readFileSync(new URL(`../${file}`, import.meta.url), 'utf8');
+    assert.doesNotMatch(code, /\d_\d/, `${file}: numeric separators like 86400_000`);
+    assert.doesNotMatch(code, /\?\?|\?\.(?![\d])|\|\|=|&&=/, `${file}: ?? ?. ||= or &&=`);
+  }
+});
+
 test('Parser.gs is up to date with the Node parsers', () => {
   const before = readFileSync(new URL('../Parser.gs', import.meta.url), 'utf8');
   execFileSync(process.execPath, ['--no-warnings', new URL('../build-parser.mjs', import.meta.url).pathname]);
