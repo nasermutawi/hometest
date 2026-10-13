@@ -636,6 +636,7 @@ function render() {
   if (state.view === 'detail') renderDetail();
   if (state.view === 'review') renderReview();
   show('v-' + state.view);
+  $('#toast').classList.toggle('lift', state.view === 'tasks');
 }
 
 function attentionHtml(list) {
