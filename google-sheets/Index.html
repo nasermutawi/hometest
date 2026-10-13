@@ -612,6 +612,15 @@ function apply(data) {
   if (!state.deepLinked) openDeepLink();
 }
 
+// If Google never answers, say why instead of loading forever.
+const STUCK_MESSAGE = "Google hasn't answered yet. This usually means more than one Google account is signed in to this browser: open the link in a private (incognito) window signed in to just one account. If it still won't open, the app's code may have an error. In the script editor, the Executions page (on the left) shows it.";
+setTimeout(() => { if (!state.data) { $('#blocked-msg').textContent = STUCK_MESSAGE; show('v-blocked'); } }, 20000);
+window.addEventListener('error', (e) => {
+  if (state.data) return;
+  $('#blocked-msg').textContent = `The page hit an error: ${e.message}`;
+  show('v-blocked');
+});
+
 async function load() {
   try {
     apply(await run('getState'));
