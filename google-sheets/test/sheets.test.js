@@ -450,6 +450,13 @@ test('the .gs files only use syntax the Apps Script editor accepts', () => {
   }
 });
 
+test('the script asks only for this spreadsheet, not all of them', () => {
+  assert.match(readFileSync(new URL('../Code.gs', import.meta.url), 'utf8'), /@OnlyCurrentDoc/);
+  const manifest = JSON.parse(readFileSync(new URL('../appsscript.json', import.meta.url), 'utf8'));
+  assert.ok(manifest.oauthScopes.includes('https://www.googleapis.com/auth/spreadsheets.currentonly'));
+  assert.ok(!manifest.oauthScopes.includes('https://www.googleapis.com/auth/spreadsheets'));
+});
+
 test('Parser.gs is up to date with the Node parsers', () => {
   const before = readFileSync(new URL('../Parser.gs', import.meta.url), 'utf8');
   execFileSync(process.execPath, ['--no-warnings', new URL('../build-parser.mjs', import.meta.url).pathname]);

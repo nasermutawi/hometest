@@ -12,6 +12,9 @@
  *   - a timer (runScheduledJobs) that emails reminders and syncs Google Calendar
  *
  * Functions ending in "_" are private: the web page can't call them.
+ *
+ * @OnlyCurrentDoc  Limits the script to the spreadsheet it's attached to, so Google asks for
+ *                  access to "this spreadsheet" rather than to all of your spreadsheets.
  */
 
 // ---------------------------------------------------------------- Layout
