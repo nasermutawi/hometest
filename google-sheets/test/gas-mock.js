@@ -6,6 +6,7 @@ import vm from 'node:vm';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
+import { randomUUID } from 'node:crypto';
 import { zonedToUtc } from '../../src/time.js';
 
 const dir = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -177,7 +178,7 @@ export function createGas({ timeZone = 'Europe/London', owner = 'naser@example.c
     Utilities: {
       formatDate,
       parseDate,
-      getUuid: () => 'f00dfeedf00dfeedf00dfeedf00dfeed',
+      getUuid: () => randomUUID(),
     },
     Session: {
       getActiveUser: () => ({ getEmail: () => activeUser }),
@@ -211,7 +212,7 @@ export function createGas({ timeZone = 'Europe/London', owner = 'naser@example.c
       MimeType: { JSON: 'application/json' },
       createTextOutput: (content) => chainable({ getContent: () => content }),
     },
-    HtmlService: { createHtmlOutputFromFile: () => chainable({}) },
+    HtmlService: { createHtmlOutputFromFile: () => chainable({}), createHtmlOutput: (html) => chainable({ getContent: () => html }) },
   };
   vm.createContext(context);
   // Same order as the Apps Script editor: Code.gs first, so nothing at the top level of Code.gs
@@ -236,6 +237,12 @@ export function createGas({ timeZone = 'Europe/London', owner = 'naser@example.c
       activeUser = email;
       const out = context[fn](...args);
       return out === undefined ? out : JSON.parse(JSON.stringify(out));
+    },
+    // Calls the app's API the way the GitHub Pages app does (fetch → doPost).
+    api(key, fn, ...args) {
+      activeUser = owner; // the web app runs as the owner
+      const res = context.doPost({ postData: { contents: JSON.stringify({ key, fn, args }) } });
+      return JSON.parse(res.getContent());
     },
     // Simulates someone typing into a cell, then fires the installed onEdit trigger.
     edit(email, sheetName, row, header, value) {

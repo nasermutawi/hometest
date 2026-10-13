@@ -8,7 +8,8 @@
  *   Activity  a log of every change; used to email the other person
  *
  * The script also serves:
- *   - a phone-friendly web app (doGet): speak or type tasks, then manage them
+ *   - a small private API (doPost) for the app, which is a web page hosted on GitHub Pages
+ *     (the docs/ folder). Each person opens it with a personal link that carries their key.
  *   - a timer (runScheduledJobs) that emails reminders and syncs Google Calendar
  *
  * Functions ending in "_" are private: the web page can't call them.
@@ -47,7 +48,8 @@ const DEFAULT_SETTINGS = [
   ['Calendar sync', 'Yes', 'Yes = put tasks with a date in Google Calendar, with alerts, for members who turned on Calendar invites.'],
   ['Quick times', '09:00, 13:00, 19:00', 'The one-tap times the app offers when you pick a time (24-hour clock, comma separated).'],
   ['Evening nudge time', '18:00', 'A task with a date but no time gets an email at this time the day before, asking for a time.'],
-  ['App link', '', 'Filled in automatically the first time someone opens the app.'],
+  ['App address', 'https://nasermutawi.github.io/hometest/', 'Where the app lives (GitHub Pages). Used in personal links and in email links.'],
+  ['Server address', '', 'The web app link from Deploy (ends in /exec). Paste it here if myLink asks for it.'],
 ];
 
 // The Owner column holds a member's name, "Shared" or "Unassigned".
@@ -72,6 +74,7 @@ function setup() {
   const have = new Set(existing.map((r) => String(r[0])));
   DEFAULT_SETTINGS.forEach((row) => { if (!have.has(row[0])) settings.appendRow(row); });
   removeSetting_('Assistant key'); // the old Claude connector key; no longer used
+  removeSetting_('App link'); // replaced by App address
   settings.setColumnWidth(1, 190).setColumnWidth(2, 220).setColumnWidth(3, 520);
 
   // The person running setup becomes the first member.
@@ -115,7 +118,12 @@ function checkSetup() {
   console.log(`In the Members tab: ${state.me ? `yes, as ${state.me.name}` : 'not yet (the app will ask for a name)'}`);
   console.log(`Members: ${state.members.map((m) => `${m.name} <${m.email}>`).join(', ') || 'none'}`);
   console.log(`Tasks: ${state.tasks.length}`);
-  console.log(`App link: ${state.household.appUrl || '(not deployed yet)'}`);
+  console.log(`App address: ${state.household.appUrl}`);
+  try {
+    console.log(`Server address: ${serverAddress_()}`);
+  } catch (err) {
+    console.log(`Server address: ${err.message}`);
+  }
   const triggers = ScriptApp.getProjectTriggers().map((t) => t.getHandlerFunction());
   console.log(`Timers: ${triggers.join(', ') || 'none. Run setup.'}`);
   console.log('The server side works. If the app still will not open, the problem is in the browser: see the guide.');
@@ -284,7 +292,7 @@ function memberByName_(name) {
 
 /** The person using the web app, or null if they aren't in the Members tab yet. */
 function currentMember_() {
-  return findMember_(Session.getActiveUser().getEmail());
+  return findMember_(currentEmail_());
 }
 
 function requireMember_() {
@@ -564,36 +572,151 @@ function deleteTask_(id, actor) {
   sheet_(TASKS).deleteRow(t.row);
 }
 
-// ---------------------------------------------------------------- Web app
+// ---------------------------------------------------------------- The app's private API
+
+// The app (docs/index.html on GitHub Pages) posts {key, fn, args} here. The web app is deployed
+// to run as the sheet's owner and to accept anonymous requests, so the personal key in each
+// request is what says who is asking. Only the functions listed here can be called.
+const API_FUNCTIONS = {
+  getState: () => getState(),
+  savePreferences: (prefs) => savePreferences(prefs),
+  capture: (text) => capture(text),
+  discardCapture: (ids) => discardCapture(ids),
+  editByVoice: (id, text) => editByVoice(id, text),
+  saveTask: (data) => saveTask(data),
+  setTaskDone: (id, done) => setTaskDone(id, done),
+  setPrepDone: (id, index, done) => setPrepDone(id, index, done),
+  deleteTask: (id) => deleteTask(id),
+  getActivity: () => getActivity(),
+  addPerson: (name, email) => addPerson(name, email),
+  linkFor: (name, reset) => linkFor(name, reset),
+};
+
+let actingEmail_ = '';
+
+/** Who is asking: the owner of the key on an API request, or the signed-in Google user otherwise. */
+function currentEmail_() {
+  return actingEmail_ || Session.getActiveUser().getEmail();
+}
+
+function doPost(e) {
+  let out;
+  try {
+    fresh_();
+    const req = JSON.parse((e && e.postData && e.postData.contents) || '{}');
+    const email = emailForKey_(req.key);
+    if (!email) {
+      out = { ok: false, error: 'link', message: "This link doesn't work any more. Ask for a new one: in the app, Settings → People → Send link." };
+    } else if (!Object.prototype.hasOwnProperty.call(API_FUNCTIONS, req.fn)) {
+      out = { ok: false, error: 'unknown', message: 'The app asked for something the server does not know. Update Code.gs.' };
+    } else {
+      actingEmail_ = email;
+      out = { ok: true, result: API_FUNCTIONS[req.fn](...(Array.isArray(req.args) ? req.args : [])) };
+    }
+  } catch (err) {
+    out = { ok: false, error: 'failed', message: err.message };
+  } finally {
+    actingEmail_ = '';
+  }
+  return ContentService.createTextOutput(JSON.stringify(out)).setMimeType(ContentService.MimeType.JSON);
+}
 
 function doGet() {
-  return HtmlService.createHtmlOutputFromFile('Index')
-    .setTitle('Household')
-    .addMetaTag('viewport', 'width=device-width, initial-scale=1, viewport-fit=cover');
+  return HtmlService.createHtmlOutput('<p style="font:16px sans-serif;padding:24px">The Household server is running. '
+    + 'Open the app with your personal link instead. If you don\'t have one, ask the person who set it up.</p>').setTitle('Household');
 }
+
+// Personal keys live in Script Properties, which only people who can edit the script can see.
+function memberKeys_() {
+  return JSON.parse(PropertiesService.getScriptProperties().getProperty('memberKeys') || '{}');
+}
+
+function emailForKey_(key) {
+  if (!key || String(key).length < 24) return '';
+  const keys = memberKeys_();
+  const email = Object.keys(keys).find((e) => keys[e] === String(key));
+  return email && findMember_(email) ? email : '';
+}
+
+function keyFor_(email, reset) {
+  const keys = memberKeys_();
+  if (!keys[email] || reset) {
+    keys[email] = (Utilities.getUuid() + Utilities.getUuid()).replace(/-/g, '');
+    PropertiesService.getScriptProperties().setProperty('memberKeys', JSON.stringify(keys));
+  }
+  return keys[email];
+}
+
+function serverAddress_() {
+  const saved = getSetting_('Server address');
+  if (/^https:\/\/script\.google\.com\/.+\/exec$/.test(saved)) return saved;
+  let url = '';
+  try { url = ScriptApp.getService().getUrl() || ''; } catch (err) { /* not deployed */ }
+  if (/\/exec$/.test(url)) return url;
+  throw new Error('Deploy the web app first (Deploy → New deployment), then paste its link, which ends in /exec, into the Server address row of the Settings tab.');
+}
+
+/** The link that opens the app as this person. Anyone holding it can use the app as them. */
+function personalLink_(email, reset) {
+  const app = getSetting_('App address') || 'https://nasermutawi.github.io/hometest/';
+  return `${app}#s=${encodeURIComponent(serverAddress_())}&k=${keyFor_(email, reset)}`;
+}
+
+/** Run this in the script editor (after deploying) to get your own link. */
+function myLink() {
+  fresh_();
+  const me = findMember_(Session.getEffectiveUser().getEmail());
+  if (!me) throw new Error('Run setup first.');
+  const link = personalLink_(me.email, false);
+  console.log(`Your personal link. Open it on your phone, and keep it to yourself: it works like a password.\n\n${link}`);
+  return link;
+}
+
+/** Adds someone to the household and returns their personal link to send them. */
+function addPerson(name, email) {
+  fresh_();
+  const me = requireMember_();
+  const clean = String(name || '').trim().slice(0, 40);
+  const mail = String(email || '').trim().toLowerCase();
+  if (!clean) throw new Error('Enter their first name.');
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(mail)) throw new Error('Enter their email address. Reminders are sent there.');
+  const link = withLock_(() => {
+    if (findMember_(mail)) throw new Error(`${mail} is already in the household. Use Send link next to their name.`);
+    if (memberByName_(clean) || clean.toLowerCase() === OWNER_SHARED.toLowerCase()) throw new Error(`Someone called ${clean} is already in the household. Add an initial, e.g. "${clean} B".`);
+    sheet_(MEMBERS).appendRow([clean, mail, 'Yes', 'Yes', 'No', 'Yes']);
+    delete cache_.members;
+    refreshOwnerChoices_();
+    log_(clean, 'joined', null, `Added by ${me.name}`);
+    return personalLink_(mail, true);
+  });
+  return { state: getState(), link };
+}
+
+/** A member's link; reset = make a new one, so the old one stops working. */
+function linkFor(name, reset) {
+  fresh_();
+  requireMember_();
+  const m = memberByName_(name);
+  if (!m) throw new Error(`"${name}" isn't in the Members tab.`);
+  return withLock_(() => personalLink_(m.email, Boolean(reset)));
+}
+
+// ---------------------------------------------------------------- What the app shows
 
 /** Everything the app needs to draw itself. */
 function getState() {
   fresh_();
-  const email = Session.getActiveUser().getEmail();
+  const email = currentEmail_();
   if (!email) {
-    return { error: 'signin', message: 'Open this app from the link that ends in /exec while signed in to Google.' };
+    return { error: 'signin', message: 'Open the app with your personal link.' };
   }
-  let sheetUrl;
-  try {
-    sheetUrl = ss_().getUrl();
-  } catch (err) {
-    return { error: 'access', message: `${email} doesn't have access to the household's Google Sheet yet. Ask the owner to share it with you as an Editor.` };
-  }
-  const appLink = ScriptApp.getService().getUrl();
-  if (appLink && !getSetting_('App link')) setSetting_('App link', appLink);
-
+  const sheetUrl = ss_().getUrl();
   const me = findMember_(email);
   const members = members_();
   return {
     me: me ? { name: me.name, email: me.email, prefs: prefsOf_(me) } : null,
     email,
-    household: { name: getSetting_('Household name') || 'Our household', timezone: tz_(), sheetUrl, appUrl: getSetting_('App link') || appLink },
+    household: { name: getSetting_('Household name') || 'Our household', timezone: tz_(), sheetUrl, appUrl: getSetting_('App address') },
     members: members.map((m) => ({ name: m.name, email: m.email })),
     tasks: me ? tasks_().map(clientTask_) : [],
     categories: CATEGORIES,
@@ -630,7 +753,7 @@ function prefsOf_(m) {
 /** Adds the signed-in person to the Members tab. */
 function joinHousehold(name) {
   fresh_();
-  const email = Session.getActiveUser().getEmail();
+  const email = currentEmail_();
   const clean = String(name || '').trim().slice(0, 40);
   if (!clean) throw new Error('Enter your first name.');
   return withLock_(() => {
@@ -999,15 +1122,18 @@ function claudeKey_() {
 function chat(text) {
   fresh_();
   const me = requireMember_();
-  const userProps = PropertiesService.getUserProperties();
-  const context = JSON.parse(userProps.getProperty('chatContext') || '{}');
+  // Kept per person in Script Properties (everyone runs as the owner now).
+  const props = PropertiesService.getScriptProperties();
+  const ck = `chatContext:${me.email}`;
+  const hk = `chatHistory:${me.email}`;
+  const context = JSON.parse(props.getProperty(ck) || '{}');
   const contextTaskId = context.at && Date.now() - context.at < 86400000 ? context.taskId : null;
-  const history = JSON.parse(userProps.getProperty('chatHistory') || '[]');
+  const history = JSON.parse(props.getProperty(hk) || '[]');
   const message = String(text || '').slice(0, 2000);
   const reply = withLock_(() => runChat_(message, me.name, contextTaskId, history));
-  userProps.setProperty('chatContext', JSON.stringify({ taskId: reply.taskId || contextTaskId, at: Date.now() }));
+  props.setProperty(ck, JSON.stringify({ taskId: reply.taskId || contextTaskId, at: Date.now() }));
   const kept = [...history, { role: 'user', content: message }, { role: 'assistant', content: reply.text }];
-  userProps.setProperty('chatHistory', JSON.stringify(kept.slice(-CHAT_HISTORY_MESSAGES)));
+  props.setProperty(hk, JSON.stringify(kept.slice(-CHAT_HISTORY_MESSAGES)));
   return reply.text;
 }
 
@@ -1371,7 +1497,7 @@ function nudgeRecipients_(t, members) {
 
 /** A link that opens the app on one task (and, with pick = 'time', straight to choosing a time). */
 function taskLink_(id, pick) {
-  const app = getSetting_('App link');
+  const app = getSetting_('App address');
   if (!app) return '';
   return `${app}${app.includes('?') ? '&' : '?'}task=${id}${pick ? `&pick=${pick}` : ''}`;
 }
@@ -1426,7 +1552,7 @@ function sendDigest_(box) {
   if (!reminders.length && !updates.length && !summary) return;
 
   const household = getSetting_('Household name') || 'Household';
-  const link = getSetting_('App link');
+  const link = getSetting_('App address');
   const textOf = (l) => (typeof l === 'string' ? l : l.text);
   const sections = [];
   if (reminders.length) sections.push(['Reminders', reminders]);

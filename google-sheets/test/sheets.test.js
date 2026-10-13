@@ -35,22 +35,63 @@ test('setup builds the tabs, adds the owner as a member and installs the timers'
   gas.context.setup();
   assert.equal(gas.rows('Members').length, 1);
   assert.equal(gas.triggers.length, 2);
-  assert.equal(gas.rows('Settings').length, 7);
+  assert.equal(gas.rows('Settings').length, 8);
 });
 
-test('a second person joins from the app; people without sheet access are told why', () => {
+test('personal links: the owner gets one, adds a partner, and each key acts as its own person', () => {
   const gas = createGas({ owner: NASER });
   gas.as(NASER);
   gas.context.setup();
-  const before = gas.call(SARA, 'getState');
-  assert.equal(before.me, null);
-  const after = gas.call(SARA, 'joinHousehold', 'Sara');
-  assert.equal(after.me.name, 'Sara');
-  assert.deepEqual(after.members.map((m) => m.name), ['Naser', 'Sara']);
-  assert.throws(() => gas.call('other@example.com', 'joinHousehold', 'Sara'), /already in the household/);
+  // A link pasted into Server address wins over the one Google reports.
+  gas.sheet('Settings').getRange(gas.rows('Settings').findIndex((r) => r.Setting === 'Server address') + 2, 2)
+    .setValue('https://script.google.com/macros/s/abc/exec');
 
-  gas.deny('stranger@example.com');
-  assert.equal(gas.call('stranger@example.com', 'getState').error, 'access');
+  const link = gas.context.myLink();
+  assert.match(link, /^https:\/\/nasermutawi\.github\.io\/hometest\/#s=https%3A%2F%2Fscript\.google\.com%2Fmacros%2Fs%2Fabc%2Fexec&k=[0-9a-f]{64}$/);
+  const naserKey = link.split('&k=')[1];
+  assert.equal(gas.context.myLink(), link, 'the same link each time');
+
+  const state = gas.api(naserKey, 'getState');
+  assert.equal(state.ok, true);
+  assert.equal(state.result.me.name, 'Naser');
+
+  const added = gas.api(naserKey, 'addPerson', 'Sara', 'Sara@Example.com');
+  const saraKey = added.result.link.split('&k=')[1];
+  assert.notEqual(saraKey, naserKey);
+  assert.deepEqual(gas.rows('Members').map((m) => m.Email), [NASER, SARA]);
+  assert.equal(gas.api(naserKey, 'addPerson', 'Sara', SARA).message, `${SARA} is already in the household. Use Send link next to their name.`);
+
+  // Sara's key acts as Sara.
+  assert.equal(gas.api(saraKey, 'getState').result.me.name, 'Sara');
+  gas.api(saraKey, 'capture', "I'll renew the car insurance on Friday");
+  assert.equal(gas.rows('Tasks')[0].Owner, 'Sara');
+  assert.equal(gas.rows('Tasks')[0]['Created by'], 'Sara');
+
+  // A new link replaces the old one.
+  const fresh = gas.api(naserKey, 'linkFor', 'Sara', true).result.split('&k=')[1];
+  assert.equal(gas.api(saraKey, 'getState').error, 'link');
+  assert.equal(gas.api(fresh, 'getState').result.me.name, 'Sara');
+
+  // Wrong keys and unlisted functions get nowhere; keys never appear in the sheet.
+  assert.equal(gas.api('nope', 'getState').error, 'link');
+  assert.equal(gas.api('', 'getState').error, 'link');
+  assert.equal(gas.api(naserKey, 'setup').error, 'unknown');
+  assert.equal(gas.api(naserKey, 'runScheduledJobs').error, 'unknown');
+  for (const tab of ['Tasks', 'Members', 'Settings', 'Activity']) {
+    assert.equal(JSON.stringify(gas.rows(tab)).includes(naserKey), false, `${tab} has no keys`);
+  }
+
+  // Removing someone from the Members tab switches their link off.
+  gas.sheet('Members').deleteRow(3);
+  assert.equal(gas.api(fresh, 'getState').error, 'link');
+});
+
+test('the server page explains itself; errors come back as messages', () => {
+  const gas = household();
+  gas.context.PropertiesService.getScriptProperties().setProperty('memberKeys', JSON.stringify({ [NASER]: 'k'.repeat(32) }));
+  assert.match(gas.context.doGet().getContent(), /Open the app with your personal link/);
+  const res = gas.api('k'.repeat(32), 'saveTask', { title: '' });
+  assert.deepEqual(res, { ok: false, error: 'failed', message: 'Give the task a title.' });
 });
 
 test('plain-language entry becomes a readable row in the sheet', () => {
@@ -419,13 +460,13 @@ test('evening-before nudge: a dated task with no time asks its owner, or both pe
   gas.context.runScheduledJobs();
   const toNaser = gas.outbox.find((m) => m.to === NASER);
   const toSara = gas.outbox.find((m) => m.to === SARA);
-  assert.match(toNaser.body, /"Pick up the dry cleaning" is tomorrow \(Tue 13 Oct\)\. No time set yet\. You're on it\.\n  Pick a time: https:\/\/script\.google\.com\/macros\/s\/test\/exec\?task=1&pick=time/);
+  assert.match(toNaser.body, /"Pick up the dry cleaning" is tomorrow \(Tue 13 Oct\)\. No time set yet\. You're on it\.\n  Pick a time: https:\/\/nasermutawi\.github\.io\/hometest\/\?task=1&pick=time/);
   assert.match(toNaser.body, /"Book the dentist" is tomorrow/);
   assert.match(toNaser.body, /"Buy stamps" is tomorrow/);
   assert.doesNotMatch(toSara.body, /dry cleaning/, "only the owner hears about their own task");
   assert.match(toSara.body, /"Book the dentist" is tomorrow \(Tue 13 Oct\)\. No time set yet\. It's shared\./);
   assert.match(toSara.body, /"Buy stamps" is tomorrow/);
-  assert.match(toSara.htmlBody, /<a href="https:\/\/script\.google\.com\/macros\/s\/test\/exec\?task=2&amp;pick=time"[^>]*>Pick a time<\/a>/);
+  assert.match(toSara.htmlBody, /<a href="https:\/\/nasermutawi\.github\.io\/hometest\/\?task=2&amp;pick=time"[^>]*>Pick a time<\/a>/);
   assert.doesNotMatch(toNaser.body, /Haircut/, 'tasks with a time are not nudged');
 
   gas.outbox.length = 0;

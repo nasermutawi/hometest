@@ -1,10 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<base target="_top">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Household</title>
+<meta name="description" content="Our household tasks">
+<meta name="referrer" content="no-referrer">
+<meta name="theme-color" content="#24614f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Household">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap">
 <style>
@@ -32,7 +40,7 @@
   }
 }
 * { box-sizing: border-box; }
-html, body { margin: 0; background: var(--bg); color: var(--text); font: 500 16px/1.45 var(--font); -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; background: var(--bg); padding-top: env(safe-area-inset-top); color: var(--text); font: 500 16px/1.45 var(--font); -webkit-tap-highlight-color: transparent; }
 [hidden] { display: none !important; }
 h1, h2, h3, p { margin: 0; }
 button, input, textarea, select { font: inherit; color: inherit; }
@@ -295,14 +303,11 @@ legend { padding: 0; }
 </div>
 
 <div id="v-join" class="center" hidden>
-  <form id="join-form" class="panel">
-    <h1 class="title-l">Welcome</h1>
-    <p class="muted">You're signed in as <strong id="join-email"></strong>. What should the household call you?</p>
-    <label class="label" for="join-name">Your first name</label>
-    <input id="join-name" class="field" required maxlength="40" autocomplete="given-name">
-    <p class="error" id="join-error" hidden></p>
-    <button class="primary" type="submit">Join the household</button>
-  </form>
+  <div class="panel">
+    <h1 class="title-l">Open your personal link</h1>
+    <p class="muted">This app opens with a personal link that only you have. Ask the person who set up the household to send you yours (Settings → People → Send link), then tap it on this phone.</p>
+    <p class="muted small">Setting up for the first time? Follow the setup guide, then run <strong>myLink</strong> in the script editor.</p>
+  </div>
 </div>
 
 <!-- Opens here: quick capture -->
@@ -479,17 +484,22 @@ legend { padding: 0; }
       <label class="toggle" for="p-calendar">Add tasks to my Google Calendar<input type="checkbox" id="p-calendar"></label>
       <p class="muted small" style="margin-top:10px">Turn on Gmail notifications on your phone so reminders pop up.</p>
     </section>
-    <section>
-      <h2 class="eyebrow" style="margin-bottom:4px">Household</h2>
+    <section class="stack" style="gap:6px">
+      <h2 class="eyebrow">People</h2>
       <ul class="members" id="member-list"></ul>
-    </section>
-    <section class="stack">
-      <h2 class="eyebrow">Invite your partner</h2>
-      <ol class="steps">
-        <li><a id="share-sheet" href="#" target="_blank" rel="noopener">Open the Google Sheet</a>, tap Share and add their Gmail address as an Editor.</li>
-        <li>Send them this link:</li>
-      </ol>
-      <div class="copyrow"><input id="app-link" class="field" readonly aria-label="App link"><button type="button" id="copy-link">Copy</button></div>
+      <button type="button" class="addline" id="person-open">+ Add a person</button>
+      <form class="stack" id="person-form" hidden>
+        <input class="field" id="person-name" placeholder="First name" maxlength="40" autocomplete="off" aria-label="First name">
+        <input class="field" id="person-email" type="email" placeholder="Email (reminders go here)" autocomplete="off" aria-label="Email">
+        <p class="error" id="person-error" hidden></p>
+        <button type="submit" class="primary" style="height:48px">Add and get their link</button>
+      </form>
+      <div class="stack" id="link-box" hidden>
+        <p class="small" id="link-text"></p>
+        <div class="copyrow"><input id="app-link" class="field" readonly aria-label="Personal link"><button type="button" id="copy-link">Copy</button></div>
+        <button type="button" class="secondary" id="share-link" hidden style="height:44px">Share…</button>
+        <p class="muted small">Anyone with this link can use the app as them, so send it only to them (WhatsApp or text is fine).</p>
+      </div>
     </section>
     <section class="stack">
       <h2 class="eyebrow">More</h2>
@@ -513,24 +523,46 @@ const icon = (id, size) => `<svg width="${size}" height="${size}" aria-hidden="t
 const SHARED = 'Shared';
 const AUTO_SAVE_SECONDS = 5;
 
-// google.script.run as promises. A dropped connection ("NetworkError … HTTP0") is retried once.
-const isNetworkError = (err) => /NetworkError|HTTP ?0|Failed to fetch/i.test(err && err.message);
-function runOnce(fn, args) {
-  return new Promise((resolve, reject) => {
-    google.script.run.withSuccessHandler(resolve)
-      .withFailureHandler((err) => reject(err instanceof Error ? err : new Error(String((err && err.message) || err))))[fn](...args);
-  });
+// ---------------------------------------------------------------- Talking to the household server
+
+// The personal link looks like .../#s=<server address>&k=<key>. Both are kept on this phone.
+// The link stays in the address bar so "Add to Home Screen" keeps it too.
+const CONFIG_KEY = 'household:link';
+function readConfig() {
+  const hash = new URLSearchParams(location.hash.slice(1));
+  if (hash.get('s') && hash.get('k')) {
+    const config = { server: hash.get('s'), key: hash.get('k') };
+    try { localStorage.setItem(CONFIG_KEY, JSON.stringify(config)); } catch (err) { /* private mode: the link still works */ }
+    return config;
+  }
+  try { return JSON.parse(localStorage.getItem(CONFIG_KEY) || 'null'); } catch (err) { return null; }
+}
+const config = readConfig();
+
+class ServerError extends Error {
+  constructor(message, code) { super(message); this.code = code; }
+}
+
+const isNetworkError = (err) => !(err instanceof ServerError) && /NetworkError|Failed to fetch|Load failed|network/i.test(err && err.message);
+async function runOnce(fn, args) {
+  if (window.householdApi) return window.householdApi(fn, args); // the preview's stand-in server
+  // text/plain keeps this a "simple" request, which Google's servers accept from another site.
+  const res = await fetch(config.server, { method: 'POST', redirect: 'follow', body: JSON.stringify({ key: config.key, fn, args }) });
+  const body = await res.json();
+  if (!body.ok) throw new ServerError(body.message || 'Something went wrong.', body.error);
+  return body.result;
 }
 async function run(fn, ...args) {
   try {
     return await runOnce(fn, args);
   } catch (err) {
+    if (err instanceof ServerError && err.code === 'link') { showLinkProblem(err.message); throw err; }
     if (!isNetworkError(err)) throw err;
     await new Promise((r) => setTimeout(r, 1500));
     try {
       return await runOnce(fn, args);
     } catch (again) {
-      throw isNetworkError(again) ? new Error("Couldn't reach Google. Check your connection and try again.") : again;
+      throw isNetworkError(again) ? new Error("Couldn't reach the household server. Check your connection and try again.") : again;
     }
   }
 }
@@ -618,7 +650,6 @@ function apply(data) {
     return;
   }
   if (!data.me) {
-    $('#join-email').textContent = data.email;
     show('v-join');
     return;
   }
@@ -626,16 +657,21 @@ function apply(data) {
   if (!state.deepLinked) openDeepLink();
 }
 
-// If Google never answers, say why instead of loading forever.
-const STUCK_MESSAGE = "Google hasn't answered yet. This usually means more than one Google account is signed in to this browser: open the link in a private (incognito) window signed in to just one account. If it still won't open, the app's code may have an error. In the script editor, the Executions page (on the left) shows it.";
-setTimeout(() => { if (!state.data) { $('#blocked-msg').textContent = STUCK_MESSAGE; show('v-blocked'); } }, 20000);
+// If the server never answers, say why instead of loading forever.
+const STUCK_MESSAGE = "The household server hasn't answered. Check your connection and reload. If it keeps happening, check the web app is deployed with \"Who has access: Anyone\" (see the setup guide).";
+setTimeout(() => { if (!state.data && $('#v-join').hidden && $('#v-blocked').hidden) { $('#blocked-msg').textContent = STUCK_MESSAGE; show('v-blocked'); } }, 20000);
 window.addEventListener('error', (e) => {
   if (state.data) return;
   $('#blocked-msg').textContent = `The page hit an error: ${e.message}`;
   show('v-blocked');
 });
 
-const NETWORK_HELP = "Couldn't reach Google. If you opened this from a home-screen icon on an iPhone, open the link in Safari or Chrome instead (see the setup guide). Otherwise check your connection and reload.";
+const NETWORK_HELP = "Couldn't reach the household server. Check your connection and reload. If it keeps happening, check the web app is deployed with \"Who has access: Anyone\" (see the setup guide).";
+
+function showLinkProblem(message) {
+  $('#blocked-msg').textContent = message;
+  show('v-blocked');
+}
 
 async function load() {
   try {
@@ -643,7 +679,8 @@ async function load() {
   } catch (err) {
     // Once the app is showing, a failed background refresh just waits for the next one.
     if (state.data && state.data.me) return;
-    $('#blocked-msg').textContent = /reach Google/.test(err.message) ? NETWORK_HELP : err.message;
+    if (err instanceof ServerError && err.code === 'link') return;
+    $('#blocked-msg').textContent = /reach the household/.test(err.message) ? NETWORK_HELP : err.message;
     show('v-blocked');
   }
 }
@@ -1385,10 +1422,11 @@ $('#settings-btn').addEventListener('click', () => {
   $('#p-updates').checked = d.me.prefs.emailUpdates;
   $('#p-summary').checked = d.me.prefs.morningSummary;
   $('#p-calendar').checked = d.me.prefs.calendarInvites;
-  $('#member-list').innerHTML = d.members.map((m) => `<li>${pill(m.name)}<span>${esc(m.email)}${m.email === d.me.email ? ' (you)' : ''}</span></li>`).join('');
-  $('#share-sheet').href = d.household.sheetUrl;
+  renderPeople();
+  $('#person-form').hidden = true;
+  $('#person-open').hidden = false;
+  $('#link-box').hidden = true;
   $('#sheet-link').href = d.household.sheetUrl;
-  $('#app-link').value = d.household.appUrl || '';
   $('#signed-in-as').textContent = `Signed in as ${d.me.email}`;
   $('#assistant-mode').textContent = d.assistant === 'claude'
     ? 'Understanding speech: Claude.' : "Understanding speech: simple rules (Claude isn't set up). Say one thing per sentence for best results.";
@@ -1417,6 +1455,59 @@ $('#activity-btn').addEventListener('click', async () => {
   } catch (err) { list.innerHTML = `<li class="error">${esc(err.message)}</li>`; }
 });
 
+function renderPeople() {
+  const d = state.data;
+  $('#member-list').innerHTML = d.members.map((m) => `<li>${pill(m.name)}<span style="flex:1">${esc(m.email)}${m.email === d.me.email ? ' (you)' : ''}</span>
+    <button type="button" class="addline" style="height:36px" data-link="${esc(m.name)}">${m.email === d.me.email ? 'My link' : 'Send link'}</button></li>`).join('');
+}
+
+function showLink(link, text) {
+  $('#link-text').textContent = text;
+  $('#app-link').value = link;
+  $('#share-link').hidden = !navigator.share;
+  $('#link-box').hidden = false;
+  $('#link-box').scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+}
+
+$('#member-list').addEventListener('click', async (e) => {
+  const b = e.target.closest('[data-link]');
+  if (!b) return;
+  const name = b.dataset.link;
+  const mine = name === state.data.me.name;
+  try {
+    const link = await run('linkFor', name, false);
+    showLink(link, mine ? 'Your link, for your other phone or computer:' : `${name}'s link. Send it to them:`);
+  } catch (err) { fail(err); }
+});
+
+$('#person-open').addEventListener('click', () => {
+  $('#person-open').hidden = true;
+  $('#person-form').hidden = false;
+  $('#person-name').focus();
+});
+
+$('#person-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const err = $('#person-error');
+  err.hidden = true;
+  try {
+    const res = await run('addPerson', $('#person-name').value, $('#person-email').value);
+    apply(res.state);
+    renderPeople();
+    $('#person-form').hidden = true;
+    $('#person-open').hidden = false;
+    $('#person-form').reset();
+    showLink(res.link, 'Added. Now send them this link:');
+  } catch (ex) {
+    err.textContent = ex.message;
+    err.hidden = false;
+  }
+});
+
+$('#share-link').addEventListener('click', () => {
+  navigator.share({ title: 'Household', text: 'Your link to our household app:', url: $('#app-link').value }).catch(() => {});
+});
+
 $('#copy-link').addEventListener('click', () => {
   const input = $('#app-link');
   input.select();
@@ -1425,33 +1516,23 @@ $('#copy-link').addEventListener('click', () => {
   else { document.execCommand('copy'); done(); }
 });
 
-$('#join-form').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  try {
-    apply(await run('joinHousehold', $('#join-name').value));
-  } catch (err) {
-    $('#join-error').textContent = err.message;
-    $('#join-error').hidden = false;
-  }
-});
 
 // Links in reminder emails: ...?task=12 opens that task; &pick=time goes straight to choosing a time.
 function openDeepLink() {
   state.deepLinked = true;
-  if (!(window.google && google.script && google.script.url)) return;
-  google.script.url.getLocation((loc) => {
-    const p = (loc && loc.parameter) || {};
-    const t = p.task && taskById(p.task);
-    if (!t) return;
-    openDetail(t.id);
-    if (p.pick === 'time' && !t.done) openWhen(t.id, 'time');
-  });
+  const p = new URLSearchParams(location.search);
+  const t = p.get('task') && taskById(p.get('task'));
+  if (!t) return;
+  openDetail(t.id);
+  if (p.get('pick') === 'time' && !t.done) openWhen(t.id, 'time');
+  // Done with it: a reload shouldn't reopen the same task.
+  try { history.replaceState(null, '', location.pathname + location.hash); } catch (err) { /* fine */ }
 }
 
 // Keep both phones in step while the app is open.
 setInterval(() => { if (!document.hidden && !$('dialog[open]') && state.data && state.data.me) load(); }, 30000);
 document.addEventListener('visibilitychange', () => { if (!document.hidden && !$('dialog[open]') && state.data) load(); });
-load();
+if (config || window.householdApi) load(); else show('v-join');
 </script>
 </body>
 </html>

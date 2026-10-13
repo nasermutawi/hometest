@@ -1,6 +1,6 @@
-// Local preview of the Sheets edition: serves Index.html with a stand-in for
-// google.script.run backed by the in-memory Apps Script mock.
-// Usage: node google-sheets/test/preview-server.mjs [port]   then open /?as=you@example.com
+// Local preview of the app (docs/index.html) against the in-memory Apps Script mock.
+// Usage: node google-sheets/test/preview-server.mjs [port], then open /?as=naser@example.com
+// (and, after adding Sara in Settings → People, /?as=sara@example.com in another window).
 import http from 'node:http';
 import { readFileSync } from 'node:fs';
 import { createGas } from './gas-mock.js';
@@ -10,22 +10,13 @@ const owner = 'naser@example.com';
 const gas = createGas({ owner, start: new Date().toISOString() });
 gas.as(owner);
 gas.context.setup();
-const html = readFileSync(new URL('../Index.html', import.meta.url), 'utf8');
+const html = readFileSync(new URL('../../docs/index.html', import.meta.url), 'utf8');
 
+// Stands in for the network: each window acts as the person named in ?as=.
 const shim = `<script>
 const AS = new URLSearchParams(location.search).get('as') || '${owner}';
-window.google = { script: {
-  url: { getLocation: (cb) => cb({ parameter: Object.fromEntries(new URLSearchParams(location.search)) }) },
-  get run() {
-  let ok = () => {}, fail = () => {};
-  const runner = new Proxy({}, { get(_, name) {
-    if (name === 'withSuccessHandler') return (f) => { ok = f; return runner; };
-    if (name === 'withFailureHandler') return (f) => { fail = f; return runner; };
-    return (...args) => fetch('/rpc', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ as: AS, fn: name, args }) })
-      .then((r) => r.json()).then((r) => (r.error ? fail(new Error(r.error)) : ok(r.result)));
-  } });
-  return runner;
-} } };
+window.householdApi = (fn, args) => fetch('/rpc', { method: 'POST', body: JSON.stringify({ as: AS, fn, args }) })
+  .then((r) => r.json()).then((r) => { if (!r.ok) { const e = new Error(r.message); e.code = r.error; throw e; } return r.result; });
 </script>`;
 
 http.createServer((req, res) => {
@@ -34,13 +25,8 @@ http.createServer((req, res) => {
     req.on('data', (c) => { body += c; });
     req.on('end', () => {
       const { as, fn, args } = JSON.parse(body);
-      let out;
-      try {
-        out = { result: gas.call(as, fn, ...args) };
-      } catch (err) {
-        out = { error: err.message };
-      }
-      res.writeHead(200, { 'Content-Type': 'application/json' }).end(JSON.stringify(out ?? null));
+      const key = gas.context.findMember_(as) ? gas.context.keyFor_(as, false) : 'unknown';
+      res.writeHead(200, { 'Content-Type': 'application/json' }).end(JSON.stringify(gas.api(key, fn, ...args)));
     });
     return;
   }
@@ -54,4 +40,4 @@ http.createServer((req, res) => {
     return;
   }
   res.writeHead(200, { 'Content-Type': 'text/html' }).end(html.replace('<head>', `<head>${shim}`));
-}).listen(port, () => console.log(`Sheets preview on http://localhost:${port}/?as=${owner}`));
+}).listen(port, () => console.log(`App preview on http://localhost:${port}/?as=${owner}`));
