@@ -1,8 +1,10 @@
-# Spec: Instant actions and swipe gestures
+# Spec: An instant, smooth app (app-wide) and swipe gestures
 
 **Edition:** Google Sheets edition only — `docs/index.html` (the app on GitHub Pages) and `google-sheets/Code.gs` (the Apps Script server). The Node.js edition (`src/`, `public/`) is out of scope.
 
-**Goal:** every tap feels instant, the app opens straight onto the task list, and task rows support swipe gestures.
+**Goal:** the whole app feels instant and smooth — every screen and every action, not just the task list. The app opens straight onto the tasks, nothing waits on the network unless it truly has to, and task rows support swipe gestures. The user will test performance across the app, so this must be one consistent approach, not a fix for one button.
+
+**Sync expectations:** the two people use the app on their own time, not side by side. It's fine if the other person's changes only appear when the app is opened or brought back to the front. Instant sync between phones is **not** needed.
 
 ## Why it feels slow today
 
@@ -11,12 +13,20 @@
 - On open, the app shows nothing until the first `getState` returns.
 - The 30-second refresh (`setInterval(… load …, 30000)`) can land while a write is in flight and overwrite what the user just did.
 
+## 0. One app-wide approach
+
+Build a single data layer that every screen goes through, instead of patching individual buttons.
+
+- **One write path:** a helper (for example `mutate(applyLocally, serverCall)`) that applies the change to local state, re-renders, queues the server call, reconciles the reply, and rolls back on failure. No screen calls `run()` directly for a write.
+- **Audit every server call** and put it in one of two groups. List the result in the pull request. Today's calls are:
+  - **Instant (optimistic):** `setTaskDone`, `deleteTask`, `setPrepDone`, `saveTask` (every place that uses it: task page fields, date/time sheet, owner and repeat choosers, the edit form, the review screen), `discardCapture`, `savePreferences`.
+  - **Needs the server's answer:** `capture` and `editByVoice` (the server understands the words), `addPerson` and `linkFor` (the server creates links and sends email), `getActivity`. These must **never freeze the screen**: respond to the tap at once, show progress where the result will appear, and keep the rest of the app usable. For example, after a recording, show the spoken text straight away as an "Understanding…" row that turns into the real task(s) when the reply arrives.
+- **Navigation never waits:** opening a task, switching filters, going back, and opening sheets and dialogs all render from local state with no network wait.
+- **Any new feature** added later must use the same write path. Note this in a comment at the top of the data layer.
+
 ## 1. Optimistic updates (the main fix)
 
-Change the local state and re-render first; send to the server in the background.
-
-- **Applies to:** mark done / reopen, delete, prep step done, and field edits from the task page (owner, date and time, repeat, category, notes).
-- **Does not apply to:** voice capture and `editByVoice`. The server does the understanding there, so keep the current loading state.
+Change the local state and re-render first; send to the server in the background. This applies to everything in the "Instant" group above.
 - **Done animation:** the tick fills immediately (target under 100 ms from tap), the row shows as done (strike-through or fade), then the row leaves the open list after about 400 ms. Respect `prefers-reduced-motion`.
 - **Repeating tasks:** show "Done" straight away. When the reply arrives with `next`, insert the next occurrence and show the "Next one on …" toast.
 - **Write queue:** send writes one at a time, in order. Quick repeated taps on the same task (done → undo → done) must end in the right final state; collapse them where possible.
@@ -31,8 +41,10 @@ Change the local state and re-render first; send to the server in the background
 
 ## 3. Refresh behaviour
 
-- Skip the 30-second refresh while writes are queued and for about 3 seconds after the last one finishes.
-- Also refresh when the app becomes visible again (`visibilitychange`), so switching back to the app shows the other person's changes.
+- Refresh when the app opens and whenever it comes back to the front (`visibilitychange`). That's the main way the other person's changes arrive.
+- Keep a gentle periodic refresh only while the app is visible, at 60 seconds instead of 30. That's fewer server calls, and live sync isn't needed.
+- Skip any refresh while writes are queued and for about 3 seconds after the last one finishes.
+- A background refresh must never jump the screen: keep the scroll position, any open swipe, open sheets, and anything being typed.
 
 ## 4. Lighter server work (Code.gs)
 
@@ -63,6 +75,15 @@ On the Tasks list, in every group:
 - Visible pressed state on rows and buttons.
 - A subtle indicator (not a blocking spinner) while a background refresh or save is in progress.
 
+## 7. Performance testing aid
+
+The user wants to test performance on their own phone, so build a simple way to see it:
+
+- Opening the app with `?perf=1` in the link (remembered until turned off) shows a small panel listing recent actions: what was tapped, **time until the screen changed**, **server time**, and whether it succeeded or failed.
+- The panel has a **Copy** button that copies the log as text, so it can be pasted into a chat.
+- In the preview, add switches for **slow server** (about 3 seconds) and **failing server**, so rollbacks and progress states can be checked.
+- Hidden completely when `perf` is off, with no cost to normal use.
+
 ## Not in this change
 
 - Live updates between phones (needs the hosted backend; see `BACKLOG.md`).
@@ -77,7 +98,13 @@ On the Tasks list, in every group:
 
 ## Done when
 
+- [ ] Every server call is listed in the pull request as "instant" or "needs the server", and every write goes through the one data layer.
+- [ ] No action anywhere in the app freezes the screen while waiting for the server.
 - [ ] Tapping the tick shows the change in under 100 ms, including on a slow connection.
+- [ ] Changing owner, date, repeat, notes or a prep step shows instantly, both on the task page and back on the list.
+- [ ] After a recording, the spoken text appears immediately and turns into the task(s) when the server replies.
+- [ ] A background refresh never moves the scroll position or closes what's open.
+- [ ] The `?perf=1` panel shows timings and the log can be copied.
 - [ ] With the connection off, tapping done reverts with a clear message, and Retry works once it's back on.
 - [ ] Tapping done, undo, done quickly ends with the task done on both the screen and the sheet.
 - [ ] Swipe right completes a task; swipe left deletes it; Undo brings it back and the sheet never loses it.
@@ -91,6 +118,6 @@ On the Tasks list, in every group:
 
 When finished, give the user plain steps for:
 
-1. Trying the preview on their phone.
+1. Trying the preview on their phone, including how to turn on the `?perf=1` panel.
 2. Updating the server: paste the new `Code.gs`, then **Deploy → Manage deployments → ✏️ → Version: New version → Deploy**.
 3. Merging the pull request so the app on GitHub Pages updates.
