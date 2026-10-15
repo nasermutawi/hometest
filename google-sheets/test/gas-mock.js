@@ -34,8 +34,11 @@ function localParts(date, tz) {
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-export function createGas({ timeZone = 'Europe/London', owner = 'naser@example.com', start = '2026-10-12T09:00:00Z' } = {}) {
+export function createGas({ timeZone = 'Europe/London', owner = 'naser@example.com', start = '2026-10-12T09:00:00Z', codePath = join(dir, 'Code.gs') } = {}) {
   const clock = { now: new Date(start).getTime() };
+  // How many times the script touched the spreadsheet (each one is a slow round trip in Apps Script).
+  const stats = { reads: 0, writes: 0, cacheHits: 0 };
+  const cacheStore = new Map();
   let activeUser = owner;
   const deniedUsers = new Set();
   const outbox = [];
@@ -65,18 +68,22 @@ export function createGas({ timeZone = 'Europe/London', owner = 'naser@example.c
   // ---- Spreadsheet
   function makeSheet(name) {
     const data = [];
+    const lastRow = () => {
+      for (let r = data.length; r > 0; r--) if ((data[r - 1] || []).some((v) => v !== '' && v != null)) return r;
+      return 0;
+    };
     const sheet = chainable({
       name,
       data,
       getName: () => name,
       getMaxRows: () => 1000,
       getLastRow() {
-        for (let r = data.length; r > 0; r--) if ((data[r - 1] || []).some((v) => v !== '' && v != null)) return r;
-        return 0;
+        stats.reads++;
+        return lastRow();
       },
       getLastColumn: () => data.reduce((m, row) => Math.max(m, (row || []).length), 0),
-      appendRow(values) { data[sheet.getLastRow()] = [...values]; return sheet; },
-      deleteRow(r) { data.splice(r - 1, 1); return sheet; },
+      appendRow(values) { stats.writes++; data[lastRow()] = [...values]; return sheet; },
+      deleteRow(r) { stats.writes++; data.splice(r - 1, 1); return sheet; },
       getRange(row, col, numRows = 1, numCols = 1) {
         if (typeof row === 'string') return chainable({}); // A1 ranges are only used for formatting
         return makeRange(sheet, row, col, numRows, numCols);
@@ -90,10 +97,10 @@ export function createGas({ timeZone = 'Europe/London', owner = 'naser@example.c
     const cell = (r, c) => { const v = (data[r - 1] || [])[c - 1]; return v === undefined || v === null ? '' : v; };
     const set = (r, c, v) => { data[r - 1] = data[r - 1] || []; for (let i = data[r - 1].length; i < c - 1; i++) data[r - 1][i] = ''; data[r - 1][c - 1] = v; };
     return chainable({
-      getValues: () => Array.from({ length: numRows }, (_, i) => Array.from({ length: numCols }, (_, j) => cell(row + i, col + j))),
-      getValue: () => cell(row, col),
-      setValues(values) { values.forEach((r, i) => r.forEach((v, j) => set(row + i, col + j, v))); return this; },
-      setValue(v) { set(row, col, v); return this; },
+      getValues: () => { stats.reads++; return Array.from({ length: numRows }, (_, i) => Array.from({ length: numCols }, (_, j) => cell(row + i, col + j))); },
+      getValue: () => { stats.reads++; return cell(row, col); },
+      setValues(values) { stats.writes++; values.forEach((r, i) => r.forEach((v, j) => set(row + i, col + j, v))); return this; },
+      setValue(v) { stats.writes++; set(row, col, v); return this; },
       getRow: () => row,
       getColumn: () => col,
       getNumRows: () => numRows,
@@ -188,6 +195,22 @@ export function createGas({ timeZone = 'Europe/London', owner = 'naser@example.c
       getScriptProperties: () => props(scriptProps),
       getUserProperties: () => props(userProps[activeUser] ||= {}),
     },
+    CacheService: {
+      getScriptCache: () => ({
+        get(k) {
+          const e = cacheStore.get(k);
+          if (!e || e.expires <= clock.now) { cacheStore.delete(k); return null; }
+          stats.cacheHits++;
+          return e.value;
+        },
+        put(k, v, seconds = 600) {
+          if (String(v).length > 100000) throw new Error('Argument too large');
+          cacheStore.set(k, { value: String(v), expires: clock.now + seconds * 1000 });
+        },
+        remove(k) { cacheStore.delete(k); },
+        removeAll(keys) { keys.forEach((k) => cacheStore.delete(k)); },
+      }),
+    },
     LockService: { getScriptLock: () => ({ waitLock() {}, releaseLock() {} }) },
     UrlFetchApp: {
       fetch(url, opts) {
@@ -217,11 +240,13 @@ export function createGas({ timeZone = 'Europe/London', owner = 'naser@example.c
   vm.createContext(context);
   // Same order as the Apps Script editor: Code.gs first, so nothing at the top level of Code.gs
   // may use names from Parser.gs.
-  vm.runInContext(readFileSync(join(dir, 'Code.gs'), 'utf8'), context, { filename: 'Code.gs' });
+  vm.runInContext(readFileSync(codePath, 'utf8'), context, { filename: 'Code.gs' });
   vm.runInContext(readFileSync(join(dir, 'Parser.gs'), 'utf8'), context, { filename: 'Parser.gs' });
 
   const gas = {
     context,
+    stats,
+    cache: cacheStore,
     http,
     clock,
     outbox,

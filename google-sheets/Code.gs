@@ -82,8 +82,9 @@ function setup() {
   if (email && !findMember_(email)) {
     const name = email.split('@')[0].replace(/[._\d]+/g, ' ').trim().split(' ')[0] || 'Me';
     members.appendRow([name.charAt(0).toUpperCase() + name.slice(1), email, 'Yes', 'Yes', 'No', 'Yes']);
-    delete cache_.members;
+    forgetShared_('members');
   }
+  forgetShared_('settings');
 
   formatTasks_(tasks);
   members.getRange('C2:F').setDataValidation(SpreadsheetApp.newDataValidation().requireValueInList(['Yes', 'No'], true).build());
@@ -216,6 +217,12 @@ function table_(name) {
 function writeRow_(table, row, obj) {
   const values = table.headers.map((h) => (h in obj ? obj[h] : ''));
   table.sh.getRange(row, 1, 1, values.length).setValues([values]);
+  // Keep the in-memory copy in step, so the rest of this request needn't read the tab again.
+  const copy = { _row: row };
+  table.headers.forEach((h, j) => { copy[h] = values[j]; });
+  const i = table.rows.findIndex((r) => r._row === row);
+  if (i >= 0) table.rows[i] = copy;
+  else table.rows.push(copy);
 }
 
 function withLock_(fn) {
@@ -230,22 +237,60 @@ function withLock_(fn) {
 
 // ---------------------------------------------------------------- Settings & members
 
-// Each call from the app is a separate run of the script. Within one run, the Settings and
-// Members tabs are read once and remembered; every public function starts with a fresh slate.
+// Each call from the app is a separate run of the script. Within one run, the Settings,
+// Members and Tasks tabs are read at most once and remembered; every public function starts
+// with a fresh slate.
 let cache_ = {};
 function fresh_() { cache_ = {}; }
 
-function getSetting_(key) {
-  if (!cache_.settings) {
-    const sh = ss_().getSheetByName(SETTINGS);
-    cache_.settings = !sh || sh.getLastRow() < 2 ? [] : sh.getRange(2, 1, sh.getLastRow() - 1, 2).getValues();
+// Settings and Members rarely change, so they are also kept in Apps Script's cache for a few
+// minutes, shared between requests. The app clears it whenever it writes to those tabs, and
+// so does an edit typed into either tab; anything else (rows deleted by hand, say) shows up
+// within SHARED_CACHE_SECONDS.
+const SHARED_CACHE_SECONDS = 300;
+
+function scriptCache_() {
+  try { return CacheService.getScriptCache(); } catch (err) { return null; }
+}
+
+function shared_(name, read) {
+  if (cache_[name]) return cache_[name];
+  const cache = scriptCache_();
+  const key = `household:${name}`;
+  if (cache) {
+    try {
+      const hit = cache.get(key);
+      if (hit) return (cache_[name] = JSON.parse(hit));
+    } catch (err) { /* read the sheet instead */ }
   }
-  const row = cache_.settings.find((r) => String(r[0]) === key);
-  return row ? String(row[1]).trim() : '';
+  cache_[name] = read();
+  if (cache) {
+    try { cache.put(key, JSON.stringify(cache_[name]), SHARED_CACHE_SECONDS); } catch (err) { /* too big or unavailable: fine */ }
+  }
+  return cache_[name];
+}
+
+function forgetShared_(name) {
+  delete cache_[name];
+  const cache = scriptCache_();
+  if (cache) {
+    try { cache.remove(`household:${name}`); } catch (err) { /* nothing cached */ }
+  }
+}
+
+function getSetting_(key) {
+  const settings = shared_('settings', () => {
+    const sh = ss_().getSheetByName(SETTINGS);
+    const rows = !sh || sh.getLastRow() < 2 ? [] : sh.getRange(2, 1, sh.getLastRow() - 1, 2).getValues();
+    // Stored as text, which is all getSetting_ ever hands out.
+    return rows.map((r) => [String(r[0]), String(r[1])]);
+  });
+  const row = settings.find((r) => r[0] === key);
+  return row ? row[1].trim() : '';
 }
 
 function removeSetting_(key) {
-  delete cache_.settings;
+  forgetShared_('settings');
   const sh = sheet_(SETTINGS);
   const rows = sh.getLastRow() > 1 ? sh.getRange(2, 1, sh.getLastRow() - 1, 1).getValues() : [];
   const i = rows.findIndex((r) => String(r[0]) === key);
@@ -253,7 +298,7 @@ function removeSetting_(key) {
 }
 
 function setSetting_(key, value) {
-  delete cache_.settings;
+  forgetShared_('settings');
   const sh = sheet_(SETTINGS);
   const rows = sh.getLastRow() > 1 ? sh.getRange(2, 1, sh.getLastRow() - 1, 1).getValues() : [];
   const i = rows.findIndex((r) => String(r[0]) === key);
@@ -264,8 +309,7 @@ function setSetting_(key, value) {
 const yes_ = (v) => /^(yes|y|true|1)$/i.test(String(v).trim());
 
 function members_() {
-  if (!cache_.members) cache_.members = readMembers_();
-  return cache_.members;
+  return shared_('members', readMembers_);
 }
 
 function readMembers_() {
@@ -472,8 +516,19 @@ function when_(t) {
 
 // ---------------------------------------------------------------- Task operations
 
+/** The Tasks tab, read once per request; writeRow_ keeps it current, and deleting a row forgets it. */
+function tasksTable_() {
+  if (!cache_.tasksTable) cache_.tasksTable = table_(TASKS);
+  return cache_.tasksTable;
+}
+
+function deleteTaskRow_(row) {
+  sheet_(TASKS).deleteRow(row);
+  delete cache_.tasksTable;
+}
+
 function tasks_() {
-  return table_(TASKS).rows.map(toTask_).filter((t) => t.title);
+  return tasksTable_().rows.map(toTask_).filter((t) => t.title);
 }
 
 function taskById_(id) {
@@ -483,8 +538,7 @@ function taskById_(id) {
 }
 
 function saveTaskRow_(t) {
-  const table = table_(TASKS);
-  writeRow_(table, t.row, fromTask_(t));
+  writeRow_(tasksTable_(), t.row, fromTask_(t));
 }
 
 function nextId_() {
@@ -525,7 +579,7 @@ function createTask_(data, actor) {
 function insertTask_(data, actor) {
   const now = new Date();
   const t = { ...cleanTask_(data), id: nextId_(), done: false, createdBy: actor, created: now, updated: now, completed: '', calendarEvent: '', nextId: null };
-  const table = table_(TASKS);
+  const table = tasksTable_();
   const used = table.rows.filter((r) => String(r.Task || '').trim() || r.ID);
   t.row = used.length ? used[used.length - 1]._row + 1 : 2;
   writeRow_(table, t.row, fromTask_(t));
@@ -569,7 +623,7 @@ function setDone_(t, done, actor) {
 function deleteTask_(id, actor) {
   const t = taskById_(id);
   log_(actor, 'deleted', t, t.calendarEvent ? `calendar:${t.calendarEvent}` : '');
-  sheet_(TASKS).deleteRow(t.row);
+  deleteTaskRow_(t.row);
 }
 
 // ---------------------------------------------------------------- The app's private API
@@ -577,16 +631,18 @@ function deleteTask_(id, actor) {
 // The app (docs/index.html on GitHub Pages) posts {key, fn, args} here. The web app is deployed
 // to run as the sheet's owner and to accept anonymous requests, so the personal key in each
 // request is what says who is asking. Only the functions listed here can be called.
+// Calls that change something take an optional last argument, { slim: true }: the reply then
+// holds only what changed (see slimReply_) instead of the whole household.
 const API_FUNCTIONS = {
   getState: () => getState(),
-  savePreferences: (prefs) => savePreferences(prefs),
-  capture: (text) => capture(text),
-  discardCapture: (ids) => discardCapture(ids),
-  editByVoice: (id, text) => editByVoice(id, text),
-  saveTask: (data) => saveTask(data),
-  setTaskDone: (id, done) => setTaskDone(id, done),
-  setPrepDone: (id, index, done) => setPrepDone(id, index, done),
-  deleteTask: (id) => deleteTask(id),
+  savePreferences: (prefs, opts) => savePreferences(prefs, opts),
+  capture: (text, opts) => capture(text, opts),
+  discardCapture: (ids, opts) => discardCapture(ids, opts),
+  editByVoice: (id, text, opts) => editByVoice(id, text, opts),
+  saveTask: (data, opts) => saveTask(data, opts),
+  setTaskDone: (id, done, opts) => setTaskDone(id, done, opts),
+  setPrepDone: (id, index, done, opts) => setPrepDone(id, index, done, opts),
+  deleteTask: (id, opts) => deleteTask(id, opts),
   getActivity: () => getActivity(),
   addPerson: (name, email) => addPerson(name, email),
   linkFor: (name, reset) => linkFor(name, reset),
@@ -635,7 +691,21 @@ function emailForKey_(key) {
   if (!key || String(key).length < 24) return '';
   const keys = memberKeys_();
   const email = Object.keys(keys).find((e) => keys[e] === String(key));
-  return email && findMember_(email) ? email : '';
+  if (!email) return '';
+  checkMembersCache_();
+  return findMember_(email) ? email : '';
+}
+
+/**
+ * Compares the remembered Members list with the tab's Email column (one small read), and
+ * forgets it if they differ. Deleting someone's row fires no edit trigger, so this is what
+ * switches their link off straight away and keeps remembered row numbers right.
+ */
+function checkMembersCache_() {
+  const sh = sheet_(MEMBERS);
+  const emails = sh.getLastRow() < 2 ? [] : sh.getRange(2, 2, sh.getLastRow() - 1, 1).getValues().map((r) => String(r[0]).trim().toLowerCase());
+  const known = members_();
+  if (known.length !== emails.filter(Boolean).length || known.some((m) => emails[m.row - 2] !== m.email)) forgetShared_('members');
 }
 
 function keyFor_(email, reset) {
@@ -696,12 +766,12 @@ function addPerson(name, email) {
     if (findMember_(mail)) throw new Error(`${mail} is already in the household. Use Send link next to their name.`);
     if (memberByName_(clean) || clean.toLowerCase() === OWNER_SHARED.toLowerCase()) throw new Error(`Someone called ${clean} is already in the household. Add an initial, e.g. "${clean} B".`);
     sheet_(MEMBERS).appendRow([clean, mail, 'Yes', 'Yes', 'No', 'Yes']);
-    delete cache_.members;
+    forgetShared_('members');
     refreshOwnerChoices_();
     log_(clean, 'joined', null, `Added by ${me.name}`);
     return personalLink_(mail, true);
   });
-  return { state: getState(), link };
+  return { state: state_(), link };
 }
 
 /** A member's link; reset = make a new one, so the old one stops working. */
@@ -718,6 +788,11 @@ function linkFor(name, reset) {
 /** Everything the app needs to draw itself. */
 function getState() {
   fresh_();
+  return state_();
+}
+
+/** getState without starting afresh: used at the end of a change, reusing what it already read. */
+function state_() {
   const email = currentEmail_();
   if (!email) {
     return { error: 'signin', message: 'Open the app with your personal link.' };
@@ -736,8 +811,20 @@ function getState() {
     defaultReminders: parseReminders_(getSetting_('Default reminders')),
     assistant: claudeKey_() ? 'claude' : 'rules',
     quickTimes: quickTimes_(),
-    now: fmt_(new Date(), "yyyy-MM-dd'T'HH:mm"),
+    now: nowText_(),
   };
+}
+
+const nowText_ = () => fmt_(new Date(), "yyyy-MM-dd'T'HH:mm");
+const slim_ = (opts) => Boolean(opts && opts.slim);
+
+/**
+ * The short reply to a change, for an app that asked for { slim: true }: any of task, next
+ * (a repeat's next occurrence), tasks, deletedId, deletedIds and prefs, plus the time now.
+ * Older apps get the whole household from state_() instead.
+ */
+function slimReply_(changes) {
+  return { slim: true, ...changes, now: nowText_() };
 }
 
 function quickTimes_() {
@@ -769,23 +856,25 @@ function joinHousehold(name) {
   const clean = String(name || '').trim().slice(0, 40);
   if (!clean) throw new Error('Enter your first name.');
   return withLock_(() => {
-    if (findMember_(email)) return getState();
+    if (findMember_(email)) return state_();
     if (memberByName_(clean)) throw new Error(`Someone called ${clean} is already in the household. Add an initial, e.g. "${clean} B".`);
     sheet_(MEMBERS).appendRow([clean, email, 'Yes', 'Yes', 'No', 'Yes']);
-    delete cache_.members;
+    forgetShared_('members');
     refreshOwnerChoices_();
     log_(clean, 'joined', null, '');
-    return getState();
+    return state_();
   });
 }
 
-function savePreferences(prefs) {
+function savePreferences(prefs, opts) {
   fresh_();
+  forgetShared_('members'); // write to the row the person is on now, not a remembered one
   const me = requireMember_();
   const yn = (v) => (v ? 'Yes' : 'No');
-  delete cache_.members;
   sheet_(MEMBERS).getRange(me.row, 3, 1, 4).setValues([[yn(prefs.emailReminders), yn(prefs.emailUpdates), yn(prefs.morningSummary), yn(prefs.calendarInvites)]]);
-  return getState();
+  forgetShared_('members');
+  if (slim_(opts)) return slimReply_({ prefs: prefsOf_(currentMember_()) });
+  return state_();
 }
 
 /** Turns a sentence into a draft task (nothing is saved). */
@@ -803,7 +892,7 @@ const MAX_CAPTURED = 12;
  * Saves everything said in one recording, as one or more tasks, straight away: nothing is
  * lost if the phone is put away. The app then offers Review, and Undo (discardCapture).
  */
-function capture(text) {
+function capture(text, opts) {
   fresh_();
   const me = requireMember_();
   const message = String(text || '').trim().slice(0, 3000);
@@ -821,14 +910,16 @@ function capture(text) {
   if (!drafts || !drafts.length) drafts = draftsFromRules_(message, me.name);
   const saved = withLock_(() => drafts.slice(0, MAX_CAPTURED)
     .map((d) => createTask_({ ...d, repeats: d.dueDate ? d.repeats : 'Never' }, me.name)));
-  const state = getState();
-  state.captured = saved.map((t) => t.id);
+  const captured = saved.map((t) => t.id);
+  if (slim_(opts)) return slimReply_({ tasks: saved.map(clientTask_), captured, notice });
+  const state = state_();
+  state.captured = captured;
   state.notice = notice;
   return state;
 }
 
 /** Undo for capture: removes those tasks. If the other person hasn't been emailed yet, it's as if they never existed. */
-function discardCapture(ids) {
+function discardCapture(ids, opts) {
   fresh_();
   const me = requireMember_();
   const wanted = new Set((ids || []).map(Number));
@@ -838,11 +929,12 @@ function discardCapture(ids) {
     const silent = new Set(unsent.map((a) => Number(a['Task ID'])));
     unsent.sort((a, b) => b._row - a._row).forEach((a) => activity.sh.deleteRow(a._row));
     tasks_().filter((t) => wanted.has(t.id)).sort((a, b) => b.row - a.row).forEach((t) => {
-      if (silent.has(t.id)) sheet_(TASKS).deleteRow(t.row);
+      if (silent.has(t.id)) deleteTaskRow_(t.row);
       else deleteTask_(t.id, me.name);
     });
   });
-  return getState();
+  if (slim_(opts)) return slimReply_({ deletedIds: [...wanted] });
+  return state_();
 }
 
 // Verbs that usually start a new errand after "and": "pick up the dry cleaning and buy a present".
@@ -910,7 +1002,7 @@ function speechOwner_(text, speaker) {
 // ---------------------------------------------------------------- Changing one task by voice
 
 /** Applies a spoken change ("make it Tuesday at 4", "give it to Sara") to one task. */
-function editByVoice(id, text) {
+function editByVoice(id, text, opts) {
   fresh_();
   const me = requireMember_();
   const message = String(text || '').trim().slice(0, 1000);
@@ -928,13 +1020,16 @@ function editByVoice(id, text) {
   }
   if (!change) change = editFromRules_(message, before, me.name);
   const changed = withLock_(() => applyEdit_(before, change, me.name));
-  const state = getState();
-  state.edit = {
+  const after = taskById_(before.id);
+  const edit = {
     id: before.id,
     changed,
     before: clientTask_(before),
     summary: (changed.length ? `Changed ${listWords_(changed.map((c) => EDIT_WORDS[c]))}.` : "Didn't catch a change. Try \"move it to Friday at 9\" or \"give it to Sara\".") + notice,
   };
+  if (slim_(opts)) return slimReply_({ task: clientTask_(after), next: nextOf_(after), edit });
+  const state = state_();
+  state.edit = edit;
   return state;
 }
 
@@ -1031,40 +1126,52 @@ function cleanOwnerOrKeep_(owner, current) {
   }
 }
 
-function saveTask(data) {
-  fresh_();
-  const me = requireMember_();
-  withLock_(() => (data.id ? updateTask_(data.id, data, me.name) : createTask_(data, me.name)));
-  return getState();
+/** A repeating task's next occurrence, for the app, or null. */
+function nextOf_(t) {
+  const next = t.nextId && tasks_().find((x) => x.id === t.nextId);
+  return next ? clientTask_(next) : null;
 }
 
-function setTaskDone(id, done) {
+function saveTask(data, opts) {
+  fresh_();
+  const me = requireMember_();
+  const t = withLock_(() => (data.id ? updateTask_(data.id, data, me.name) : createTask_(data, me.name)));
+  if (slim_(opts)) return slimReply_({ task: clientTask_(t), next: nextOf_(t) });
+  return state_();
+}
+
+function setTaskDone(id, done, opts) {
   fresh_();
   const me = requireMember_();
   const t = withLock_(() => setDone_(taskById_(id), Boolean(done), me.name));
-  const state = getState();
-  state.next = t.nextId ? clientTask_(taskById_(t.nextId)) : null;
+  const next = nextOf_(t);
+  if (slim_(opts)) return slimReply_({ task: clientTask_(t), next });
+  const state = state_();
+  state.next = next;
   return state;
 }
 
-function setPrepDone(id, index, done) {
+function setPrepDone(id, index, done, opts) {
   fresh_();
   requireMember_();
-  withLock_(() => {
-    const t = taskById_(id);
-    if (!t.prep[index]) throw new Error('That prep step no longer exists.');
-    t.prep[index].done = Boolean(done);
-    t.updated = new Date();
-    saveTaskRow_(t);
+  const t = withLock_(() => {
+    const task = taskById_(id);
+    if (!task.prep[index]) throw new Error('That prep step no longer exists.');
+    task.prep[index].done = Boolean(done);
+    task.updated = new Date();
+    saveTaskRow_(task);
+    return task;
   });
-  return getState();
+  if (slim_(opts)) return slimReply_({ task: clientTask_(t) });
+  return state_();
 }
 
-function deleteTask(id) {
+function deleteTask(id, opts) {
   fresh_();
   const me = requireMember_();
   withLock_(() => deleteTask_(id, me.name));
-  return getState();
+  if (slim_(opts)) return slimReply_({ deletedId: Number(id) });
+  return state_();
 }
 
 function getActivity() {
@@ -1401,7 +1508,8 @@ function byDue_(a, b) {
 function onSheetEdit(e) {
   fresh_();
   const sh = e.range.getSheet();
-  if (sh.getName() === MEMBERS) { refreshOwnerChoices_(); return; }
+  if (sh.getName() === SETTINGS) { forgetShared_('settings'); return; }
+  if (sh.getName() === MEMBERS) { forgetShared_('members'); refreshOwnerChoices_(); return; }
   if (sh.getName() !== TASKS) return;
   const editorEmail = e.user && e.user.getEmail ? e.user.getEmail() : '';
   const actor = (findMember_(editorEmail) || {}).name || 'Someone (in the sheet)';
@@ -1410,7 +1518,7 @@ function onSheetEdit(e) {
   const header = e.range.getNumColumns() === 1 ? TASK_COLUMNS[e.range.getColumn() - 1] : null;
 
   withLock_(() => {
-    const table = table_(TASKS);
+    const table = tasksTable_();
     for (let row = firstRow; row <= lastRow; row++) {
       const r = table.rows.find((x) => x._row === row);
       if (!r || !String(r.Task || '').trim()) continue;
@@ -1440,6 +1548,9 @@ function onSheetEdit(e) {
 /** Runs every 5 minutes (installed by setup). */
 function runScheduledJobs() {
   fresh_();
+  // Not in a hurry here, so read Settings and Members afresh (this also refreshes the cache).
+  forgetShared_('settings');
+  forgetShared_('members');
   withLock_(() => {
     const props = PropertiesService.getScriptProperties();
     const now = new Date();
