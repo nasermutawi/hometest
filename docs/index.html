@@ -125,7 +125,7 @@ svg { flex: 0 0 auto; }
 .row-meta { font-size: 13px; color: var(--muted); }
 .row-meta .late { color: var(--danger); font-weight: 700; }
 .empty { padding: 48px 8px; text-align: center; color: var(--muted); }
-.bar { position: fixed; left: 0; right: 0; bottom: 0; background: var(--bg); border-top: 1px solid var(--line); }
+.bar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 10; background: var(--bg); border-top: 1px solid var(--line); }
 .bar-inner { max-width: 480px; margin: 0 auto; padding: 14px 20px calc(20px + env(safe-area-inset-bottom)); display: flex; align-items: center; justify-content: space-between; }
 .bar .round { width: 52px; height: 52px; border: 1px solid var(--border); }
 .midmic { width: 68px; height: 68px; border-radius: 50%; background: var(--accent); color: var(--on-accent); display: flex; align-items: center; justify-content: center; }
@@ -279,6 +279,63 @@ legend { padding: 0; }
 .toast svg { color: var(--toast-link); }
 .toast .msg { flex: 1; margin-left: 6px; font-weight: 600; padding: 8px 0; }
 .toast button { color: var(--toast-link); font-weight: 700; padding: 10px; }
+
+/* Instant feel: pressed states, the done tick, swipes, progress */
+.chip:active, .pillbtn:active, .round:active, .primary:active, .secondary:active, .textbtn:active, .addline:active, .linkbtn:active,
+.options button:active, .menu button:active, .step:active, .seg button:active, .attention:active, .today-card:active, .toast button:active { opacity: 0.7; }
+.bigmic:active, .midmic:active, .saybtn:active, .stop:active { transform: scale(0.96); }
+.check { transition: background-color 0.12s, border-color 0.12s, color 0.12s; }
+.check:active { transform: scale(0.88); }
+.row-title, .row-meta { transition: color 0.2s; }
+.swipe { position: relative; overflow: hidden; margin: 0 -20px; }
+.swipe .row { position: relative; z-index: 1; background: var(--bg); padding: 12px 20px; touch-action: pan-y; transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), background-color 0.15s; }
+.swipe.dragging .row { transition: none; user-select: none; -webkit-user-select: none; }
+.swipe .row:has(.row-main:active) { background: var(--soft); }
+.swipe-act { position: absolute; inset: 0; display: none; align-items: center; gap: 8px; padding: 0 24px; color: #fff; font-weight: 700; font-size: 15px; }
+.act-done { background: #2f7d5d; justify-content: flex-start; }
+.act-del { background: var(--danger); justify-content: flex-end; padding: 0; }
+.swipe[data-dir="right"] .act-done, .swipe[data-dir="left"] .act-del { display: flex; }
+.swipe-del { height: 100%; width: 96px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; color: #fff; font-size: 13px; font-weight: 700; }
+.swipe.armed .swipe-act svg { transform: scale(1.25); }
+.swipe-act svg { transition: transform 0.15s; }
+.swipe.leaving { max-height: 0 !important; opacity: 0; transition: max-height 0.2s ease-in, opacity 0.2s; }
+.swipe.fresh .row { animation: fresh 1.6s ease-out; }
+@keyframes fresh { from { background: var(--accent-soft); } }
+.row.pending { opacity: 0.85; }
+.row.pending .row-title { font-style: italic; font-weight: 500; }
+.spinner { display: inline-block; width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--border-strong); border-top-color: var(--accent); animation: spin 0.8s linear infinite; flex: 0 0 auto; vertical-align: -3px; }
+.spinner.light { border-color: rgb(255 255 255 / 0.3); border-top-color: var(--toast-link); }
+@keyframes spin { to { transform: rotate(360deg); } }
+#cap-pending { display: flex; flex-direction: column; }
+#cap-pending .row { padding: 10px 4px; }
+.syncbar { position: fixed; top: 0; left: 0; right: 0; height: 2px; z-index: 60; pointer-events: none; opacity: 0; transition: opacity 0.2s 0.25s;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent) 0 0 / 40% 100% no-repeat; }
+.syncbar.on { opacity: 1; animation: slide 1.1s ease-in-out infinite; }
+@keyframes slide { from { background-position: -40% 0; } to { background-position: 140% 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .swipe .row, .check, .row-title, .row-meta, .swipe.leaving { transition: none; }
+  .swipe.fresh .row, .spinner { animation: none; }
+  .syncbar.on { animation: none; background: var(--accent); opacity: 0.5; }
+}
+
+/* ?perf=1 */
+.perf { position: fixed; left: 8px; top: calc(4px + env(safe-area-inset-top)); z-index: 70; width: min(360px, calc(100vw - 16px)); max-height: 45dvh; overflow-y: auto;
+  background: rgb(22 32 27 / 0.92); color: #e8ede9; border-radius: 12px; font: 500 12px/1.35 ui-monospace, SFMono-Regular, Menlo, monospace; padding: 8px 10px; box-shadow: 0 6px 24px rgb(0 0 0 / 0.25); }
+.perf.min { padding: 2px 6px 2px 10px; }
+.perf.min ol, .perf.min .perf-switches, .perf.min #perf-clear { display: none; }
+.perf:not(.min) #perf-last { display: none; }
+.perf-head { display: flex; align-items: center; gap: 8px; }
+.perf-head b { flex: 0 0 auto; }
+#perf-last { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #e8ede9; }
+.perf:not(.min) .perf-head b { flex: 1; }
+.perf-head span { color: #f3cf8a; }
+.perf button { color: #9dc3b6; font-weight: 700; padding: 4px 6px; }
+.perf-switches { display: flex; gap: 12px; padding: 6px 0 2px; }
+.perf-switches label { display: flex; align-items: center; gap: 4px; }
+.perf ol { list-style: none; margin: 6px 0 0; padding: 0; }
+.perf li { padding: 4px 0; border-top: 1px solid rgb(255 255 255 / 0.1); display: flex; flex-direction: column; }
+.perf li span { color: #a3aea8; }
+.perf li.bad span { color: #ef7d70; }
 </style>
 </head>
 <body>
@@ -293,8 +350,13 @@ legend { padding: 0; }
   <symbol id="i-back" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 6-6 6 6 6"/></symbol>
   <symbol id="i-tick" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5 9-10"/></symbol>
   <symbol id="i-more" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></symbol>
+  <symbol id="i-bin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></symbol>
+  <symbol id="i-undo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5M12 16.5h.01"/></symbol>
   <symbol id="i-cal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/></symbol>
 </svg>
+
+<div id="syncbar" class="syncbar" aria-hidden="true"></div>
 
 <div id="v-loading" class="center"><p class="muted">Opening your household…</p></div>
 
@@ -325,6 +387,7 @@ legend { padding: 0; }
     <button type="button" class="linkbtn quiet" id="cap-type">or type it</button>
   </main>
   <div class="capture-foot">
+    <div id="cap-pending"></div>
     <button type="button" class="attention" id="cap-attention" hidden></button>
     <button type="button" class="today-card" id="cap-today" data-go="tasks"></button>
   </div>
@@ -522,6 +585,8 @@ const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&':
 const icon = (id, size) => `<svg width="${size}" height="${size}" aria-hidden="true"><use href="#i-${id}"/></svg>`;
 const SHARED = 'Shared';
 const AUTO_SAVE_SECONDS = 5;
+const REDUCED_MOTION = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 // ---------------------------------------------------------------- Talking to the household server
 
@@ -538,6 +603,7 @@ function readConfig() {
   try { return JSON.parse(localStorage.getItem(CONFIG_KEY) || 'null'); } catch (err) { return null; }
 }
 const config = readConfig();
+const PREVIEW = Boolean(window.householdApi);
 
 class ServerError extends Error {
   constructor(message, code) { super(message); this.code = code; }
@@ -547,7 +613,10 @@ const isNetworkError = (err) => !(err instanceof ServerError) && /NetworkError|F
 async function runOnce(fn, args) {
   if (window.householdApi) return window.householdApi(fn, args); // the preview's stand-in server
   // text/plain keeps this a "simple" request, which Google's servers accept from another site.
-  const res = await fetch(config.server, { method: 'POST', redirect: 'follow', body: JSON.stringify({ key: config.key, fn, args }) });
+  // keepalive lets a change sent as the app is put away still arrive.
+  const res = await fetch(config.server, {
+    method: 'POST', redirect: 'follow', keepalive: document.visibilityState === 'hidden', body: JSON.stringify({ key: config.key, fn, args }),
+  });
   const body = await res.json();
   if (!body.ok) throw new ServerError(body.message || 'Something went wrong.', body.error);
   return body.result;
@@ -556,9 +625,9 @@ async function run(fn, ...args) {
   try {
     return await runOnce(fn, args);
   } catch (err) {
-    if (err instanceof ServerError && err.code === 'link') { showLinkProblem(err.message); throw err; }
+    if (err instanceof ServerError && err.code === 'link') { forgetCache(); showLinkProblem(err.message); throw err; }
     if (!isNetworkError(err)) throw err;
-    await new Promise((r) => setTimeout(r, 1500));
+    await sleep(1500);
     try {
       return await runOnce(fn, args);
     } catch (again) {
@@ -567,14 +636,331 @@ async function run(fn, ...args) {
   }
 }
 
-const state = { data: null, view: 'capture', filter: 'all', detailId: null, reviewIds: [], lastEdit: null, deepLinked: false };
+const state = {
+  data: null, view: 'capture', filter: 'all', detailId: null, reviewIds: [], lastEdit: null, deepLinked: false,
+  linger: new Set(), fresh: new Set(), renderLater: false,
+};
+
+// ---------------------------------------------------------------- Performance panel (?perf=1)
+
+// Off unless the link says ?perf=1 (remembered until ?perf=0); then a small panel lists what
+// was tapped, how long until the screen changed, and how long the server took.
+const perf = { on: false, log: [], tapAt: 0, tapLabel: '', slow: false, failing: false };
+(function initPerf() {
+  const q = new URLSearchParams(location.search).get('perf');
+  try {
+    if (q === '1') localStorage.setItem('household:perf', '1');
+    if (q === '0') localStorage.removeItem('household:perf');
+    perf.on = localStorage.getItem('household:perf') === '1';
+  } catch (err) { perf.on = q === '1'; }
+})();
+
+function perfStart(label, { screen = true } = {}) {
+  if (!perf.on) return null;
+  const now = performance.now();
+  const recent = now - perf.tapAt < 800;
+  const entry = { at: new Date(), label: recent && perf.tapLabel ? `${label} (${perf.tapLabel})` : label, t0: recent ? perf.tapAt : now, screen: null, server: null, result: 'waiting' };
+  perf.tapAt = 0;
+  perf.log.unshift(entry);
+  perf.log.length = Math.min(perf.log.length, 40);
+  // After the next frame is drawn: the screen has changed.
+  if (screen) requestAnimationFrame(() => setTimeout(() => { entry.screen = Math.round(performance.now() - entry.t0); drawPerf(); }, 0));
+  return entry;
+}
+/** Something that needs no server (opening a task, a filter, a sheet). */
+function perfLocal(label) {
+  const entry = perfStart(label);
+  if (entry) entry.result = 'no server needed';
+}
+function perfEnd(entry, result, serverMs) {
+  if (!entry) return;
+  entry.result = result;
+  if (serverMs != null) entry.server = Math.round(serverMs);
+  drawPerf();
+}
+
+// ---------------------------------------------------------------- The data layer
+//
+// EVERY CHANGE GOES THROUGH mutate(); nothing else calls run() to change something. Any new
+// feature must use the same path:
+//   mutate({ apply, send }): apply(data) makes the change to a copy of the local state, which
+//     is drawn at once; send() tells the server later. Changes are sent one at a time, in order.
+//     If one fails it is undone on screen, with a toast offering Retry.
+//   A call that needs the server's answer (understanding speech, adding a person) goes through
+//     mutate() too, with apply showing progress where the answer will appear; it must never
+//     freeze the screen.
+//   Reads that change nothing (links, recent activity) use run() directly, showing progress in place.
+// sync.base is what the server last confirmed; state.data is the base with every waiting change
+// replayed on top, so a reply or refresh can never undo a change that hasn't been sent yet.
+// Replies may be "slim" (only what changed, from the new Code.gs) or the whole household
+// (older Code.gs); both are handled.
+
+const SLIM = { slim: true };
+const QUIET_AFTER_WRITE = 3000;
+const REFRESH_EVERY = 60000;
+const sync = { base: null, ops: [], sending: null, lastWrite: 0, version: 0, ids: new Map(), seq: 0, refreshing: false, nowAt: Date.now(), wake: null };
+
+const clone = (o) => (window.structuredClone ? structuredClone(o) : JSON.parse(JSON.stringify(o)));
+const realId = (id) => sync.ids.get(Number(id)) || Number(id);
+const taskIn = (data, id) => data.tasks.find((t) => t.id === realId(id));
+
+/** nowAt: when data.now was true (now, unless it comes from this phone's copy). */
+function setBase(data, nowAt = Date.now()) {
+  sync.base = data;
+  sync.version++;
+  sync.nowAt = nowAt;
+  saveCache(data);
+}
+
+function recompute() {
+  const data = clone(sync.base);
+  sync.ops.forEach((op) => {
+    try { op.apply(data); } catch (err) { console.error('apply', op.label, err); }
+  });
+  state.data = data;
+}
+
+/** Makes a change on screen now and sends it to the server in the background. Returns the queued change. */
+function mutate(spec) {
+  const op = { ...spec, spec, n: ++sync.seq, holdUntil: spec.hold ? Date.now() + spec.hold : 0, perf: perfStart(spec.label) };
+  // A newer change to the same thing replaces one that hasn't been sent yet.
+  if (op.key) sync.ops = sync.ops.filter((o) => o === sync.sending || o.key !== op.key);
+  sync.ops.push(op);
+  recompute();
+  draw();
+  pump();
+  return op;
+}
+
+/** Takes back a change that hasn't been sent yet (Undo during a delete's grace period). */
+function cancel(op) {
+  if (!sync.ops.includes(op) || sync.sending === op) return false;
+  sync.ops = sync.ops.filter((o) => o !== op);
+  perfEnd(op.perf, 'cancelled');
+  recompute();
+  draw();
+  setBusy();
+  return true;
+}
+
+async function pump() {
+  if (sync.sending || !sync.base) return;
+  const now = Date.now();
+  const op = sync.ops.find((o) => !o.holdUntil || o.holdUntil <= now);
+  clearTimeout(sync.wake);
+  if (!op) {
+    const held = sync.ops.map((o) => o.holdUntil).filter(Boolean);
+    if (held.length) sync.wake = setTimeout(pump, Math.max(0, Math.min(...held) - now) + 20);
+    setBusy();
+    return;
+  }
+  sync.sending = op;
+  setBusy();
+  const started = performance.now();
+  let reply;
+  let error = null;
+  const skipped = Boolean(op.skip && op.skip(sync.base));
+  if (!skipped) {
+    try { reply = await op.send(); } catch (err) { error = err; }
+  }
+  sync.ops = sync.ops.filter((o) => o !== op);
+  sync.sending = null;
+  sync.lastWrite = Date.now();
+  try {
+    if (skipped) {
+      perfEnd(op.perf, 'skipped (already saved)', 0);
+    } else if (error) {
+      perfEnd(op.perf, `failed: ${error.message}`, performance.now() - started);
+      recompute();
+      draw();
+      if (!(error instanceof ServerError && error.code === 'link')) {
+        if (op.fail) op.fail(error);
+        else couldntSave(op, error);
+      }
+    } else {
+      merge(reply, op);
+      perfEnd(op.perf, 'ok', performance.now() - started);
+      recompute();
+      quietDraw();
+      if (op.done) op.done(reply);
+    }
+  } catch (err) {
+    console.error('after', op.label, err);
+  }
+  setBusy();
+  pump();
+}
+
+function couldntSave(op, err) {
+  const msg = err instanceof ServerError ? `Couldn't save: ${err.message}` : "Couldn't save. Check your connection.";
+  toast(msg, [{ label: 'Retry', fn: () => mutate(op.spec) }], 8000, 'alert');
+}
+
+/** Folds a server reply into the confirmed state: a slim reply patches it, a full one replaces it. */
+function merge(reply, op) {
+  const r = op.stateOf ? op.stateOf(reply) : reply;
+  if (!r || typeof r !== 'object' || !sync.base) return;
+  if (r.slim) {
+    const base = sync.base;
+    const tasks = [r.task, r.next].concat(r.tasks || []).filter(Boolean);
+    if (op.tempId && r.task) remap(op.tempId, r.task.id);
+    tasks.forEach((t) => {
+      const i = base.tasks.findIndex((x) => x.id === t.id);
+      if (i >= 0) base.tasks[i] = t; else base.tasks.push(t);
+    });
+    const gone = new Set([r.deletedId].concat(r.deletedIds || []).filter((x) => x != null).map(Number));
+    if (gone.size) base.tasks = base.tasks.filter((t) => !gone.has(t.id));
+    if (r.prefs && base.me) base.me.prefs = r.prefs;
+    if (r.now) base.now = r.now;
+    setBase(base);
+  } else if (Array.isArray(r.tasks) && 'me' in r) {
+    if (op.tempId) {
+      const known = new Set(sync.base.tasks.map((t) => t.id));
+      const added = r.tasks.filter((t) => !known.has(t.id)).sort((a, b) => b.id - a.id)[0];
+      if (added) remap(op.tempId, added.id);
+    }
+    const { captured, notice, next, edit, ...data } = r;
+    setBase(data);
+  }
+}
+
+/** A task made on this phone got its real number from the server. */
+function remap(tempId, id) {
+  sync.ids.set(tempId, id);
+  if (state.detailId === tempId) state.detailId = id;
+  state.reviewIds = state.reviewIds.map(realId);
+  if (state.lastEdit && state.lastEdit.id === tempId) state.lastEdit.id = id;
+}
+
+/** Fetches the latest household in the background, unless changes are on their way. */
+async function refresh() {
+  if (!config && !PREVIEW) return;
+  clearTimeout(refresh.later);
+  if (sync.refreshing) return;
+  const sinceWrite = Date.now() - sync.lastWrite;
+  if (sync.base && (sync.ops.length || sync.sending || sinceWrite < QUIET_AFTER_WRITE)) {
+    refresh.later = setTimeout(refresh, Math.max(QUIET_AFTER_WRITE - sinceWrite, 1000));
+    return;
+  }
+  sync.refreshing = true;
+  setBusy();
+  const version = sync.version;
+  const entry = perfStart('Refresh', { screen: false });
+  const started = performance.now();
+  try {
+    const data = await run('getState');
+    perfEnd(entry, 'ok', performance.now() - started);
+    // A change confirmed meanwhile may be newer than this; fetch again shortly instead.
+    if (sync.version !== version) { refresh.later = setTimeout(refresh, QUIET_AFTER_WRITE); return; }
+    receive(data, false);
+  } catch (err) {
+    perfEnd(entry, `failed: ${err.message}`, performance.now() - started);
+    // Once the app is showing, a failed background refresh just waits for the next one.
+    if (state.data && state.data.me) return;
+    if (err instanceof ServerError && err.code === 'link') return;
+    $('#blocked-msg').textContent = /reach the household/.test(err.message) ? NETWORK_HELP : err.message;
+    show('v-blocked');
+  } finally {
+    sync.refreshing = false;
+    setBusy();
+  }
+}
+
+/** A whole household from the server or from this phone's copy (saved at savedAt). */
+function receive(data, fromCache, savedAt) {
+  if (data.error) {
+    state.data = data;
+    $('#blocked-msg').textContent = data.message;
+    show('v-blocked');
+    return;
+  }
+  if (!data.me) {
+    state.data = data;
+    show('v-join');
+    return;
+  }
+  const first = !state.data || !state.data.me;
+  setBase(data, savedAt || Date.now());
+  recompute();
+  if (first) draw(); else quietDraw();
+  if (!state.deepLinked) openDeepLink(fromCache);
+  pump();
+}
+
+// The last household seen is kept on this phone, per personal link, so the app opens at once.
+const cacheKey = () => (PREVIEW ? `household:state:preview:${new URLSearchParams(location.search).get('as') || ''}` : config ? `household:state:${config.key}` : '');
+function saveCache(data) {
+  const key = cacheKey();
+  if (!key || !data || !data.me) return;
+  try { localStorage.setItem(key, JSON.stringify({ key, at: sync.nowAt, data })); } catch (err) { /* full or unavailable: fine */ }
+}
+function loadCache() {
+  const key = cacheKey();
+  if (!key) return null;
+  try {
+    const saved = JSON.parse(localStorage.getItem(key) || 'null');
+    return saved && saved.key === key && saved.data && saved.data.me ? saved : null;
+  } catch (err) { return null; }
+}
+function forgetCache() {
+  try { Object.keys(localStorage).filter((k) => k.startsWith('household:state:')).forEach((k) => localStorage.removeItem(k)); } catch (err) { /* fine */ }
+}
+
+/** The app or a change is talking to the server: a thin bar at the top, never a blocking spinner. */
+function setBusy() {
+  const busy = Boolean(sync.sending || sync.refreshing || sync.ops.some((o) => !o.holdUntil));
+  $('#syncbar').classList.toggle('on', busy);
+  if (perf.on) drawPerf();
+}
+
+// Deletes wait a few seconds for Undo. If the app is put away first, send them now.
+function flushHeld() {
+  const held = sync.ops.filter((o) => o.holdUntil && o !== sync.sending);
+  if (!held.length) return;
+  sync.ops = sync.ops.filter((o) => !held.includes(o));
+  held.forEach((op) => {
+    op.apply(sync.base);
+    op.send().then(() => perfEnd(op.perf, 'ok (sent on leaving)'), (err) => perfEnd(op.perf, `failed: ${err.message}`));
+  });
+  sync.lastWrite = Date.now();
+  sync.version++; // a refresh already on its way may predate these
+  saveCache(sync.base);
+  recompute();
+}
+
+// ---------------------------------------------------------------- Drawing without jumping
+
+/** Redraws for something the person just did. */
+function draw() {
+  const y = window.scrollY;
+  render();
+  if (window.scrollY !== y) window.scrollTo(0, y);
+}
+
+/** Redraws for something that arrived in the background: never while typing or swiping. */
+function quietDraw() {
+  if (busyEditing()) { state.renderLater = true; return; }
+  state.renderLater = false;
+  draw();
+}
+function busyEditing() {
+  const a = document.activeElement;
+  const typing = a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) && !a.closest('dialog') && !a.classList.contains('hidden-input');
+  return Boolean(typing || swipe.tracking || swipe.open || swipe.animating);
+}
+document.addEventListener('focusout', () => setTimeout(() => { if (state.renderLater) quietDraw(); }, 0));
 
 // ---------------------------------------------------------------- Dates
 
 const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const utc = (d) => { const [y, m, dd] = d.split('-').map(Number); return new Date(Date.UTC(y, m - 1, dd)); };
-const today = () => state.data.now.slice(0, 10);
+/** The household's local time now, "yyyy-MM-ddTHH:mm": the server's clock moved on by the time since it said so. */
+function householdNow() {
+  const at = Date.parse(`${state.data.now}:00Z`);
+  return isNaN(at) ? state.data.now : new Date(at + Date.now() - sync.nowAt).toISOString().slice(0, 16);
+}
+const today = () => householdNow().slice(0, 10);
 const addDays = (d, n) => { const x = utc(d); x.setUTCDate(x.getUTCDate() + n); return x.toISOString().slice(0, 10); };
 const daysFrom = (d) => Math.round((utc(d) - utc(today())) / 86400000);
 const weekday = (d) => WEEKDAYS[utc(d).getUTCDay()];
@@ -602,7 +988,7 @@ function partOfDay(t) {
 function isLate(t) {
   if (t.done || !t.dueDate) return false;
   if (t.dueDate < today()) return true;
-  return t.dueDate === today() && t.time && t.time < state.data.now.slice(11, 16);
+  return t.dueDate === today() && t.time && t.time < householdNow().slice(11, 16);
 }
 
 // ---------------------------------------------------------------- Owners
@@ -624,6 +1010,8 @@ function show(view) {
 }
 
 function go(view) {
+  perfLocal(`Open ${view}`);
+  closeSwipe(false);
   state.view = view;
   if (view !== 'detail') state.lastEdit = null;
   render();
@@ -631,31 +1019,19 @@ function go(view) {
 }
 
 let toastTimer;
-function toast(msg, actions = [], ms = 3500) {
+function toast(msg, actions = [], ms = 3500, kind = 'ok') {
   const el = $('#toast');
-  el.innerHTML = `${icon('tick', 20)}<span class="msg">${esc(msg)}</span>${actions.map((a, i) => `<button type="button" data-t="${i}">${esc(a.label)}</button>`).join('')}`;
+  // An open dialog makes the rest of the page untappable, so the toast goes inside it.
+  const host = $$('dialog[open]').pop() || document.body;
+  if (el.parentNode !== host) host.append(el);
+  el.innerHTML = `${kind === 'alert' ? icon('alert', 20) : icon('tick', 20)}<span class="msg">${esc(msg)}</span>${actions.map((a, i) => `<button type="button" data-t="${i}">${esc(a.label)}</button>`).join('')}`;
   actions.forEach((a, i) => el.querySelector(`[data-t="${i}"]`).addEventListener('click', () => { el.hidden = true; a.fn(); }));
   el.classList.toggle('lift', state.view === 'tasks');
   el.hidden = false;
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => { el.hidden = true; }, actions.length ? Math.max(ms, 6000) : ms);
 }
-const fail = (err) => toast(err.message || String(err));
-
-function apply(data) {
-  state.data = data;
-  if (data.error) {
-    $('#blocked-msg').textContent = data.message;
-    show('v-blocked');
-    return;
-  }
-  if (!data.me) {
-    show('v-join');
-    return;
-  }
-  render();
-  if (!state.deepLinked) openDeepLink();
-}
+const fail = (err) => toast(err.message || String(err), [], 4500, 'alert');
 
 // If the server never answers, say why instead of loading forever.
 const STUCK_MESSAGE = "The household server hasn't answered. Check your connection and reload. If it keeps happening, check the web app is deployed with \"Who has access: Anyone\" (see the setup guide).";
@@ -673,19 +1049,7 @@ function showLinkProblem(message) {
   show('v-blocked');
 }
 
-async function load() {
-  try {
-    apply(await run('getState'));
-  } catch (err) {
-    // Once the app is showing, a failed background refresh just waits for the next one.
-    if (state.data && state.data.me) return;
-    if (err instanceof ServerError && err.code === 'link') return;
-    $('#blocked-msg').textContent = /reach the household/.test(err.message) ? NETWORK_HELP : err.message;
-    show('v-blocked');
-  }
-}
-
-const taskById = (id) => state.data.tasks.find((t) => t.id === Number(id));
+const taskById = (id) => taskIn(state.data, id);
 const openTasks = () => state.data.tasks.filter((t) => !t.done);
 const needsDate = () => openTasks().filter((t) => !t.dueDate);
 
@@ -711,11 +1075,20 @@ function openAttention(list) {
   else { state.filter = 'nodate'; go('tasks'); }
 }
 
+/** Recordings the server is still working out: shown straight away, replaced by the tasks. */
+function pendingHtml() {
+  return (state.data.pending || []).map((p) => `<div class="row pending" aria-live="polite">
+    <span class="spinner" aria-hidden="true"></span>
+    <span class="row-main"><span class="row-title">“${esc(p.text)}”</span><span class="row-meta">Understanding…</span></span>
+  </div>`).join('');
+}
+
 // ---------------------------------------------------------------- Quick capture (home)
 
 function renderCapture() {
   const t0 = today();
   $('#cap-date').textContent = `${weekday(t0)} ${utc(t0).getUTCDate()} ${new Intl.DateTimeFormat('en-GB', { month: 'long', timeZone: 'UTC' }).format(utc(t0))}`;
+  $('#cap-pending').innerHTML = pendingHtml();
   const missing = needsDate();
   $('#cap-attention').hidden = !missing.length;
   $('#cap-attention').innerHTML = attentionHtml(missing);
@@ -753,8 +1126,10 @@ function visible() {
   const me = state.data.me.name;
   const f = state.filter;
   return state.data.tasks.filter((t) => {
-    if (f === 'done') return t.done;
-    if (t.done) return false;
+    // Just ticked: stays where it was for a moment, shown as done, before it leaves.
+    const done = state.linger.has(t.id) ? !t.done : t.done;
+    if (f === 'done') return done;
+    if (done) return false;
     if (f === 'nodate') return !t.dueDate;
     if (!t.dueDate) return false; // shown in the amber strip instead
     if (f === 'mine') return t.owner === me;
@@ -790,10 +1165,14 @@ function rowMeta(t, group) {
 const REPEAT_WORDS = { Daily: 'Every day', Weekly: 'Every week', Monthly: 'Every month', Quarterly: 'Every quarter', Yearly: 'Every year' };
 
 function taskRow(t, group) {
-  return `<div class="row ${t.done ? 'done' : ''}">
-    <button type="button" class="check ${t.done ? 'on' : ''}" data-done="${t.id}" aria-label="${t.done ? 'Mark not done' : 'Mark done'}: ${esc(t.title)}">${icon('tick', 14)}</button>
-    <button type="button" class="row-main" data-open="${t.id}"><span class="row-title">${esc(t.title)}</span><span class="row-meta">${rowMeta(t, group)}</span></button>
-    ${pill(t.owner)}
+  return `<div class="swipe${state.fresh.has(t.id) ? ' fresh' : ''}" data-row="${t.id}">
+    <div class="swipe-act act-done" aria-hidden="true">${icon(t.done ? 'undo' : 'tick', 22)}<span>${t.done ? 'Reopen' : 'Done'}</span></div>
+    <div class="swipe-act act-del" aria-hidden="true"><button type="button" class="swipe-del" data-swipe-del="${t.id}" tabindex="-1">${icon('bin', 20)}<span>Delete</span></button></div>
+    <div class="row ${t.done ? 'done' : ''}">
+      <button type="button" class="check ${t.done ? 'on' : ''}" data-done="${t.id}" aria-label="${t.done ? 'Mark not done' : 'Mark done'}: ${esc(t.title)}">${icon('tick', 14)}</button>
+      <button type="button" class="row-main" data-open="${t.id}"><span class="row-title">${esc(t.title)}</span><span class="row-meta">${rowMeta(t, group)}</span></button>
+      ${pill(t.owner)}
+    </div>
   </div>`;
 }
 
@@ -806,21 +1185,115 @@ function renderTasks() {
   $('#list-attention').hidden = !missing.length || state.filter === 'nodate' || state.filter === 'done';
   $('#list-attention').innerHTML = attentionHtml(missing);
   const groups = groupsOf(visible());
-  $('#list').innerHTML = groups.length
+  const pending = state.filter === 'done' ? '' : pendingHtml();
+  $('#list').innerHTML = (pending ? `<section class="group">${pending}</section>` : '') + (groups.length
     ? groups.map(([name, list]) => `<section class="group ${name === 'Overdue' ? 'late' : ''}"><h2 class="eyebrow">${esc(name)}</h2>${list.map((t) => taskRow(t, name)).join('')}</section>`).join('')
-    : `<p class="empty">${state.filter === 'done' ? 'Nothing finished yet.' : 'Nothing here. Tap the microphone or + to add a task.'}</p>`;
+    : (pending ? '' : `<p class="empty">${state.filter === 'done' ? 'Nothing finished yet.' : 'Nothing here. Tap the microphone or + to add a task.'}</p>`));
 }
 
-async function toggleDone(id) {
+// ---------------------------------------------------------------- Changes (all through mutate)
+
+const nowIso = () => new Date().toISOString();
+
+/** Done or not done, as a change with no toast: the building block for ticks, swipes and undo. */
+function doneChange(id, done, extra = {}) {
+  return mutate({
+    label: done ? 'Done' : 'Reopen',
+    key: `done:${realId(id)}`,
+    apply: (d) => { const t = taskIn(d, id); if (t) { t.done = done; t.completed = done ? nowIso() : ''; } },
+    skip: (base) => { const t = taskIn(base, id); return Boolean(t) && t.done === done; },
+    send: () => run('setTaskDone', realId(id), done, SLIM),
+    ...extra,
+  });
+}
+
+/** The tick: fills at once, the row shows as done, then leaves the list. */
+function toggleDone(id, { linger = true } = {}) {
   const t = taskById(id);
+  if (!t) return;
   const done = !t.done;
-  try {
-    const res = await run('setTaskDone', t.id, done);
-    apply(res);
-    if (!done) toast('Reopened');
-    else if (res.next) toast(`Done. Next one ${dayLabel(res.next.dueDate).toLowerCase().startsWith('to') ? dayLabel(res.next.dueDate).toLowerCase() : `on ${shortDate(res.next.dueDate)}`}`);
-    else toast('Done', [{ label: 'Undo', fn: () => run('setTaskDone', t.id, false).then(apply, fail) }]);
-  } catch (err) { fail(err); }
+  const repeating = done && t.repeats !== 'Never' && t.dueDate;
+  if (linger && state.view === 'tasks') lingerRow(t.id);
+  doneChange(t.id, done, {
+    done: (reply) => {
+      const next = reply && reply.next;
+      if (repeating && next) toast(`Done. Next one ${dayLabel(next.dueDate).toLowerCase().startsWith('to') ? dayLabel(next.dueDate).toLowerCase() : `on ${shortDate(next.dueDate)}`}`);
+    },
+  });
+  if (!done) toast('Reopened');
+  else if (repeating) toast('Done');
+  else toast('Done', [{ label: 'Undo', fn: () => doneChange(t.id, false) }]);
+}
+
+const LINGER_MS = 400;
+function lingerRow(id) {
+  state.linger.add(id);
+  setTimeout(() => {
+    const row = $(`#list [data-row="${id}"]`);
+    if (row && !REDUCED_MOTION) collapse(row);
+    setTimeout(() => { state.linger.delete(id); quietDraw(); }, row && !REDUCED_MOTION ? 220 : 0);
+  }, LINGER_MS);
+}
+
+/** Changes some of a task's fields. Only those fields are sent, so other changes to the task are kept. */
+function saveFields(id, patch, message) {
+  mutate({
+    label: message || 'Save',
+    apply: (d) => { const t = taskIn(d, id); if (t) Object.assign(t, patch); },
+    send: () => run('saveTask', { ...patch, id: realId(id) }, SLIM),
+  });
+  if (message) toast(message);
+}
+
+function createTask(data) {
+  const tempId = -(++sync.seq);
+  mutate({
+    label: 'Add task',
+    tempId,
+    apply: (d) => {
+      d.tasks.push({
+        id: tempId, done: false, title: data.title, dueDate: data.dueDate, time: data.time, owner: data.owner, repeats: data.repeats,
+        notes: data.notes || '', category: data.category || 'other', reminders: d.defaultReminders || [], prep: data.prep || [],
+        completed: '', createdBy: d.me.name,
+      });
+    },
+    send: () => run('saveTask', data, SLIM),
+  });
+}
+
+function setStep(id, index, done) {
+  mutate({
+    label: done ? 'Prep step done' : 'Prep step undone',
+    key: `prep:${realId(id)}:${index}`,
+    apply: (d) => { const t = taskIn(d, id); if (t && t.prep[index]) t.prep[index].done = done; },
+    skip: (base) => { const t = taskIn(base, id); return Boolean(t && t.prep[index]) && t.prep[index].done === done; },
+    send: () => run('setPrepDone', realId(id), index, done, SLIM),
+  });
+}
+
+/** Deletes at once on screen; the server hears after the Undo window, or as soon as the app is put away. */
+const UNDO_DELETE_MS = 6500;
+function deleteSoon(id) {
+  const t = taskById(id);
+  if (!t) return;
+  const op = mutate({
+    label: 'Delete',
+    hold: UNDO_DELETE_MS,
+    apply: (d) => { d.tasks = d.tasks.filter((x) => x.id !== realId(id)); },
+    send: () => run('deleteTask', realId(id), SLIM),
+  });
+  toast('Deleted', [{ label: 'Undo', fn: () => toast(cancel(op) ? 'Brought back' : 'Too late: it was already deleted') }], 6000);
+}
+
+function savePrefs(prefs) {
+  const spec = {
+    label: 'Preferences',
+    key: 'prefs',
+    apply: (d) => { d.me.prefs = { ...prefs }; },
+    send: () => run('savePreferences', prefs, SLIM),
+    fail: (err) => { fillPrefs(); couldntSave({ spec }, err); },
+  };
+  mutate(spec);
 }
 
 // ---------------------------------------------------------------- One task
@@ -831,7 +1304,7 @@ function openDetail(id) {
   go('detail');
 }
 
-const changedClass = (key) => (state.lastEdit && state.lastEdit.id === state.detailId && state.lastEdit.changed.some((c) => key.includes(c)) ? ' changed' : '');
+const changedClass = (key) => (state.lastEdit && !state.lastEdit.pending && state.lastEdit.id === state.detailId && state.lastEdit.changed.some((c) => key.includes(c)) ? ' changed' : '');
 const updatedTag = (key) => (changedClass(key) ? '<span class="updated">Updated</span>' : '');
 
 function whenChip(t, cls = '') {
@@ -846,7 +1319,8 @@ function stepWhen(s) {
 function renderDetail() {
   const t = taskById(state.detailId);
   const done = t.prep.filter((s) => s.done).length;
-  const newPrep = state.lastEdit && state.lastEdit.id === t.id && state.lastEdit.changed.includes('prep') ? state.lastEdit.before.prep.length : Infinity;
+  const e = state.lastEdit;
+  const newPrep = e && !e.pending && e.id === t.id && e.changed.includes('prep') ? e.before.prep.length : Infinity;
   $('#detail').innerHTML = `
     <div class="detail-title">
       <button type="button" class="check ${t.done ? 'on' : ''}" data-done="${t.id}" aria-label="${t.done ? 'Mark not done' : 'Mark done'}">${icon('tick', 16)}</button>
@@ -875,6 +1349,13 @@ function renderDetail() {
 
 function renderDetailFoot() {
   const e = state.lastEdit && state.lastEdit.id === state.detailId ? state.lastEdit : null;
+  if (e && e.pending) {
+    $('#detail-foot').innerHTML = `<section class="voice-card" aria-label="Voice edit">
+        <q>${esc(e.said)}</q>
+        <div class="actions"><span class="result"><span class="spinner light" aria-hidden="true"></span>Understanding…</span></div>
+      </section>`;
+    return;
+  }
   $('#detail-foot').innerHTML = e
     ? `<section class="voice-card" aria-label="Voice edit">
         <q>${esc(e.said)}</q>
@@ -885,35 +1366,40 @@ function renderDetailFoot() {
     : `<button type="button" class="saybtn" id="say-change">${icon('mic', 24)}Say what to change</button>`;
 }
 
-async function saveFields(id, patch, message) {
-  const t = taskById(id);
-  const data = { ...t, ...patch, id: t.id };
-  try {
-    apply(await run('saveTask', data));
-    if (message) toast(message);
-  } catch (err) { fail(err); }
+/** Needs the server (it understands the words): the card shows what was said at once, then the result. */
+function voiceEdit(id, said) {
+  state.lastEdit = { id: realId(id), said, pending: true };
+  state.detailId = realId(id);
+  if (state.view !== 'detail') go('detail');
+  mutate({
+    label: 'Voice edit',
+    apply: () => {},
+    send: () => run('editByVoice', realId(id), said, SLIM),
+    done: (res) => {
+      if (!res || !res.edit) return;
+      const edit = { ...res.edit, said };
+      if (state.lastEdit && state.lastEdit.pending && state.lastEdit.id === edit.id) {
+        state.lastEdit = edit;
+        quietDraw();
+        if (state.renderLater) renderDetailFoot();
+      } else {
+        toast(edit.summary);
+      }
+    },
+    fail: (err) => {
+      if (state.lastEdit && state.lastEdit.pending) { state.lastEdit = null; if (state.view === 'detail') renderDetailFoot(); }
+      toast(err instanceof ServerError ? `Couldn't change that: ${err.message}` : "Couldn't reach the server. Nothing was changed.", [{ label: 'Retry', fn: () => voiceEdit(id, said) }], 8000, 'alert');
+    },
+  });
 }
 
-async function voiceEdit(id, said) {
-  try {
-    const res = await run('editByVoice', id, said);
-    apply(res);
-    state.lastEdit = { ...res.edit, said };
-    state.detailId = id;
-    if (state.view !== 'detail') go('detail'); else render();
-  } catch (err) { fail(err); }
-}
-
-async function undoVoiceEdit() {
+function undoVoiceEdit() {
   const e = state.lastEdit;
   state.lastEdit = null;
   const b = e.before;
-  try {
-    let res = await run('saveTask', { id: b.id, title: b.title, dueDate: b.dueDate, time: b.time, owner: b.owner, repeats: b.repeats, notes: b.notes, category: b.category, reminders: b.reminders, prep: b.prep });
-    if (e.changed.includes('done')) res = await run('setTaskDone', b.id, b.done);
-    apply(res);
-    toast('Change undone');
-  } catch (err) { fail(err); }
+  saveFields(b.id, { title: b.title, dueDate: b.dueDate, time: b.time, owner: b.owner, repeats: b.repeats, notes: b.notes, prep: b.prep });
+  if (e.changed.includes('done')) doneChange(b.id, b.done);
+  toast('Change undone');
 }
 
 // ---------------------------------------------------------------- Review (already saved)
@@ -1026,16 +1512,17 @@ function startCapture() {
   });
 }
 
-function openTypeCapture(hint) {
+function openTypeCapture(hint, value = '') {
   typeInstead({
     title: 'What needs doing?',
     hint: hint || 'Say several things at once and each becomes its own task. Your keyboard\'s microphone works here too.',
     placeholder: 'e.g. Friday I need to pick up the dry cleaning. Also we need to book the dentist',
+    value,
     onText: handleCapture,
   });
 }
 
-// ---------------------------------------------------------------- After recording: Save or Review
+// ---------------------------------------------------------------- After recording
 
 let heardTimer = null;
 let captured = [];
@@ -1046,40 +1533,56 @@ function heardRow(t) {
   return `<li><b>${esc(t.title)}</b><span>${esc(dayLabel(t.dueDate).replace(/^(Mon|Tues|Wednes|Thurs|Fri|Satur|Sun)day$/, (m) => m.slice(0, 3)))}${t.time ? ` ${esc(t.time)}` : ''} · ${esc(who)}</span></li>`;
 }
 
-async function handleCapture(text) {
+/**
+ * Needs the server (it understands the words). What was said shows straight away as an
+ * "Understanding…" row; when the reply comes it turns into the task(s), with Review and Undo.
+ */
+function handleCapture(text) {
+  const pid = ++sync.seq;
+  mutate({
+    label: 'Capture',
+    apply: (d) => { d.pending = (d.pending || []).concat({ pid, text }); },
+    send: () => run('capture', text, SLIM),
+    done: (res) => showCaptured(res),
+    fail: (err) => toast(`Couldn't save that: ${err instanceof ServerError ? err.message : 'no connection'}`, [
+      { label: 'Retry', fn: () => handleCapture(text) },
+      { label: 'Edit', fn: () => openTypeCapture('Nothing was saved. Check the words and tap Save.', text) },
+    ], 10000, 'alert'),
+  });
+}
+
+function showCaptured(res) {
+  const ids = (res && res.captured) || [];
+  if (!ids.length) return;
+  ids.forEach((id) => state.fresh.add(id));
+  setTimeout(() => { ids.forEach((id) => state.fresh.delete(id)); }, 1600);
+  quietDraw();
+  const idle = !$('dialog[open]') && ['capture', 'tasks'].includes(state.view) && !document.hidden && !busyEditing();
+  if (!idle) { savedToast(ids); return; }
   const dlg = $('#d-heard');
+  captured = ids;
+  const tasks = ids.map(taskById).filter(Boolean);
+  $('#heard-title').textContent = `Got it: ${tasks.length} task${tasks.length === 1 ? '' : 's'}`;
+  $('#heard-sub').textContent = res.notice || `Saving in ${AUTO_SAVE_SECONDS} seconds unless you tap Review.`;
+  $('#heard-list').innerHTML = tasks.map(heardRow).join('');
+  $('#heard-quote').hidden = true;
+  $('#heard-actions').hidden = false;
+  $('#heard-discard').hidden = false;
+  dlg.showModal();
+  const ring = $('#heard-save .ring');
+  ring.classList.remove('go');
+  void ring.getBoundingClientRect();
+  ring.classList.add('go');
   clearTimeout(heardTimer);
-  captured = [];
-  $('#heard-title').textContent = 'Working it out…';
-  $('#heard-sub').textContent = '';
-  $('#heard-quote').textContent = `“${text}”`;
-  $('#heard-quote').hidden = false;
-  $('#heard-list').innerHTML = '';
-  $('#heard-actions').hidden = true;
-  $('#heard-discard').hidden = true;
-  if (!dlg.open) dlg.showModal();
-  try {
-    const res = await run('capture', text);
-    apply(res);
-    captured = res.captured;
-    const tasks = captured.map(taskById).filter(Boolean);
-    $('#heard-title').textContent = `Got it: ${tasks.length} task${tasks.length === 1 ? '' : 's'}`;
-    $('#heard-sub').textContent = res.notice || `Saving in ${AUTO_SAVE_SECONDS} seconds unless you tap Review.`;
-    $('#heard-quote').hidden = true;
-    $('#heard-list').innerHTML = tasks.map(heardRow).join('');
-    $('#heard-actions').hidden = false;
-    $('#heard-discard').hidden = false;
-    const ring = $('#heard-save .ring');
-    ring.classList.remove('go');
-    void ring.getBoundingClientRect();
-    ring.classList.add('go');
-    heardTimer = setTimeout(finishCapture, AUTO_SAVE_SECONDS * 1000);
-  } catch (err) {
-    dlg.close();
-    toast(`Couldn't save that: ${err.message}`);
-    openTypeCapture('Nothing was saved. Check the words and tap Save.');
-    $('#type-text').value = text;
-  }
+  heardTimer = setTimeout(finishCapture, AUTO_SAVE_SECONDS * 1000);
+}
+
+function savedToast(ids) {
+  const n = ids.length;
+  toast(`Saved ${n} task${n === 1 ? '' : 's'}`, [
+    { label: 'Review', fn: () => { state.reviewIds = ids; go('review'); } },
+    { label: 'Undo', fn: () => discard(ids) },
+  ]);
 }
 
 // The tasks are already in the sheet; "Save" just closes and offers Undo.
@@ -1090,20 +1593,18 @@ function finishCapture() {
   dlg.close();
   const ids = captured.slice();
   state.reviewIds = ids;
-  state.view = 'capture';
-  render();
-  const n = ids.length;
-  toast(`Saved ${n} task${n === 1 ? '' : 's'}`, [
-    { label: 'Review', fn: () => { state.reviewIds = ids; go('review'); } },
-    { label: 'Undo', fn: () => discard(ids) },
-  ]);
+  draw();
+  savedToast(ids);
 }
 
-async function discard(ids) {
-  try {
-    apply(await run('discardCapture', ids));
-    toast('Not saved');
-  } catch (err) { fail(err); }
+function discard(ids) {
+  const wanted = new Set(ids.map(realId));
+  mutate({
+    label: 'Discard',
+    apply: (d) => { d.tasks = d.tasks.filter((t) => !wanted.has(t.id)); },
+    send: () => run('discardCapture', [...wanted], SLIM),
+  });
+  toast('Not saved');
 }
 
 $('#heard-save').addEventListener('click', finishCapture);
@@ -1119,8 +1620,6 @@ $('#heard-discard').addEventListener('click', () => {
   discard(captured.slice());
 });
 $('#d-heard').addEventListener('cancel', (e) => { e.preventDefault(); if (captured.length) finishCapture(); });
-// Phone put away mid-countdown: the tasks are saved already, so just settle the screen.
-document.addEventListener('visibilitychange', () => { if (document.hidden && $('#d-heard').open && captured.length) finishCapture(); });
 
 // ---------------------------------------------------------------- Date and time sheet
 
@@ -1181,6 +1680,7 @@ function openWhen(id, mode) {
   } else {
     drawWhen();
   }
+  perfLocal('Date sheet');
   if (!$('#d-when').open) $('#d-when').showModal();
 }
 
@@ -1189,14 +1689,14 @@ function drawWhen() {
   timeChips($('#w-times'), whenState.time, (t) => { whenState.time = t; if (t && !whenState.date) whenState.date = today(); drawWhen(); });
 }
 
-async function setTime(time) {
+function setTime(time) {
   $('#d-when').close();
-  await saveFields(whenState.id, { time }, time ? `Set for ${time}` : 'Any time it is');
+  saveFields(whenState.id, { time }, time ? `Set for ${time}` : 'Any time it is');
 }
 
-$('#when-save').addEventListener('click', async () => {
+$('#when-save').addEventListener('click', () => {
   $('#d-when').close();
-  await saveFields(whenState.id, { dueDate: whenState.date, time: whenState.date ? whenState.time : '' }, 'Saved');
+  saveFields(whenState.id, { dueDate: whenState.date, time: whenState.date ? whenState.time : '' }, 'Saved');
 });
 $('#q-times').addEventListener('click', (e) => { const b = e.target.closest('[data-q]'); if (b) setTime(b.dataset.q); });
 $('#q-other').addEventListener('click', () => pickNative('#time-picker', '12:00', setTime));
@@ -1219,6 +1719,7 @@ function choose(title, options, onPick) {
     $('#d-choose').close();
     onPick(options[Number(b.dataset.i)].value);
   };
+  perfLocal('Choice sheet');
   $('#d-choose').showModal();
 }
 
@@ -1314,7 +1815,7 @@ $('#f-extras').addEventListener('click', (e) => {
 });
 $('#f-prep-add').addEventListener('click', () => { const r = prepRow(null); $('#f-prep').append(r); r.querySelector('input').focus(); });
 
-$('#task-form').addEventListener('submit', async (e) => {
+$('#task-form').addEventListener('submit', (e) => {
   e.preventDefault();
   const title = $('#f-title').value.trim();
   const err = $('#form-error');
@@ -1322,21 +1823,13 @@ $('#task-form').addEventListener('submit', async (e) => {
   if (form.repeats !== 'Never' && !form.date) { err.textContent = 'A repeating task needs a day to start from.'; err.hidden = false; return; }
   const t = form.task;
   const data = {
-    id: form.id, title, dueDate: form.date, time: form.date ? form.time : '', owner: form.owner, repeats: form.repeats,
+    title, dueDate: form.date, time: form.date ? form.time : '', owner: form.owner, repeats: form.repeats,
     notes: $('#f-notes').value, category: t ? t.category : 'other', reminders: t ? t.reminders : undefined,
     prep: $$('#f-prep .prep-row').map((r) => ({ title: r.querySelector('input').value.trim(), daysBefore: Number(r.querySelector('select').value), done: r.dataset.done === '1' })).filter((s) => s.title),
   };
-  $('#form-save').disabled = true;
-  try {
-    apply(await run('saveTask', data));
-    $('#d-form').close();
-    toast(t ? 'Saved' : 'Task added');
-  } catch (ex) {
-    err.textContent = ex.message;
-    err.hidden = false;
-  } finally {
-    $('#form-save').disabled = false;
-  }
+  $('#d-form').close();
+  if (t) saveFields(t.id, data, 'Saved');
+  else { createTask(data); toast('Task added'); }
 });
 
 // ---------------------------------------------------------------- Wiring
@@ -1346,6 +1839,8 @@ document.addEventListener('click', (e) => {
   if (goBtn) { if (goBtn.dataset.go === 'tasks' && state.view !== 'tasks') state.filter = 'all'; go(goBtn.dataset.go); return; }
   const close = e.target.closest('[data-close]');
   if (close) { close.closest('dialog').close(); return; }
+  const del = e.target.closest('[data-swipe-del]');
+  if (del) { swipeDelete(del.closest('.swipe')); return; }
   const done = e.target.closest('[data-done]');
   if (done) { toggleDone(done.dataset.done); return; }
   const open = e.target.closest('[data-open]');
@@ -1366,6 +1861,8 @@ $('#list-attention').addEventListener('click', () => openAttention(needsDate()))
 $('#filters').addEventListener('click', (e) => {
   const b = e.target.closest('[data-filter]');
   if (!b) return;
+  closeSwipe(false);
+  perfLocal('Filter');
   state.filter = b.dataset.filter === state.filter && b.dataset.filter === 'nodate' ? 'all' : b.dataset.filter;
   renderTasks();
 });
@@ -1376,52 +1873,168 @@ $('#detail-more').addEventListener('click', () => {
   choose(t.title, [{ label: 'Edit by typing', value: 'edit' }, { label: 'Delete task', value: 'delete', danger: true }], (v) => {
     if (v === 'edit') openForm(t);
     if (v === 'delete') {
-      choose('Delete this task?', [{ label: 'Delete', value: 'yes', danger: true }, { label: 'Keep it', value: 'no' }], async (ok) => {
+      choose('Delete this task?', [{ label: 'Delete', value: 'yes', danger: true }, { label: 'Keep it', value: 'no' }], (ok) => {
         if (ok !== 'yes') return;
-        try { apply(await run('deleteTask', t.id)); go('tasks'); toast('Deleted'); } catch (err) { fail(err); }
+        go(state.cameFrom === 'review' ? 'review' : 'tasks');
+        deleteSoon(t.id);
       });
     }
   });
 });
 
-$('#v-detail').addEventListener('click', async (e) => {
+$('#v-detail').addEventListener('click', (e) => {
   const t = taskById(state.detailId);
   if (!t) return;
   const who = e.target.closest('[data-who]');
   if (who) {
     const owner = t.owner === who.dataset.who ? '' : who.dataset.who;
-    await saveFields(t.id, { owner }, owner ? (owner === SHARED ? 'Shared' : `${owner} has it`) : 'Nobody has it yet');
+    saveFields(t.id, { owner }, owner ? (owner === SHARED ? 'Shared' : `${owner} has it`) : 'Nobody has it yet');
     return;
   }
   const step = e.target.closest('[data-step]');
   if (step) {
-    try { apply(await run('setPrepDone', t.id, Number(step.dataset.step), step.getAttribute('aria-pressed') !== 'true')); } catch (err) { fail(err); }
+    setStep(t.id, Number(step.dataset.step), step.getAttribute('aria-pressed') !== 'true');
     return;
   }
   const id = e.target.closest('button') && e.target.closest('button').id;
   if (id === 'detail-repeat') chooseRepeat(t.id);
-  if (id === 'step-open') { $('#step-add').hidden = false; e.target.hidden = true; $('#step-text').focus(); }
+  if (id === 'step-open') { $('#step-add').hidden = false; e.target.closest('button').hidden = true; $('#step-text').focus(); }
   if (id === 'step-save') {
     const title = $('#step-text').value.trim();
-    if (title) await saveFields(t.id, { prep: t.prep.concat({ title, daysBefore: 0, done: false }) }, 'Step added');
+    if (title) { $('#step-text').blur(); saveFields(t.id, { prep: t.prep.concat({ title, daysBefore: 0, done: false }) }, 'Step added'); }
   }
   if (id === 'notes-open') { $('#notes-edit').hidden = false; $('#notes-open').hidden = true; $('#notes-text').value = t.notes; $('#notes-text').focus(); }
-  if (id === 'notes-save') await saveFields(t.id, { notes: $('#notes-text').value }, 'Note saved');
+  if (id === 'notes-save') { const notes = $('#notes-text').value; $('#notes-text').blur(); saveFields(t.id, { notes }, 'Note saved'); }
   if (id === 'say-change') sayChange(t.id);
   if (id === 'edit-undo') undoVoiceEdit();
   if (id === 'edit-again') { state.lastEdit = null; renderDetailFoot(); sayChange(t.id); }
-  if (id === 'edit-done') { state.lastEdit = null; render(); }
+  if (id === 'edit-done') { state.lastEdit = null; draw(); }
 });
 $('#v-detail').addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.id === 'step-text') { e.preventDefault(); $('#step-save').click(); } });
 
+// ---------------------------------------------------------------- Swiping task rows
+
+// Right: done (or reopen). Left: delete, or open to show a Delete button. Pointer events, so
+// fingers on iPhone and Android and a mouse on a computer all work. The tick and the task
+// page's Delete stay for anyone who doesn't swipe.
+const SWIPE_LOCK = 10;
+const SWIPE_FULL = 0.6;
+const SWIPE_OPEN = 96;
+const swipe = { tracking: null, open: null, animating: false, suppressClick: false };
+
+const rowOf = (wrap) => wrap.querySelector('.row');
+function setOffset(wrap, x, animate) {
+  const row = rowOf(wrap);
+  wrap.classList.toggle('dragging', !animate);
+  row.style.transform = x ? `translateX(${x}px)` : '';
+  wrap.dataset.dir = x > 0 ? 'right' : x < 0 ? 'left' : '';
+}
+
+function closeSwipe(animate = true) {
+  const wrap = swipe.open;
+  swipe.open = null;
+  if (wrap && wrap.isConnected) setOffset(wrap, 0, animate);
+  if (state.renderLater) setTimeout(quietDraw, 260);
+}
+
+// A tap anywhere while a row is open just closes it.
+document.addEventListener('pointerdown', (e) => {
+  swipe.suppressClick = false;
+  if (swipe.open && !e.target.closest('[data-swipe-del]')) {
+    closeSwipe();
+    swipe.suppressClick = true;
+  }
+}, true);
+document.addEventListener('click', (e) => {
+  if (perf.on) {
+    perf.tapAt = e.timeStamp || performance.now();
+    const b = e.target.closest('button, a, label');
+    perf.tapLabel = b ? (b.getAttribute('aria-label') || b.innerText || '').trim().replace(/\s+/g, ' ').slice(0, 40) : '';
+  }
+  if (swipe.suppressClick) { swipe.suppressClick = false; e.stopPropagation(); e.preventDefault(); }
+}, true);
+
+$('#list').addEventListener('pointerdown', (e) => {
+  if (e.pointerType === 'mouse' && e.button !== 0) return;
+  const wrap = e.target.closest('.swipe');
+  if (!wrap || swipe.animating || swipe.suppressClick || e.target.closest('[data-swipe-del]')) return;
+  swipe.tracking = { wrap, id: Number(wrap.dataset.row), x0: e.clientX, y0: e.clientY, dx: 0, axis: null, pointerId: e.pointerId, width: wrap.offsetWidth, armed: false };
+});
+
+window.addEventListener('pointermove', (e) => {
+  const s = swipe.tracking;
+  if (!s || e.pointerId !== s.pointerId) return;
+  const dx = e.clientX - s.x0;
+  const dy = e.clientY - s.y0;
+  if (!s.axis) {
+    if (Math.abs(dx) < SWIPE_LOCK && Math.abs(dy) < SWIPE_LOCK) return;
+    s.axis = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y';
+    if (s.axis === 'y') { swipe.tracking = null; return; } // scrolling the list: never a swipe
+    try { rowOf(s.wrap).setPointerCapture(e.pointerId); } catch (err) { /* fine */ }
+  }
+  e.preventDefault();
+  s.dx = dx;
+  setOffset(s.wrap, dx, false);
+  const armed = Math.abs(dx) > s.width * SWIPE_FULL;
+  if (armed !== s.armed) {
+    s.armed = armed;
+    s.wrap.classList.toggle('armed', armed);
+    if (armed && navigator.vibrate) { try { navigator.vibrate(10); } catch (err) { /* fine */ } }
+  }
+}, { passive: false });
+
+function endSwipe(e, cancelled) {
+  const s = swipe.tracking;
+  if (!s || e.pointerId !== s.pointerId) return;
+  swipe.tracking = null;
+  if (s.axis !== 'x') return;
+  swipe.suppressClick = !cancelled; // the click that ends a drag isn't a tap
+  if (perf.on) { perf.tapAt = e.timeStamp || performance.now(); perf.tapLabel = 'swipe'; }
+  s.wrap.classList.remove('armed');
+  const full = Math.abs(s.dx) > s.width * SWIPE_FULL;
+  if (!cancelled && full && s.dx > 0) swipeAway(s.wrap, 1, () => toggleDone(s.id, { linger: false }));
+  else if (!cancelled && full && s.dx < 0) swipeDelete(s.wrap);
+  else if (!cancelled && s.dx < -SWIPE_OPEN / 2) { setOffset(s.wrap, -SWIPE_OPEN, true); swipe.open = s.wrap; }
+  else { setOffset(s.wrap, 0, true); if (state.renderLater) setTimeout(quietDraw, 260); }
+}
+window.addEventListener('pointerup', (e) => endSwipe(e, false));
+window.addEventListener('pointercancel', (e) => endSwipe(e, true));
+
+/** Slides the row out, folds the gap, then makes the change. */
+function swipeAway(wrap, dir, then) {
+  swipe.animating = true;
+  swipe.open = null;
+  const finish = () => { swipe.animating = false; then(); };
+  if (REDUCED_MOTION) { finish(); return; }
+  setOffset(wrap, dir * wrap.offsetWidth, true);
+  setTimeout(() => { collapse(wrap); setTimeout(finish, 200); }, 180);
+}
+
+/** Folds a row's height away (the list closes the gap). */
+function collapse(el) {
+  el.style.maxHeight = `${el.offsetHeight}px`;
+  void el.offsetHeight;
+  el.classList.add('leaving');
+}
+
+function swipeDelete(wrap) {
+  const id = Number(wrap.dataset.row);
+  swipeAway(wrap, -1, () => deleteSoon(id));
+}
+
 // ---------------------------------------------------------------- Settings
+
+function fillPrefs() {
+  const p = state.data.me.prefs;
+  $('#p-reminders').checked = p.emailReminders;
+  $('#p-updates').checked = p.emailUpdates;
+  $('#p-summary').checked = p.morningSummary;
+  $('#p-calendar').checked = p.calendarInvites;
+}
 
 $('#settings-btn').addEventListener('click', () => {
   const d = state.data;
-  $('#p-reminders').checked = d.me.prefs.emailReminders;
-  $('#p-updates').checked = d.me.prefs.emailUpdates;
-  $('#p-summary').checked = d.me.prefs.morningSummary;
-  $('#p-calendar').checked = d.me.prefs.calendarInvites;
+  fillPrefs();
   renderPeople();
   $('#person-form').hidden = true;
   $('#person-open').hidden = false;
@@ -1434,21 +2047,19 @@ $('#settings-btn').addEventListener('click', () => {
   $('#d-settings').showModal();
 });
 
-$$('#d-settings .toggle input').forEach((box) => box.addEventListener('change', async () => {
-  try {
-    apply(await run('savePreferences', {
-      emailReminders: $('#p-reminders').checked, emailUpdates: $('#p-updates').checked,
-      morningSummary: $('#p-summary').checked, calendarInvites: $('#p-calendar').checked,
-    }));
-    toast('Saved');
-  } catch (err) { fail(err); }
+$$('#d-settings .toggle input').forEach((box) => box.addEventListener('change', () => {
+  savePrefs({
+    emailReminders: $('#p-reminders').checked, emailUpdates: $('#p-updates').checked,
+    morningSummary: $('#p-summary').checked, calendarInvites: $('#p-calendar').checked,
+  });
+  toast('Saved');
 }));
 
 $('#activity-btn').addEventListener('click', async () => {
   const list = $('#activity-list');
   if (!list.hidden) { list.hidden = true; return; }
   list.hidden = false;
-  list.innerHTML = '<li class="muted">Loading…</li>';
+  list.innerHTML = '<li class="muted"><span class="spinner" aria-hidden="true"></span> Loading…</li>';
   try {
     const items = await run('getActivity');
     list.innerHTML = items.length ? items.map((a) => `<li>${esc(a.text)}<time>${esc(a.when)}</time></li>`).join('') : '<li class="muted">Nothing yet.</li>';
@@ -1469,15 +2080,19 @@ function showLink(link, text) {
   $('#link-box').scrollIntoView({ block: 'nearest', behavior: 'smooth' });
 }
 
+// Needs the server (it makes the link): progress shows in the box where the link will appear.
 $('#member-list').addEventListener('click', async (e) => {
   const b = e.target.closest('[data-link]');
   if (!b) return;
   const name = b.dataset.link;
   const mine = name === state.data.me.name;
+  $('#link-text').innerHTML = '<span class="spinner" aria-hidden="true"></span> Getting the link…';
+  $('#app-link').value = '';
+  $('#link-box').hidden = false;
   try {
     const link = await run('linkFor', name, false);
     showLink(link, mine ? 'Your link, for your other phone or computer:' : `${name}'s link. Send it to them:`);
-  } catch (err) { fail(err); }
+  } catch (err) { $('#link-box').hidden = true; fail(err); }
 });
 
 $('#person-open').addEventListener('click', () => {
@@ -1486,53 +2101,147 @@ $('#person-open').addEventListener('click', () => {
   $('#person-name').focus();
 });
 
-$('#person-form').addEventListener('submit', async (e) => {
+$('#person-form').addEventListener('submit', (e) => {
   e.preventDefault();
   const err = $('#person-error');
+  const btn = $('#person-form [type="submit"]');
+  const name = $('#person-name').value;
+  const email = $('#person-email').value;
   err.hidden = true;
-  try {
-    const res = await run('addPerson', $('#person-name').value, $('#person-email').value);
-    apply(res.state);
-    renderPeople();
-    $('#person-form').hidden = true;
-    $('#person-open').hidden = false;
-    $('#person-form').reset();
-    showLink(res.link, 'Added. Now send them this link:');
-  } catch (ex) {
-    err.textContent = ex.message;
-    err.hidden = false;
-  }
+  btn.disabled = true;
+  btn.textContent = 'Adding…';
+  const reset = () => { btn.disabled = false; btn.textContent = 'Add and get their link'; };
+  mutate({
+    label: 'Add a person',
+    apply: () => {},
+    send: () => run('addPerson', name, email),
+    stateOf: (res) => res && res.state,
+    done: (res) => {
+      reset();
+      renderPeople();
+      $('#person-form').hidden = true;
+      $('#person-open').hidden = false;
+      $('#person-form').reset();
+      showLink(res.link, 'Added. Now send them this link:');
+    },
+    fail: (ex) => {
+      reset();
+      err.textContent = ex.message;
+      err.hidden = false;
+    },
+  });
 });
 
 $('#share-link').addEventListener('click', () => {
   navigator.share({ title: 'Household', text: 'Your link to our household app:', url: $('#app-link').value }).catch(() => {});
 });
 
-$('#copy-link').addEventListener('click', () => {
-  const input = $('#app-link');
-  input.select();
-  const done = () => toast('Link copied');
-  if (navigator.clipboard) navigator.clipboard.writeText(input.value).then(done, () => { document.execCommand('copy'); done(); });
-  else { document.execCommand('copy'); done(); }
-});
+function copyText(text, done) {
+  if (navigator.clipboard) navigator.clipboard.writeText(text).then(done, () => fallbackCopy(text, done));
+  else fallbackCopy(text, done);
+}
+function fallbackCopy(text, done) {
+  const area = document.createElement('textarea');
+  area.value = text;
+  area.setAttribute('readonly', '');
+  area.style.position = 'fixed';
+  area.style.opacity = '0';
+  document.body.append(area);
+  area.select();
+  try { document.execCommand('copy'); } catch (err) { /* nothing more to try */ }
+  area.remove();
+  done();
+}
 
+$('#copy-link').addEventListener('click', () => copyText($('#app-link').value, () => toast('Link copied')));
 
 // Links in reminder emails: ...?task=12 opens that task; &pick=time goes straight to choosing a time.
-function openDeepLink() {
-  state.deepLinked = true;
+function openDeepLink(fromCache) {
   const p = new URLSearchParams(location.search);
   const t = p.get('task') && taskById(p.get('task'));
+  // A task too new for this phone's copy: wait for the server's list.
+  if (!t && fromCache && p.get('task')) return;
+  state.deepLinked = true;
   if (!t) return;
   openDetail(t.id);
   if (p.get('pick') === 'time' && !t.done) openWhen(t.id, 'time');
   // Done with it: a reload shouldn't reopen the same task.
-  try { history.replaceState(null, '', location.pathname + location.hash); } catch (err) { /* fine */ }
+  p.delete('task');
+  p.delete('pick');
+  const q = p.toString();
+  try { history.replaceState(null, '', location.pathname + (q ? `?${q}` : '') + location.hash); } catch (err) { /* fine */ }
 }
 
-// Keep both phones in step while the app is open.
-setInterval(() => { if (!document.hidden && !$('dialog[open]') && state.data && state.data.me) load(); }, 30000);
-document.addEventListener('visibilitychange', () => { if (!document.hidden && !$('dialog[open]') && state.data) load(); });
-if (config || window.householdApi) load(); else show('v-join');
+// ---------------------------------------------------------------- The performance panel
+
+function drawPerf() {
+  if (!perf.on) return;
+  let panel = $('#perf');
+  if (!panel) {
+    panel = document.createElement('section');
+    panel.id = 'perf';
+    panel.className = 'perf min';
+    panel.setAttribute('aria-label', 'Performance');
+    panel.innerHTML = `<div class="perf-head"><b>Perf</b><span id="perf-last"></span><span id="perf-queue"></span>
+        <button type="button" id="perf-copy">Copy</button><button type="button" id="perf-clear">Clear</button><button type="button" id="perf-min" aria-label="Show or hide the log">+</button></div>
+      ${PREVIEW ? '<div class="perf-switches"><label><input type="checkbox" id="perf-slow"> Slow server (3 s)</label><label><input type="checkbox" id="perf-fail"> Failing server</label></div>' : ''}
+      <ol id="perf-log"></ol>`;
+    document.body.append(panel);
+    $('#perf-copy').addEventListener('click', () => copyText(perfText(), () => toast('Performance log copied')));
+    $('#perf-clear').addEventListener('click', () => { perf.log.length = 0; drawPerf(); });
+    $('#perf-min').addEventListener('click', () => { panel.classList.toggle('min'); $('#perf-min').textContent = panel.classList.contains('min') ? '+' : '–'; });
+    if (PREVIEW) {
+      $('#perf-slow').addEventListener('change', (e) => { perf.slow = e.target.checked; });
+      $('#perf-fail').addEventListener('change', (e) => { perf.failing = e.target.checked; });
+    }
+  }
+  const waiting = sync.ops.length;
+  $('#perf-queue').textContent = waiting ? `${waiting} waiting` : '';
+  const last = perf.log[0];
+  $('#perf-last').textContent = last ? `${last.label}: ${last.screen == null ? '…' : last.screen} / ${last.server == null ? '–' : last.server} ms` : 'tap something';
+  $('#perf-log').innerHTML = perf.log.map((e) => `<li class="${/^failed/.test(e.result) ? 'bad' : ''}"><b>${esc(e.label)}</b>
+    <span>screen ${e.screen == null ? '–' : `${e.screen} ms`} · server ${e.server == null ? '…' : `${e.server} ms`} · ${esc(e.result)}</span></li>`).join('');
+}
+
+function perfText() {
+  const lines = perf.log.map((e) => `${e.at.toTimeString().slice(0, 8)}  ${e.label}  screen ${e.screen == null ? '-' : `${e.screen}ms`}  server ${e.server == null ? '-' : `${e.server}ms`}  ${e.result}`);
+  return [`Household performance log, ${new Date().toISOString()}`, navigator.userAgent, ...lines].join('\n');
+}
+
+// In the preview, the switches make the stand-in server slow or unreachable.
+if (PREVIEW) {
+  const real = window.householdApi;
+  window.householdApi = async (fn, args) => {
+    if (perf.slow) await sleep(3000);
+    if (perf.failing) throw new TypeError('Failed to fetch');
+    return real(fn, args);
+  };
+}
+
+// ---------------------------------------------------------------- Starting up and staying fresh
+
+// The other person's changes arrive when the app opens or comes back to the front, and every
+// minute while it's showing. Live updates between phones aren't needed.
+setInterval(() => { if (!document.hidden) refresh(); }, REFRESH_EVERY);
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    flushHeld();
+    // Phone put away mid-countdown: the tasks are saved already, so just settle the screen.
+    if ($('#d-heard').open && captured.length) finishCapture();
+  } else {
+    refresh();
+  }
+});
+window.addEventListener('pagehide', flushHeld);
+
+if (perf.on) drawPerf();
+if (config || PREVIEW) {
+  const cached = loadCache();
+  if (cached) receive(cached.data, true, cached.at);
+  refresh();
+} else {
+  show('v-join');
+}
 </script>
 </body>
 </html>

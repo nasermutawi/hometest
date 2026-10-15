@@ -6,7 +6,8 @@ The household task app, running entirely on a Google account at no cost:
 - **The app** is a web page on GitHub Pages (the repository's `docs/` folder), designed for phones. It talks to a small private server: the Google Apps Script attached to the sheet. Each person opens the app with a **personal link** that carries their key, so nobody signs in to Google on their phone. People are added from the app (**Settings → People → Add a person**), which gives you their link to send them.
   - It **opens on a big microphone**. Say one or several things ("On Friday I need to pick up the dry cleaning and buy a present for Mum. Also we need to book the dentist"). Each becomes its own task, and they're saved the moment you stop talking. A sheet shows what was understood with **Review** and **Save**. If you do nothing it closes after 5 seconds; **Discard** or **Undo** removes them again.
   - **Who owns it** comes from the words: a name → that person, "I/me" → whoever is speaking, "you" → the other person, "we/us/let's" → **Shared**, nothing said → **Unassigned**.
-  - **Tasks** (the list) has filters (All, Mine, the other person's, Shared, Done), an amber strip for tasks that need a date, and a bottom bar with **+** (type a task with date and time chips), the microphone and settings.
+  - **Tasks** (the list) has filters (All, Mine, the other person's, Shared, Done), an amber strip for tasks that need a date, and a bottom bar with **+** (type a task with date and time chips), the microphone and settings. **Swipe a task right** to mark it done (or reopen it), **left** to delete it, with **Undo** for a few seconds.
+  - **Everything is instant:** a tick, a new owner, a date or a note shows at once and is saved in the background, one change at a time. If saving fails, the change is undone on screen with a **Retry** button. The app opens straight away from the copy kept on the phone, then quietly fetches the latest. The other person's changes arrive when the app is opened or brought back to the front, and every minute while it's open.
   - **A task's page** shows when, who, repeats, prep steps and notes, all tappable. **Say what to change** edits that task by voice ("make it Tuesday at 4 and remind me to find the insurance card the day before"); what changed is highlighted, with Undo.
   - No microphone (or it's blocked)? A typing box opens instead, and the keyboard's own microphone works there.
 - **Reminders and updates go by email** from a 5-minute timer, worded for each person ("You're on it" / "Sara is on it" / "It's shared" / "Nobody has taken it yet"), plus an optional morning summary.
@@ -26,7 +27,7 @@ Only people with a personal link can use the app, and each link acts as that one
 | `Parser.gs` | The offline language parser. **Generated** from `src/ai/rulesParser.js` and `src/chat/rulesInterpreter.js` by `npm run build:sheets` |
 | `../docs/index.html` | The app itself, served by GitHub Pages |
 | `appsscript.json` | Manifest, only needed if you use `clasp` |
-| `test/` | An in-memory imitation of the Apps Script services plus tests (`npm test`), and a local preview (`npm run preview:sheets`, then open `http://localhost:3200/?as=naser@example.com`; add Sara in Settings → People, then open `?as=sara@example.com` in another window) |
+| `test/` | An in-memory imitation of the Apps Script services plus tests (`npm test`), a local preview (`npm run preview:sheets`, then open `http://localhost:3200/?as=naser@example.com`; add Sara in Settings → People, then open `?as=sara@example.com` in another window), and `measure.mjs`, which counts the sheet reads and writes each call makes |
 
 ## Installing
 
@@ -50,12 +51,17 @@ The non-technical step-by-step guide is linked from the project conversation. In
 
 Claude's instructions are in `capturePrompt_`, `editPrompt_` and `chatPrompt_` in `Code.gs`. Its answers are checked before anything changes (unknown people become Unassigned, unknown tasks and actions are dropped), and a failed request falls back to the simple rules. The model is set in `CLAUDE_MODEL`.
 
+## Checking speed
+
+Add `?perf=1` to the app's link (before the `#`), e.g. `https://nasermutawi.github.io/hometest/?perf=1#s=…`. A small bar at the top then shows each action: how long until the screen changed and how long the server took. Tap **+** for the full list and **Copy** to paste it into a message. `?perf=0` turns it off again. In the local preview the panel also has **Slow server** and **Failing server** switches, for trying out what happens on a bad connection.
+
 ## Limits
 
 - Reminders can be up to 5 minutes late, because the timer runs every 5 minutes.
 - Free Gmail accounts can send about 100 emails a day from scripts, which is plenty for a household.
 - Whether the in-app microphone works depends on the browser: Chrome on Android and desktop, and Safari on iPhone, usually work; an iPhone home-screen icon may not. When it doesn't, the app opens a typing box, where the keyboard's microphone does the same job.
-- Each action takes a second or two, because Google's free servers start up for each request.
+- Saving takes a second or two in the background, because Google's free servers start up for each request; the screen doesn't wait for it. Turning the speech into tasks, adding a person and making a link do wait for the server, with progress shown in place.
+- Settings and the Members list are remembered by the server for up to 5 minutes. Edits typed into those tabs take effect at once; changes made any other way (by another script, say) within 5 minutes. Removing someone always switches their link off at once.
 - Without Claude, dictation that has no pauses or punctuation may come out as one task. Say "also" between things, or edit afterwards.
 - When a task is edited directly in the sheet by someone other than the sheet's owner, Google may not reveal who made the edit, so it's logged as "Someone (in the sheet)".
 - Google shows a small "created by a Google Apps Script user" banner above the app.
