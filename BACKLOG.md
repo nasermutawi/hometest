@@ -51,3 +51,19 @@ Ideas parked for later. None of them blocks the current version (the Google Shee
 |---|---|---|
 | Native phone app | Reliable notifications, a record button on the home or lock screen, the microphone always available; needs an Apple Developer account ($99 a year) and one of the existing backends | Large |
 | Hosted Node.js version as the backend (Railway, about $5 a month) | Real push notifications and its own database instead of the sheet | Medium |
+
+## Ideas from Todoist and Structured (to explore later)
+
+| Idea | From | Why it might fit | Effort |
+|---|---|---|---|
+| Day timeline view for timed tasks (optional "Today" view) | Structured | See the day's shape at a glance; keep the grouped list as default | Large |
+| Inbox for captures that skipped review | Both | Nothing said out loud gets lost | Medium |
+| Quick add that highlights dates and "for me / for you / for us" as you type | Todoist | Faster typed entry, owner set in the same sentence | Medium |
+| Smarter repeats ("every other Thursday", "last Friday of the month") | Todoist | Chores and bins | Medium |
+| "Move all overdue to today" in one tap | Structured | Quick reset after a busy day | Small |
+| Areas (House, Trip, Kids) shared between both | Todoist | Group related tasks | Medium |
+| One "note to partner" line on a task | Todoist | Context without a full comment thread | Small |
+| Week view compressed to icons | Structured | Plan the weekend together | Medium |
+| Icon per task, picked automatically from the title | Structured | Easier to skim; never required | Medium |
+| Gentle shared moment when Today is cleared (no streaks or scores) | Todoist (karma), reworked | Feels good without turning chores into a scoreboard | Small |
+| Completion sound (off by default) | Structured, Things | Makes finishing feel finished | Small |
