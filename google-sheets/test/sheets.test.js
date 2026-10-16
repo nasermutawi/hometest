@@ -482,7 +482,8 @@ test('quick times come from the Settings tab', () => {
   const gas = household();
   assert.deepEqual(gas.call(NASER, 'getState').quickTimes, ['09:00', '13:00', '19:00']);
   const row = gas.rows('Settings').findIndex((r) => r.Setting === 'Quick times') + 2;
-  gas.sheet('Settings').getRange(row, 2).setValue('8:30, 12:00, 6pm');
+  // Typed into the sheet: the edit trigger clears the cached settings, so it shows at once.
+  gas.edit(NASER, 'Settings', row, 'Value', '8:30, 12:00, 6pm');
   assert.deepEqual(gas.call(NASER, 'getState').quickTimes, ['08:30', '12:00', '18:00']);
 });
 
@@ -515,4 +516,129 @@ test('Parser.gs is up to date with the Node parsers', () => {
   const before = readFileSync(new URL('../Parser.gs', import.meta.url), 'utf8');
   execFileSync(process.execPath, ['--no-warnings', new URL('../build-parser.mjs', import.meta.url).pathname]);
   assert.equal(readFileSync(new URL('../Parser.gs', import.meta.url), 'utf8'), before, 'Run npm run build:sheets and commit Parser.gs');
+});
+
+// ---------------------------------------------------------------- Slim replies and caching
+
+test('changes asked for with { slim: true } reply with only what changed', () => {
+  const gas = household();
+  const key = gas.context.keyFor_(NASER, false);
+  const api = (fn, ...args) => { const r = gas.api(key, fn, ...args); assert.equal(r.ok, true, r.message); return r.result; };
+  const SLIM = { slim: true };
+
+  const added = api('saveTask', { title: 'Water the plants', dueDate: '2026-10-13', time: '09:00', owner: 'Sara', repeats: 'Weekly', prep: [{ title: 'Fill the can', daysBefore: 0 }] }, SLIM);
+  assert.equal(added.slim, true);
+  assert.equal(added.tasks, undefined, 'no whole task list');
+  assert.equal(added.task.title, 'Water the plants');
+  assert.equal(added.task.owner, 'Sara');
+  assert.match(added.now, /^2026-10-11T10:00$/);
+  const id = added.task.id;
+
+  const prep = api('setPrepDone', id, 0, true, SLIM);
+  assert.equal(prep.task.prep[0].done, true);
+
+  const done = api('setTaskDone', id, true, SLIM);
+  assert.equal(done.task.done, true);
+  assert.equal(done.next.dueDate, '2026-10-20');
+  assert.equal(done.next.prep[0].done, false);
+  // Done → undo → done: still one next occurrence, and the reply names it each time.
+  api('setTaskDone', id, false, SLIM);
+  assert.equal(api('setTaskDone', id, true, SLIM).next.id, done.next.id);
+  assert.equal(gas.rows('Tasks').length, 2);
+
+  const edited = api('editByVoice', done.next.id, 'give it to Naser', SLIM);
+  assert.equal(edited.task.owner, 'Naser');
+  assert.deepEqual(edited.edit.changed, ['owner']);
+
+  assert.deepEqual(api('deleteTask', done.next.id, SLIM), { slim: true, deletedId: done.next.id, now: '2026-10-11T10:00' });
+
+  const cap = api('capture', 'Buy milk. Also call the plumber', SLIM);
+  assert.equal(cap.tasks.length, 2);
+  assert.deepEqual(cap.captured, cap.tasks.map((t) => t.id));
+  assert.deepEqual(api('discardCapture', cap.captured, SLIM).deletedIds, cap.captured);
+
+  const prefs = api('savePreferences', { emailReminders: false, emailUpdates: true, morningSummary: true, calendarInvites: false }, SLIM);
+  assert.deepEqual(prefs.prefs, { emailReminders: false, emailUpdates: true, morningSummary: true, calendarInvites: false });
+});
+
+test('without { slim: true } changes still reply with the whole household (apps from before)', () => {
+  const gas = household();
+  const key = gas.context.keyFor_(NASER, false);
+  const res = gas.api(key, 'saveTask', { title: 'Book the dentist', dueDate: '2026-10-13', repeats: 'Monthly' }).result;
+  assert.equal(res.slim, undefined);
+  assert.equal(res.tasks.length, 1);
+  assert.equal(res.me.name, 'Naser');
+  const done = gas.api(key, 'setTaskDone', res.tasks[0].id, true).result;
+  assert.equal(done.tasks.length, 2);
+  assert.equal(done.next.dueDate, '2026-11-13');
+  assert.deepEqual(gas.api(key, 'capture', 'Buy milk').result.captured, [3]);
+});
+
+test('a change and its reply read the Tasks tab once, and Settings and Members come from the cache', () => {
+  const gas = household();
+  const key = gas.context.keyFor_(NASER, false);
+  gas.api(key, 'saveTask', { title: 'Book the dentist', dueDate: '2026-10-13' });
+  const reads = (fn) => { const before = gas.stats.reads; fn(); return gas.stats.reads - before; };
+  const plain = reads(() => gas.api(key, 'getState'));
+  // A full-reply change costs the same reads as getState alone: no second read of the Tasks tab.
+  assert.equal(reads(() => gas.api(key, 'setTaskDone', 1, true)), plain);
+  const hits = gas.stats.cacheHits;
+  gas.api(key, 'getState');
+  assert.ok(gas.stats.cacheHits >= hits + 2, 'Settings and Members came from the cache');
+});
+
+test('cached Settings and Members are cleared by the app, by edits in the sheet, and after five minutes', () => {
+  const gas = household();
+  const key = gas.context.keyFor_(NASER, false);
+  const state = () => gas.api(key, 'getState').result;
+  assert.equal(state().household.name, 'Our household');
+
+  // Changed by the app: seen at once.
+  gas.api(key, 'savePreferences', { emailReminders: false, emailUpdates: false, morningSummary: true, calendarInvites: false });
+  assert.equal(state().me.prefs.morningSummary, true);
+  gas.api(key, 'addPerson', 'Omar', 'omar@example.com');
+  assert.deepEqual(state().members.map((m) => m.name), ['Naser', 'Sara', 'Omar']);
+
+  // Typed into the sheet (the edit trigger runs): seen at once.
+  gas.edit(NASER, 'Members', 3, 'Name', 'Sarah');
+  assert.deepEqual(state().members.map((m) => m.name), ['Naser', 'Sarah', 'Omar']);
+  const nameRow = gas.rows('Settings').findIndex((r) => r.Setting === 'Household name') + 2;
+  gas.edit(NASER, 'Settings', nameRow, 'Value', 'The Flat');
+  assert.equal(state().household.name, 'The Flat');
+
+  // Changed without the trigger (e.g. by another script): seen within five minutes.
+  gas.sheet('Settings').getRange(nameRow, 2).setValue('Home');
+  assert.equal(state().household.name, 'The Flat');
+  gas.advance(5 * 60_000 + 1000);
+  assert.equal(state().household.name, 'Home');
+
+  // A deleted Members row fires no trigger, but the link stops working at once and rows stay right.
+  const omarKey = gas.context.keyFor_('omar@example.com', false);
+  assert.equal(gas.api(omarKey, 'getState').result.me.name, 'Omar');
+  const saraKey = gas.context.keyFor_(SARA, false);
+  assert.equal(gas.api(saraKey, 'getState').ok, true);
+  gas.sheet('Members').deleteRow(3); // Sarah
+  assert.equal(gas.api(saraKey, 'getState').error, 'link');
+  assert.equal(gas.api(key, 'getState').result.members.length, 2);
+  gas.api(omarKey, 'savePreferences', { emailReminders: true, emailUpdates: true, morningSummary: true, calendarInvites: true });
+  assert.equal(gas.rows('Members')[1].Email, 'omar@example.com');
+  assert.equal(gas.rows('Members')[1]['Morning summary'], 'Yes', 'written to Omar\'s row, not the deleted one');
+});
+
+test('no request from the app sends email or touches the calendar; only the timer does', () => {
+  const gas = household();
+  const key = gas.context.keyFor_(NASER, false);
+  const ok = (r) => { assert.equal(r.ok, true, r.message); return r.result; };
+  const t = ok(gas.api(key, 'saveTask', { title: 'Renew the passport', dueDate: '2026-10-12', time: '10:00' }, { slim: true })).task;
+  ok(gas.api(key, 'saveTask', { ...t, owner: 'Sara' }));
+  ok(gas.api(key, 'setTaskDone', t.id, true));
+  ok(gas.api(key, 'capture', 'Buy milk tomorrow'));
+  ok(gas.api(key, 'addPerson', 'Omar', 'omar@example.com'));
+  ok(gas.api(key, 'linkFor', 'Omar', false));
+  ok(gas.api(key, 'getActivity'));
+  ok(gas.api(key, 'deleteTask', t.id));
+  assert.equal(gas.outbox.length, 0);
+  assert.equal(gas.events.size, 0);
+  gas.context.runScheduledJobs();
+  assert.ok(gas.outbox.length > 0);
 });
