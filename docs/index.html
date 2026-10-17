@@ -2,44 +2,53 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Household</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Melody</title>
 <meta name="description" content="Our household tasks">
 <meta name="referrer" content="no-referrer">
-<meta name="theme-color" content="#24614f">
+<meta name="theme-color" content="#F6EFE4" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1C1714" media="(prefers-color-scheme: dark)">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Household">
+<meta name="apple-mobile-web-app-title" content="Melody">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT@0,9..144,400..700,0..100;1,9..144,400..700,0..100&display=swap">
 <style>
+/* Melody design system: Hearth (see docs/design/hearth.md). The previous look is in docs/design/style-original-green.md. */
 :root {
-  --bg: #ffffff; --soft: #f5f6f4; --chip: #eef1ef; --line: #eef0ee; --border: #e3e7e4; --border-strong: #d5dad6;
-  --text: #16201b; --muted: #5f6b65; --faint: #8c978f;
-  --accent: #24614f; --accent-hover: #1a4a3c; --accent-soft: #e4f0eb; --accent-ink: #1a4a3c; --on-accent: #ffffff;
-  --amber-bg: #fdf3e1; --amber-ink: #7a4a00; --amber-dot: #c77c00; --amber-line: #e8c27a;
-  --p1-bg: #dce8f5; --p1-ink: #1f3b63; --p2-bg: #f3e3ec; --p2-ink: #6b2448;
-  --shared-bg: #e4f0eb; --shared-ink: #1a4a3c; --none-bg: #f1f2f1; --none-ink: #5f6b65;
-  --danger: #b23b2e; --toast-bg: #16201b; --toast-ink: #ffffff; --toast-link: #9dc3b6; --scrim: rgb(22 32 27 / 0.45);
-  --font: 'Manrope', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --bg: #F6EFE4; --surface: #FFFBF4; --soft: #EFE6D8; --chip: #F0E6D8; --line: #EBE1D3; --border: #E6DCCE; --border-strong: #DDD2C3;
+  --text: #2E2620; --muted: #75685C; --faint: #A89F94;
+  --accent: #8E3B52; --accent-hover: #74304A; --accent-soft: #F3E2E6; --accent-ink: #6F2C40; --on-accent: #FFFBF4;
+  --amber-bg: #F3E2E6; --amber-ink: #6F2C40; --amber-dot: #B5566F; --amber-line: #DDA9B8;
+  --p1: #2F6F78; --p1-bg: #DCEBEC; --p1-ink: #1F4E55;
+  --p2: #D98A3F; --p2-fill: #EFA35C; --p2-bg: #FBE7D2; --p2-ink: #8A4E14;
+  --shared-bg: linear-gradient(90deg, var(--p1-bg) 50%, var(--p2-bg) 50%); --shared-ink: #4A3F36; --none-bg: transparent; --none-ink: #75685C;
+  --on-p1: #FFFFFF; --on-p2: #3E2208; --late-bg: #F8E4DD;
+  --danger: #A63A2B; --done: #557A4A; --toast-bg: #2E2620; --toast-ink: #FFFBF4; --toast-link: #F0B9C6; --scrim: rgb(46 38 32 / 0.42);
+  --font: 'Figtree', -apple-system, 'Segoe UI', system-ui, sans-serif;
+  --display: 'Fraunces', Georgia, 'Times New Roman', serif;
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #121715; --soft: #0d1210; --chip: #1e2622; --line: #222a26; --border: #2c3631; --border-strong: #3a4540;
-    --text: #e8ede9; --muted: #a3aea8; --faint: #6f7a74;
-    --accent: #5db597; --accent-hover: #7cc9ae; --accent-soft: #1b3029; --accent-ink: #bfe3d5; --on-accent: #08130f;
-    --amber-bg: #3a2c12; --amber-ink: #f3cf8a; --amber-dot: #e0a23a; --amber-line: #7a5a1e;
-    --p1-bg: #1e2b3d; --p1-ink: #b9cdea; --p2-bg: #3a2230; --p2-ink: #ebc0d5;
-    --shared-bg: #1b3029; --shared-ink: #bfe3d5; --none-bg: #222a26; --none-ink: #a3aea8;
-    --danger: #ef7d70; --toast-bg: #e8ede9; --toast-ink: #121715; --toast-link: #24614f; --scrim: rgb(0 0 0 / 0.6);
+    --bg: #1C1714; --surface: #28211C; --soft: #221C18; --chip: #332A24; --line: #352C26; --border: #3A302A; --border-strong: #4A3F37;
+    --text: #F3EADF; --muted: #B9AC9E; --faint: #7D7369;
+    --accent: #E08AA0; --accent-hover: #EBA3B5; --accent-soft: #3A2229; --accent-ink: #F2C6D2; --on-accent: #2A1016;
+    --amber-bg: #3A2229; --amber-ink: #F2C6D2; --amber-dot: #E08AA0; --amber-line: #6B3445;
+    --p1: #6FB3B8; --p1-bg: #1E3538; --p1-ink: #A9D3D6;
+    --p2: #F4B57A; --p2-fill: #F4B57A; --p2-bg: #3D2A17; --p2-ink: #F7CB9F;
+    --shared-ink: #E5DACD; --none-ink: #B9AC9E;
+    --on-p1: #0F2326; --on-p2: #3E2208; --late-bg: #3A231F;
+    --danger: #EF8A7A; --done: #7FA571; --toast-bg: #F3EADF; --toast-ink: #1C1714; --toast-link: #8E3B52; --scrim: rgb(0 0 0 / 0.6);
     color-scheme: dark;
   }
 }
 * { box-sizing: border-box; }
+html { touch-action: manipulation; -webkit-text-size-adjust: 100%; }
 html, body { margin: 0; background: var(--bg); padding-top: env(safe-area-inset-top); color: var(--text); font: 500 16px/1.45 var(--font); -webkit-tap-highlight-color: transparent; }
 [hidden] { display: none !important; }
 h1, h2, h3, p { margin: 0; }
@@ -56,8 +65,8 @@ svg { flex: 0 0 auto; }
 .screen { min-height: 100dvh; max-width: 480px; margin: 0 auto; display: flex; flex-direction: column; }
 .pad { padding: 0 20px; }
 .eyebrow { font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
-.title-xl { font-size: 26px; line-height: 1.15; font-weight: 800; }
-.title-l { font-size: 22px; line-height: 1.2; font-weight: 800; }
+.title-xl { font-family: var(--display); font-variation-settings: 'SOFT' 100; font-size: 32px; line-height: 1.05; font-weight: 600; letter-spacing: -0.01em; }
+.title-l { font-family: var(--display); font-variation-settings: 'SOFT' 100; font-size: 24px; line-height: 1.15; font-weight: 600; }
 .muted { color: var(--muted); }
 .small { font-size: 14px; }
 .head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; padding: 28px 20px 0; }
@@ -68,29 +77,31 @@ svg { flex: 0 0 auto; }
 .round { width: 44px; height: 44px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; color: var(--text); }
 .round.outline { border: 1px solid var(--border); }
 .pillbtn { height: 44px; padding: 0 16px; border-radius: 22px; border: 1px solid var(--border); display: inline-flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 700; flex: 0 0 auto; }
-.primary { height: 56px; border-radius: 16px; background: var(--accent); color: var(--on-accent); font-size: 16px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; }
+.primary { height: 56px; border-radius: 18px; background: var(--accent); color: var(--on-accent); font-size: 16px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; }
 .primary:hover { background: var(--accent-hover); }
-.secondary { height: 52px; border-radius: 14px; border: 1px solid var(--border-strong); font-size: 16px; font-weight: 700; display: flex; align-items: center; justify-content: center; width: 100%; }
+.secondary { height: 52px; border-radius: 18px; border: 1.5px solid var(--border-strong); background: var(--surface); font-size: 16px; font-weight: 700; display: flex; align-items: center; justify-content: center; width: 100%; }
 .error { color: var(--danger); font-size: 14px; }
 
 /* Chips and pills */
 .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip-set { display: contents; }
 .chips.scroll { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin: 0 -20px; padding: 0 20px; }
 .chips.scroll::-webkit-scrollbar { display: none; }
-.chip { height: 40px; padding: 0 16px; border-radius: 20px; background: var(--chip); font-size: 14px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; flex: 0 0 auto; }
-.chip.sm { height: 36px; padding: 0 14px; border-radius: 18px; }
-.chip.outline { background: var(--bg); border: 1px solid var(--border); }
+.chip { height: 40px; padding: 0 16px; border-radius: 10px; background: var(--chip); font-size: 14px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; flex: 0 0 auto; }
+.chip.sm { height: 36px; padding: 0 14px; border-radius: 10px; }
+.chip.outline { background: var(--surface); border: 1px solid var(--border); }
 .chip[aria-pressed="true"], .chip.on { background: var(--accent); color: var(--on-accent); font-weight: 700; border-color: var(--accent); }
-.chip.dashed { background: var(--bg); border: 1px dashed var(--faint); color: var(--muted); }
+.chip.dashed { background: var(--surface); border: 1px dashed var(--faint); color: var(--muted); }
 .chip.amber { background: var(--amber-bg); color: var(--amber-ink); font-weight: 700; }
 .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--amber-dot); flex: 0 0 auto; }
-.pill { padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 700; flex: 0 0 auto; white-space: nowrap; }
+.pill { padding: 4px 10px; border-radius: 10px; font-size: 12px; font-weight: 700; flex: 0 0 auto; white-space: nowrap; }
 .o-p1 { background: var(--p1-bg); color: var(--p1-ink); }
 .o-p2 { background: var(--p2-bg); color: var(--p2-ink); }
 .o-shared { background: var(--shared-bg); color: var(--shared-ink); }
-.o-none { background: var(--none-bg); color: var(--none-ink); }
-.seg { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 4px; padding: 4px; border-radius: 22px; background: var(--chip); }
-.seg button { height: 36px; border-radius: 18px; font-size: 14px; font-weight: 600; color: var(--muted); padding: 0 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.o-none { background: var(--none-bg); color: var(--none-ink); box-shadow: inset 0 0 0 1.5px var(--faint); }
+.pill.o-none { border: 1.5px dashed var(--faint); box-shadow: none; padding: 2.5px 8.5px; }
+.seg { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 4px; padding: 4px; border-radius: 14px; background: var(--chip); }
+.seg button { height: 36px; border-radius: 10px; font-size: 14px; font-weight: 600; color: var(--muted); padding: 0 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .seg button[aria-checked="true"] { background: var(--accent); color: var(--on-accent); font-weight: 700; }
 .seg.sm button { height: 32px; font-size: 13px; padding: 0 12px; }
 .attention { display: flex; align-items: center; gap: 10px; padding: 14px 16px; border-radius: 14px; background: var(--amber-bg); color: var(--amber-ink); font-size: 15px; font-weight: 600; text-align: left; width: 100%; }
@@ -98,27 +109,43 @@ svg { flex: 0 0 auto; }
 
 /* Capture (home) */
 .capture-main { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px; padding: 24px 20px; text-align: center; }
-.bigmic { width: 132px; height: 132px; border-radius: 50%; background: var(--accent); color: var(--on-accent); display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 30px rgb(36 97 79 / 0.25); transition: transform 0.15s; }
+.bigmic { width: 132px; height: 132px; border-radius: 42%; background: var(--accent); color: var(--on-accent); display: flex; align-items: center; justify-content: center; box-shadow: 0 12px 30px rgb(142 59 82 / 0.22); transition: transform 0.15s; }
 .bigmic:hover { background: var(--accent-hover); }
 .bigmic:active { transform: scale(0.96); }
 .capture-copy { display: flex; flex-direction: column; align-items: center; gap: 6px; }
-.capture-copy strong { font-size: 20px; font-weight: 700; }
+.capture-copy strong { font-family: var(--display); font-variation-settings: 'SOFT' 100; font-size: 24px; font-weight: 600; }
 .capture-copy span { font-size: 15px; color: var(--muted); max-width: 260px; }
 .capture-foot { padding: 0 20px 32px; display: flex; flex-direction: column; gap: 10px; }
-.today-card { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 14px; background: var(--soft); text-align: left; width: 100%; }
+.today-card { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 18px; background: var(--surface); text-align: left; width: 100%; }
 .today-card > span { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .today-card b { font-size: 15px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* Task list */
 .list-top { display: flex; flex-direction: column; gap: 16px; padding: 28px 20px 0; }
-.list { padding: 4px 20px 120px; }
-.group { margin: 18px 0 0; }
+.list { padding: 4px 14px 120px; }
+.group { margin: 14px 0 0; background: var(--surface); border-radius: 22px; padding: 14px 16px 2px; overflow: hidden; }
 .group:first-child { margin-top: 4px; }
+.group > .eyebrow { display: inline-block; font-family: var(--display); font-variation-settings: 'SOFT' 100; font-style: italic; font-size: 22px; font-weight: 500; letter-spacing: 0; text-transform: none; color: var(--text); padding-bottom: 8px; margin-bottom: 2px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='8' viewBox='0 0 80 8'%3E%3Cpath d='M2 5 C 20 1, 46 8, 78 3' fill='none' stroke='%238E3B52' stroke-width='2.2' stroke-linecap='round'/%3E%3C/svg%3E") left bottom / 72px 7px no-repeat; }
+.group.late, .group.late .swipe .row { background: var(--late-bg); }
+@media (prefers-color-scheme: dark) {
+  .group > .eyebrow { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='8' viewBox='0 0 80 8'%3E%3Cpath d='M2 5 C 20 1, 46 8, 78 3' fill='none' stroke='%23E08AA0' stroke-width='2.2' stroke-linecap='round'/%3E%3C/svg%3E"); }
+}
 .group.late .eyebrow { color: var(--danger); }
-.row { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line); }
-.check { width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--faint); flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center; color: transparent; }
+.row { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px dashed var(--border-strong); }
+.swipe:last-child .row { border-bottom: none; }
+/* Pebble checks, ringed in the owner's colour: solid for one person, split for both, dashed for anyone. */
+.check { width: 26px; height: 26px; border-radius: 40%; border: 2.5px solid var(--faint); flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center; color: transparent; background: var(--surface); }
 .check:hover { border-color: var(--accent); }
+.check.c-p1 { border-color: var(--p1); }
+.check.c-p2 { border-color: var(--p2); }
+.check.c-shared { border-color: transparent; background: linear-gradient(var(--surface), var(--surface)) padding-box, linear-gradient(90deg, var(--p1) 50%, var(--p2) 50%) border-box; }
+.check.c-none { border-style: dashed; }
 .check.on { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.check.on.c-p1 { background: var(--p1); border-color: var(--p1); color: var(--on-p1); }
+.check.on.c-p2 { background: var(--p2-fill); border-color: var(--p2-fill); color: var(--on-p2); }
+.check.on.c-shared { border-color: transparent; background: linear-gradient(90deg, var(--p1) 50%, var(--p2-fill) 50%); color: var(--on-p1); }
+.check.on.c-none { border-style: solid; background: var(--faint); border-color: var(--faint); color: var(--surface); }
 .row-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; text-align: left; }
 .row-title { font-size: 16px; font-weight: 600; overflow-wrap: anywhere; }
 .row.done .row-title { text-decoration: line-through; color: var(--muted); }
@@ -128,14 +155,14 @@ svg { flex: 0 0 auto; }
 .bar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 10; background: var(--bg); border-top: 1px solid var(--line); }
 .bar-inner { max-width: 480px; margin: 0 auto; padding: 14px 20px calc(20px + env(safe-area-inset-bottom)); display: flex; align-items: center; justify-content: space-between; }
 .bar .round { width: 52px; height: 52px; border: 1px solid var(--border); }
-.midmic { width: 68px; height: 68px; border-radius: 50%; background: var(--accent); color: var(--on-accent); display: flex; align-items: center; justify-content: center; }
+.midmic { width: 68px; height: 68px; border-radius: 40%; background: var(--accent); color: var(--on-accent); display: flex; align-items: center; justify-content: center; }
 .midmic:hover { background: var(--accent-hover); }
 
 /* Detail */
 .detail { flex: 1; padding: 8px 24px 24px; display: flex; flex-direction: column; gap: 24px; }
 .detail-title { display: flex; align-items: flex-start; gap: 14px; }
-.detail-title .check { width: 28px; height: 28px; margin-top: 4px; }
-.detail-title h1 { font-size: 28px; line-height: 1.2; font-weight: 800; overflow-wrap: anywhere; }
+.detail-title .check { width: 30px; height: 30px; margin-top: 4px; }
+.detail-title h1 { font-family: var(--display); font-variation-settings: 'SOFT' 100; font-size: 30px; line-height: 1.15; font-weight: 600; overflow-wrap: anywhere; }
 .facts { margin: 0; display: flex; flex-direction: column; }
 .fact { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 0; border-bottom: 1px solid var(--line); }
 .fact dt { font-size: 14px; color: var(--muted); display: flex; flex-direction: column; gap: 2px; }
@@ -145,7 +172,7 @@ svg { flex: 0 0 auto; }
 .updated { font-size: 12px; font-weight: 700; color: var(--accent); }
 .section-h { margin: 0 0 4px; }
 .step { display: flex; align-items: center; gap: 12px; padding: 10px 0; width: 100%; text-align: left; }
-.step .box { width: 22px; height: 22px; border-radius: 6px; border: 2px solid var(--faint); flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center; color: transparent; }
+.step .box { width: 22px; height: 22px; border-radius: 40%; border: 2px solid var(--faint); flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center; color: transparent; }
 .step.on .box { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
 .step.on .step-title { text-decoration: line-through; color: var(--muted); }
 .step-title { flex: 1; font-size: 16px; }
@@ -153,11 +180,11 @@ svg { flex: 0 0 auto; }
 .step.changed { background: var(--accent-soft); margin: 0 -12px; padding: 10px 12px; border-radius: 10px; width: calc(100% + 24px); }
 .addline { align-self: flex-start; height: 40px; font-size: 15px; font-weight: 700; color: var(--accent); }
 .inline-add { display: flex; gap: 8px; }
-.field { width: 100%; border: 1px solid var(--border-strong); background: var(--bg); border-radius: 12px; padding: 10px 12px; font-size: 16px; min-width: 0; }
+.field { width: 100%; border: 1px solid var(--border-strong); background: var(--surface); border-radius: 12px; padding: 10px 12px; font-size: 16px; min-width: 0; }
 .field:focus { border-color: var(--accent); outline: none; }
 textarea.field { resize: vertical; min-height: 88px; }
 .notes { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 15px; text-align: left; }
-.saybtn { height: 60px; border-radius: 30px; background: var(--accent); color: var(--on-accent); display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 16px; font-weight: 700; width: 100%; }
+.saybtn { height: 60px; border-radius: 22px; background: var(--accent); color: var(--on-accent); display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 16px; font-weight: 700; width: 100%; }
 .saybtn:hover { background: var(--accent-hover); }
 .detail-foot { padding: 0 20px calc(24px + env(safe-area-inset-bottom)); position: sticky; bottom: 0; background: linear-gradient(transparent, var(--bg) 24px); padding-top: 24px; }
 .voice-card { border-radius: 20px; background: var(--toast-bg); color: var(--toast-ink); padding: 16px 16px 14px; display: flex; flex-direction: column; gap: 12px; }
@@ -168,18 +195,27 @@ textarea.field { resize: vertical; min-height: 88px; }
 .voice-card .done { height: 40px; padding: 0 18px; border-radius: 20px; background: var(--toast-ink); color: var(--toast-bg); font-size: 15px; font-weight: 700; }
 
 /* Review */
-.review { background: var(--soft); }
+.review { background: var(--bg); }
 .review-list { flex: 1; padding: 4px 16px 0; display: flex; flex-direction: column; gap: 10px; }
-.rcard { background: var(--bg); border-radius: 16px; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
+.rcard { background: var(--surface); border-radius: 20px; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
 .rcard.needs { box-shadow: inset 0 0 0 2px var(--amber-line); }
-.rcard-title { font-size: 17px; font-weight: 700; text-align: left; overflow-wrap: anywhere; }
-.rcard .chip { height: 32px; padding: 0 12px; border-radius: 16px; font-size: 13px; }
+.rcard-title { font-family: var(--display); font-variation-settings: 'SOFT' 100; font-size: 19px; font-weight: 600; text-align: left; overflow-wrap: anywhere; }
+.rcard .chip { height: 32px; padding: 0 12px; border-radius: 10px; font-size: 13px; }
 .badge { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; color: var(--accent); }
 
 /* Dialogs: bottom sheets and full screens */
-dialog { border: none; padding: 0; background: var(--bg); color: var(--text); max-width: 480px; width: 100%; }
+dialog { border: none; padding: 0; background: var(--surface); color: var(--text); max-width: 480px; width: 100%; }
+dialog.full { background: var(--bg); }
 dialog::backdrop { background: var(--scrim); }
-dialog.sheet { margin: auto auto 0; border-radius: 24px 24px 0 0; max-height: 92dvh; overflow-y: auto; }
+dialog.sheet { margin: auto auto 0; border-radius: 28px 28px 0 0; max-height: 92dvh; overflow-y: auto; overscroll-behavior: contain; }
+dialog.sheet.dragging { transition: none !important; overflow: hidden; }
+dialog.sheet.settling { transition: transform 0.24s cubic-bezier(0.2, 0.8, 0.2, 1); }
+dialog.sheet.leaving { transition: transform 0.2s ease-in; }
+/* The new-task card: a tall sheet with its own scrolling form, so the dimmed page shows above it. */
+dialog.sheet.tall { height: 92dvh; overflow: hidden; }
+dialog.sheet.tall[open] { display: flex; flex-direction: column; }
+dialog.sheet.tall .grab { margin-top: 10px; flex: 0 0 auto; }
+dialog.sheet.tall .form-head { padding-top: 4px; }
 dialog.sheet[open] { animation: up 0.2s ease-out; }
 @keyframes up { from { transform: translateY(24px); opacity: 0.6; } }
 dialog.full { margin: 0 auto; height: 100dvh; max-height: 100dvh; }
@@ -189,7 +225,7 @@ dialog.full[open] { display: flex; flex-direction: column; }
 .sheet-head { display: flex; flex-direction: column; gap: 4px; }
 .two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 .heard-list { list-style: none; margin: 0; padding: 0; }
-.heard-list li { display: flex; justify-content: space-between; gap: 12px; padding: 11px 0; border-bottom: 1px solid var(--line); font-size: 15px; }
+.heard-list li { display: flex; justify-content: space-between; gap: 12px; padding: 11px 0; border-bottom: 1px dashed var(--border-strong); font-size: 15px; }
 .heard-list li:last-child { border-bottom: none; }
 .heard-list b { font-weight: 600; overflow-wrap: anywhere; }
 .heard-list span { color: var(--muted); white-space: nowrap; display: inline-flex; align-items: center; gap: 6px; }
@@ -200,7 +236,7 @@ dialog.full[open] { display: flex; flex-direction: column; }
 .ring .fill { stroke: var(--on-accent); stroke-dasharray: 56.5; stroke-dashoffset: 0; }
 .ring.go .fill { animation: drain 5s linear forwards; }
 @keyframes drain { to { stroke-dashoffset: 56.5; } }
-.quoted { font-size: 15px; color: var(--muted); font-style: italic; overflow-wrap: anywhere; }
+.quoted { font-family: var(--display); font-size: 16px; color: var(--muted); font-style: italic; overflow-wrap: anywhere; background: var(--bg); border-radius: 14px; padding: 12px 14px; }
 .linkbtn { align-self: center; padding: 8px 12px; font-size: 15px; font-weight: 700; color: var(--accent); }
 .linkbtn.quiet { color: var(--muted); font-weight: 600; }
 
@@ -210,42 +246,48 @@ dialog.full[open] { display: flex; flex-direction: column; }
 .rec-top span { font-size: 14px; color: var(--muted); font-variant-numeric: tabular-nums; }
 .rec-mid { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 28px; }
 .rec-label { font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
-.rec-text { font-size: 26px; line-height: 1.35; font-weight: 600; min-height: 2.7em; overflow-wrap: anywhere; }
+.rec-text { font-family: var(--display); font-variation-settings: 'SOFT' 100; font-size: 28px; line-height: 1.3; font-weight: 500; min-height: 2.7em; overflow-wrap: anywhere; }
 .rec-text .interim { color: var(--faint); }
 .rec-text.placeholder { color: var(--faint); }
 .bars { display: flex; align-items: center; gap: 5px; height: 48px; }
 .bars span { width: 5px; border-radius: 3px; background: var(--accent); height: 10px; animation: bar 1s ease-in-out infinite; }
 .bars span:nth-child(3n) { animation-delay: -0.3s; } .bars span:nth-child(3n+1) { animation-delay: -0.6s; } .bars span:nth-child(4n) { animation-delay: -0.15s; }
 @keyframes bar { 50% { height: 42px; } }
-@media (prefers-reduced-motion: reduce) { .bars span { animation: none; height: 20px; } .ring.go .fill { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .bars span { animation: none; height: 20px; } .ring.go .fill { animation: none; } dialog.sheet[open] { animation: none; } dialog.sheet.settling, dialog.sheet.leaving { transition: none; } }
 .rec-bottom { display: flex; flex-direction: column; align-items: center; gap: 10px; }
-.stop { width: 80px; height: 80px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; }
+.stop { width: 80px; height: 80px; border-radius: 40%; background: var(--accent); display: flex; align-items: center; justify-content: center; }
 .stop span { width: 26px; height: 26px; border-radius: 6px; background: var(--on-accent); }
 
 /* Typed add / edit form */
-.form { flex: 1; overflow-y: auto; padding: 16px 20px 0; display: flex; flex-direction: column; gap: 24px; }
+.form { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 16px 20px 0; display: flex; flex-direction: column; gap: 24px; }
 .form-head { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: center; padding: 16px 12px 0; }
-.form-head h2 { justify-self: center; font-size: 16px; font-weight: 800; }
+.form-head h2 { justify-self: center; font-family: var(--display); font-variation-settings: 'SOFT' 100; font-size: 18px; font-weight: 600; }
 .label { font-size: 13px; font-weight: 700; color: var(--muted); margin-bottom: 10px; display: block; }
-.bigtitle { width: 100%; border: none; border-bottom: 2px solid var(--accent); padding: 6px 0 10px; font-size: 22px; font-weight: 700; background: transparent; outline: none; border-radius: 0; }
+.bigtitle { width: 100%; border: none; border-bottom: 2px solid var(--accent); padding: 6px 0 10px; font-family: var(--display); font-variation-settings: 'SOFT' 100; font-size: 24px; font-weight: 600; background: transparent; outline: none; border-radius: 0; }
 fieldset { border: none; margin: 0; padding: 0; min-width: 0; }
 legend { padding: 0; }
 .stack { display: flex; flex-direction: column; gap: 10px; }
 .extras { display: flex; flex-wrap: wrap; gap: 4px 18px; }
 .extras button { height: 40px; font-size: 15px; font-weight: 700; color: var(--accent); }
 .prep-row { display: grid; grid-template-columns: 1fr auto 36px; gap: 6px; align-items: center; }
-.prep-row select { border: 1px solid var(--border-strong); border-radius: 12px; padding: 10px 8px; background: var(--bg); font-size: 14px; }
+.prep-row select { border: 1px solid var(--border-strong); border-radius: 12px; padding: 10px 8px; background: var(--surface); font-size: 16px; }
 .form-foot { padding: 16px 20px calc(24px + env(safe-area-inset-bottom)); }
-.hidden-input { position: absolute; opacity: 0; pointer-events: none; width: 1px; height: 1px; }
+.picker { position: relative; overflow: hidden; }
+.pick-label { display: inline-flex; align-items: center; gap: 6px; }
+/* The phone's own date or time picker: a real input, invisible, covering the chip, so the tap lands on it. */
+.picker input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; padding: 0; border: 0; opacity: 0; font-size: 16px; cursor: pointer; -webkit-appearance: none; appearance: none; background: transparent; color: transparent; }
+.picker input::-webkit-calendar-picker-indicator { position: absolute; inset: 0; width: auto; height: auto; opacity: 0; cursor: pointer; }
+.picker:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 /* Time picker */
 .times { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
-.times button { height: 60px; border-radius: 14px; border: 1px solid var(--border-strong); font-size: 17px; font-weight: 700; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; }
+.times button { height: 60px; border-radius: 16px; border: 1.5px solid var(--border-strong); background: var(--surface); font-size: 17px; font-weight: 700; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; }
 .times button small { font-size: 12px; font-weight: 500; color: var(--muted); }
 .times button:hover { border-color: var(--accent); }
 .mic-row { display: flex; gap: 8px; }
-.mic-row .micbtn { width: 52px; height: 52px; border-radius: 50%; background: var(--accent); color: var(--on-accent); display: flex; align-items: center; justify-content: center; flex: 0 0 auto; }
+.mic-row .micbtn { width: 52px; height: 52px; border-radius: 40%; background: var(--accent); color: var(--on-accent); display: flex; align-items: center; justify-content: center; flex: 0 0 auto; }
 .mic-row .secondary { flex: 1; }
+.mic-row .picker { display: flex; align-items: center; justify-content: center; }
 
 /* Settings */
 .settings { flex: 1; overflow-y: auto; padding: 8px 20px 32px; display: flex; flex-direction: column; gap: 26px; }
@@ -256,7 +298,7 @@ legend { padding: 0; }
 .members li span:last-child { color: var(--muted); font-size: 13px; overflow: hidden; text-overflow: ellipsis; }
 .steps { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; font-size: 15px; }
 .copyrow { display: flex; gap: 8px; }
-.copyrow .field { font-size: 13px; }
+.copyrow .field { font-size: 16px; text-overflow: ellipsis; }
 .copyrow button { padding: 0 16px; border-radius: 12px; border: 1px solid var(--border-strong); font-weight: 700; font-size: 14px; }
 .activity { list-style: none; padding: 0; margin: 0; }
 .activity li { padding: 10px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
@@ -287,12 +329,12 @@ legend { padding: 0; }
 .check { transition: background-color 0.12s, border-color 0.12s, color 0.12s; }
 .check:active { transform: scale(0.88); }
 .row-title, .row-meta { transition: color 0.2s; }
-.swipe { position: relative; overflow: hidden; margin: 0 -20px; }
-.swipe .row { position: relative; z-index: 1; background: var(--bg); padding: 12px 20px; touch-action: pan-y; transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), background-color 0.15s; }
+.swipe { position: relative; overflow: hidden; margin: 0 -16px; }
+.swipe .row { position: relative; z-index: 1; background: var(--surface); padding: 12px 16px; touch-action: pan-y; transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), background-color 0.15s; }
 .swipe.dragging .row { transition: none; user-select: none; -webkit-user-select: none; }
 .swipe .row:has(.row-main:active) { background: var(--soft); }
 .swipe-act { position: absolute; inset: 0; display: none; align-items: center; gap: 8px; padding: 0 24px; color: #fff; font-weight: 700; font-size: 15px; }
-.act-done { background: #2f7d5d; justify-content: flex-start; }
+.act-done { background: var(--done); justify-content: flex-start; }
 .act-del { background: var(--danger); justify-content: flex-end; padding: 0; }
 .swipe[data-dir="right"] .act-done, .swipe[data-dir="left"] .act-del { display: flex; }
 .swipe-del { height: 100%; width: 96px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; color: #fff; font-size: 13px; font-weight: 700; }
@@ -425,7 +467,11 @@ legend { padding: 0; }
 
 <!-- Review what was just saved -->
 <div id="v-review" class="screen review" hidden>
-  <header class="head" style="padding-bottom:12px">
+  <nav class="topnav">
+    <button type="button" class="round outline" id="review-close" aria-label="Close review"><svg width="20" height="20"><use href="#i-x"/></svg></button>
+    <button type="button" class="textbtn" id="review-discard" style="color:var(--danger)">Discard</button>
+  </nav>
+  <header class="head" style="padding-top:8px;padding-bottom:12px">
     <div><h1 class="title-xl">Review</h1><p class="muted small">Already saved. Tap anything to change it.</p></div>
     <span class="badge" style="margin-top:8px"><svg width="16" height="16"><use href="#i-tick"/></svg>Saved</span>
   </header>
@@ -478,7 +524,8 @@ legend { padding: 0; }
 </dialog>
 
 <!-- Adding or editing by typing -->
-<dialog id="d-form" class="full" aria-labelledby="form-title">
+<dialog id="d-form" class="sheet tall" aria-labelledby="form-title">
+  <span class="grab" aria-hidden="true"></span>
   <div class="form-head"><button type="button" class="textbtn" data-close style="justify-self:start">Cancel</button><h2 id="form-title">New task</h2><span></span></div>
   <form class="form" id="task-form" novalidate>
     <div>
@@ -517,14 +564,12 @@ legend { padding: 0; }
       <div class="times" id="q-times"></div>
       <div class="mic-row">
         <button type="button" class="micbtn" id="q-say" aria-label="Say a time"><svg width="22" height="22"><use href="#i-mic"/></svg></button>
-        <button type="button" class="secondary" id="q-other">Other time</button>
+        <label class="secondary picker" id="q-other">Other time<input type="time" id="q-other-input" aria-label="Other time"></label>
       </div>
       <button type="button" class="linkbtn" id="q-any">Any time is fine</button>
     </div>
   </div>
 </dialog>
-<input type="date" class="hidden-input" id="date-picker" tabindex="-1" aria-hidden="true">
-<input type="time" class="hidden-input" id="time-picker" tabindex="-1" aria-hidden="true">
 
 <!-- Simple choice lists (who, repeats, more) -->
 <dialog id="d-choose" class="sheet" aria-labelledby="choose-title">
@@ -945,7 +990,7 @@ function quietDraw() {
 }
 function busyEditing() {
   const a = document.activeElement;
-  const typing = a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) && !a.closest('dialog') && !a.classList.contains('hidden-input');
+  const typing = a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) && !a.closest('dialog');
   return Boolean(typing || swipe.tracking || swipe.open || swipe.animating);
 }
 document.addEventListener('focusout', () => setTimeout(() => { if (state.renderLater) quietDraw(); }, 0));
@@ -999,6 +1044,8 @@ function ownerClass(owner) {
   const i = state.data.members.findIndex((m) => m.name === owner);
   return i % 2 === 1 ? 'o-p2' : 'o-p1';
 }
+/** The check button wears the owner's colour: c-p1, c-p2, c-shared or c-none. */
+const checkClass = (owner) => ownerClass(owner).replace('o-', 'c-');
 const ownerText = (owner) => owner || 'Unassigned';
 const pill = (owner) => `<span class="pill ${ownerClass(owner)}">${esc(ownerText(owner))}</span>`;
 const whoChoices = () => state.data.members.map((m) => m.name).concat(SHARED);
@@ -1169,7 +1216,7 @@ function taskRow(t, group) {
     <div class="swipe-act act-done" aria-hidden="true">${icon(t.done ? 'undo' : 'tick', 22)}<span>${t.done ? 'Reopen' : 'Done'}</span></div>
     <div class="swipe-act act-del" aria-hidden="true"><button type="button" class="swipe-del" data-swipe-del="${t.id}" tabindex="-1">${icon('bin', 20)}<span>Delete</span></button></div>
     <div class="row ${t.done ? 'done' : ''}">
-      <button type="button" class="check ${t.done ? 'on' : ''}" data-done="${t.id}" aria-label="${t.done ? 'Mark not done' : 'Mark done'}: ${esc(t.title)}">${icon('tick', 14)}</button>
+      <button type="button" class="check ${checkClass(t.owner)} ${t.done ? 'on' : ''}" data-done="${t.id}" aria-label="${t.done ? 'Mark not done' : 'Mark done'}: ${esc(t.title)}">${icon('tick', 14)}</button>
       <button type="button" class="row-main" data-open="${t.id}"><span class="row-title">${esc(t.title)}</span><span class="row-meta">${rowMeta(t, group)}</span></button>
       ${pill(t.owner)}
     </div>
@@ -1323,7 +1370,7 @@ function renderDetail() {
   const newPrep = e && !e.pending && e.id === t.id && e.changed.includes('prep') ? e.before.prep.length : Infinity;
   $('#detail').innerHTML = `
     <div class="detail-title">
-      <button type="button" class="check ${t.done ? 'on' : ''}" data-done="${t.id}" aria-label="${t.done ? 'Mark not done' : 'Mark done'}">${icon('tick', 16)}</button>
+      <button type="button" class="check ${checkClass(t.owner)} ${t.done ? 'on' : ''}" data-done="${t.id}" aria-label="${t.done ? 'Mark not done' : 'Mark done'}">${icon('tick', 16)}</button>
       <h1>${esc(t.title)}</h1>
     </div>
     <dl class="facts">
@@ -1422,18 +1469,24 @@ function renderReview() {
 // ---------------------------------------------------------------- Listening
 
 const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
-let rec = null;
+let recording = null; // the recording in progress: { finish(how) }
 let recClock = null;
 
-/** Records one spoken message. Calls onText with what was said, or onUnavailable if the microphone can't be used. */
+/**
+ * Records one spoken message. Calls onText with what was said, or onUnavailable if the microphone can't be used.
+ * Every way a recording ends goes through finish(), which lets go of the microphone at once: a
+ * recognizer left running is what makes the phone play its microphone sound when the app is put away.
+ */
 function listen({ label = 'Listening', onText, onUnavailable }) {
   if (!SpeechRec) { onUnavailable('none'); return; }
+  if (recording) recording.finish('cancel');
   const dlg = $('#d-record');
   const out = $('#rec-text');
   let finalText = '';
   let interim = '';
-  let cancelled = false;
   let failed = false;
+  let finished = false;
+  let stopGuard = null;
   $('#rec-label').textContent = label;
   out.textContent = 'Go ahead…';
   out.classList.add('placeholder');
@@ -1446,42 +1499,65 @@ function listen({ label = 'Listening', onText, onUnavailable }) {
   }, 500);
   if (!dlg.open) dlg.showModal();
 
-  rec = new SpeechRec();
-  rec.lang = navigator.language || 'en-GB';
-  rec.interimResults = true;
-  rec.continuous = false;
-  rec.onresult = (ev) => {
+  const r = new SpeechRec();
+  r.lang = navigator.language || 'en-GB';
+  r.interimResults = true;
+  r.continuous = false;
+
+  // how: 'ended' (the phone finished), 'stopped' (Stop, and the phone was slow to finish),
+  // 'hidden' (the app was put away: keep what was heard) or 'cancel' (keep nothing).
+  const finish = (how) => {
+    if (finished) return;
+    finished = true;
+    clearInterval(recClock);
+    clearTimeout(stopGuard);
+    r.onresult = null;
+    r.onerror = null;
+    r.onend = null;
+    if (how !== 'ended') { try { r.abort(); } catch (err) { /* already over */ } }
+    if (recording && recording.r === r) recording = null;
+    if (dlg.open) dlg.close();
+    const said = `${finalText} ${interim}`.trim();
+    if (how === 'cancel' || failed) return;
+    if (said) onText(said);
+    else if (how !== 'hidden') toast("Didn't hear anything. Tap the microphone and speak.");
+  };
+  recording = { r, finish };
+
+  r.onresult = (ev) => {
     finalText = '';
     interim = '';
-    Array.from(ev.results).forEach((r) => { if (r.isFinal) finalText += r[0].transcript; else interim += r[0].transcript; });
+    Array.from(ev.results).forEach((x) => { if (x.isFinal) finalText += x[0].transcript; else interim += x[0].transcript; });
     out.classList.remove('placeholder');
     out.innerHTML = `${esc(finalText)}<span class="interim">${esc(interim)}</span>`;
   };
-  rec.onerror = (ev) => {
+  r.onerror = (ev) => {
     if (ev.error === 'aborted') return;
     failed = true;
     if (['not-allowed', 'service-not-allowed', 'audio-capture'].includes(ev.error)) onUnavailable('blocked');
     else if (ev.error !== 'no-speech') toast("Didn't catch that. Try again.");
   };
-  rec.onend = () => {
-    clearInterval(recClock);
-    rec = null;
-    if (dlg.open) dlg.close();
-    const said = `${finalText} ${interim}`.trim();
-    if (cancelled || failed) return;
-    if (said) onText(said);
-    else toast("Didn't hear anything. Tap the microphone and speak.");
+  r.onend = () => finish('ended');
+  $('#rec-cancel').onclick = () => finish('cancel');
+  $('#rec-stop').onclick = () => {
+    try { r.stop(); } catch (err) { finish('stopped'); return; }
+    // Some phones never report the end: let go of the microphone anyway.
+    clearTimeout(stopGuard);
+    stopGuard = setTimeout(() => finish('stopped'), 1500);
   };
-  $('#rec-cancel').onclick = () => { cancelled = true; if (rec) rec.abort(); else dlg.close(); };
-  $('#rec-stop').onclick = () => { if (rec) rec.stop(); };
-  dlg.oncancel = (e) => { e.preventDefault(); $('#rec-cancel').onclick(); };
+  dlg.oncancel = (e) => { e.preventDefault(); finish('cancel'); };
   try {
-    rec.start();
+    r.start();
   } catch (err) {
     failed = true;
-    dlg.close();
+    finish('cancel');
     onUnavailable('blocked');
   }
+}
+
+/** The app is being put away: end any recording now (keeping what was heard) so the microphone is released. */
+function releaseMic() {
+  if (recording) recording.finish('hidden');
 }
 
 function typeInstead({ title, hint, placeholder, value = '', onText }) {
@@ -1617,7 +1693,29 @@ $('#heard-review').addEventListener('click', () => {
 $('#heard-discard').addEventListener('click', () => {
   clearTimeout(heardTimer);
   $('#d-heard').close();
-  discard(captured.slice());
+  discardSoon(captured.slice());
+});
+
+/** Discard with Undo: the tasks go at once on screen; the server hears after the Undo window, or as the app is put away. */
+function discardSoon(ids) {
+  const wanted = new Set(ids.map(realId));
+  if (!wanted.size) return;
+  const op = mutate({
+    label: 'Discard',
+    hold: UNDO_DELETE_MS,
+    apply: (d) => { d.tasks = d.tasks.filter((t) => !wanted.has(t.id)); },
+    send: () => run('discardCapture', [...wanted], SLIM),
+  });
+  const n = wanted.size;
+  toast(`Discarded ${n} task${n === 1 ? '' : 's'}`, [{ label: 'Undo', fn: () => toast(cancel(op) ? 'Brought back' : 'Too late: already discarded') }], 6000);
+}
+
+$('#review-close').addEventListener('click', () => go('capture'));
+$('#review-discard').addEventListener('click', () => {
+  const ids = state.reviewIds.slice();
+  state.reviewIds = [];
+  go('capture');
+  discardSoon(ids);
 });
 $('#d-heard').addEventListener('cancel', (e) => { e.preventDefault(); if (captured.length) finishCapture(); });
 
@@ -1625,44 +1723,86 @@ $('#d-heard').addEventListener('cancel', (e) => { e.preventDefault(); if (captur
 
 const whenState = { id: null, date: '', time: '', onSave: null };
 
+/**
+ * A row of chips ending in one that opens the phone's own date or time picker. The picker chip
+ * holds a real, invisible input under the finger (iOS only opens a picker from a tap on the input
+ * itself, and inputs outside an open dialog can't be tapped at all). It is built once and then
+ * updated in place, so a redraw never removes an input whose picker is open.
+ */
+function chipRow(container, type) {
+  let set = container.querySelector(':scope > .chip-set');
+  if (!set) {
+    container.innerHTML = `<span class="chip-set"></span><label class="chip outline picker"><span class="pick-label"></span><input type="${type}" aria-label="${type === 'date' ? 'Pick a date' : 'Other time'}"></label>`;
+    set = container.firstChild;
+    const chip = container.querySelector('.picker');
+    nativePicker(chip.querySelector('input'), (v) => chip.onPick && chip.onPick(v));
+  }
+  const chip = container.querySelector('.picker');
+  return { set, chip, input: chip.querySelector('input') };
+}
+
 function dateChips(container, current, onPick) {
   const t0 = today();
   const weekend = nextWeekendDay();
   const fixed = [[t0, 'Today'], [addDays(t0, 1), 'Tomorrow'], [weekend, weekday(weekend)]];
-  const custom = current && !fixed.some(([d]) => d === current);
-  container.innerHTML = fixed.map(([d, label]) => `<button type="button" class="chip" data-date="${d}" aria-pressed="${current === d}">${label}</button>`).join('')
-    + `<button type="button" class="chip outline" data-date="pick" aria-pressed="${custom}">${icon('cal', 16)}${custom ? esc(shortDate(current)) : 'Pick a date'}</button>`;
-  container.onclick = (e) => {
+  const custom = Boolean(current) && !fixed.some(([d]) => d === current);
+  const { set, chip, input } = chipRow(container, 'date');
+  set.innerHTML = fixed.map(([d, label]) => `<button type="button" class="chip" data-date="${d}" aria-pressed="${current === d}">${label}</button>`).join('');
+  chip.classList.toggle('on', custom);
+  chip.querySelector('.pick-label').innerHTML = `${icon('cal', 16)}${custom ? esc(shortDate(current)) : 'Pick a date'}`;
+  if (document.activeElement !== input) input.value = current || '';
+  chip.onPick = onPick;
+  set.onclick = (e) => {
     const b = e.target.closest('[data-date]');
-    if (!b) return;
-    if (b.dataset.date === 'pick') {
-      pickNative('#date-picker', current || addDays(t0, 7), (v) => onPick(v));
-      return;
-    }
-    onPick(b.getAttribute('aria-pressed') === 'true' ? '' : b.dataset.date); // tap again to clear
+    if (b) onPick(b.getAttribute('aria-pressed') === 'true' ? '' : b.dataset.date); // tap again to clear
   };
 }
 
 function timeChips(container, current, onPick) {
   const quick = state.data.quickTimes;
-  const custom = current && !quick.includes(current);
-  container.innerHTML = `<button type="button" class="chip" data-time-pick="" aria-pressed="${!current}">Any time</button>`
-    + quick.map((t) => `<button type="button" class="chip" data-time-pick="${t}" aria-pressed="${current === t}">${t}</button>`).join('')
-    + `<button type="button" class="chip outline" data-time-pick="other" aria-pressed="${custom}">${custom ? esc(current) : 'Other'}</button>`;
-  container.onclick = (e) => {
+  const custom = Boolean(current) && !quick.includes(current);
+  const { set, chip, input } = chipRow(container, 'time');
+  set.innerHTML = `<button type="button" class="chip" data-time-pick="" aria-pressed="${!current}">Any time</button>`
+    + quick.map((t) => `<button type="button" class="chip" data-time-pick="${t}" aria-pressed="${current === t}">${t}</button>`).join('');
+  chip.classList.toggle('on', custom);
+  chip.querySelector('.pick-label').textContent = custom ? current : 'Other';
+  if (document.activeElement !== input) input.value = current || '';
+  chip.onPick = onPick;
+  set.onclick = (e) => {
     const b = e.target.closest('[data-time-pick]');
-    if (!b) return;
-    if (b.dataset.timePick === 'other') pickNative('#time-picker', current || '12:00', onPick);
-    else onPick(b.dataset.timePick);
+    if (b) onPick(b.dataset.timePick);
   };
 }
 
-// The phone's own date or time wheel.
-function pickNative(sel, value, onPick) {
-  const input = $(sel);
-  input.value = value;
-  input.onchange = () => { if (input.value) onPick(input.value); };
-  try { input.showPicker(); } catch (err) { input.focus(); input.click(); }
+const IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+/**
+ * Wires one of the phone's own pickers. With waitOnIos, a choice on iPhone (where the wheels report
+ * every turn) counts once the picker closes or the wheels rest; elsewhere a choice counts at once.
+ * On a computer a click opens the picker too.
+ */
+function nativePicker(input, onPick, { waitOnIos = false } = {}) {
+  let chosen = '';
+  let settle = null;
+  const commit = () => {
+    clearTimeout(settle);
+    if (!chosen) return;
+    const v = chosen;
+    chosen = '';
+    onPick(v);
+  };
+  const changed = () => {
+    if (!input.value) return;
+    chosen = input.value;
+    if (waitOnIos && IOS && document.activeElement === input) { clearTimeout(settle); settle = setTimeout(commit, 1500); }
+    else commit();
+  };
+  input.addEventListener('change', changed);
+  input.addEventListener('blur', commit);
+  input.addEventListener('pointerdown', (e) => { input.mouse = e.pointerType === 'mouse'; });
+  input.addEventListener('click', () => {
+    if (input.mouse && typeof input.showPicker === 'function') { try { input.showPicker(); } catch (err) { /* the input still works by typing */ } }
+  });
 }
 
 function openWhen(id, mode) {
@@ -1676,6 +1816,7 @@ function openWhen(id, mode) {
   $('#when-full').hidden = quick;
   $('#when-quick').hidden = !quick;
   if (quick) {
+    $('#q-other-input').value = t.time || '';
     $('#q-times').innerHTML = state.data.quickTimes.slice(0, 3).map((q) => `<button type="button" data-q="${q}">${q}<small>${partOfDay(q)}</small></button>`).join('');
   } else {
     drawWhen();
@@ -1699,7 +1840,7 @@ $('#when-save').addEventListener('click', () => {
   saveFields(whenState.id, { dueDate: whenState.date, time: whenState.date ? whenState.time : '' }, 'Saved');
 });
 $('#q-times').addEventListener('click', (e) => { const b = e.target.closest('[data-q]'); if (b) setTime(b.dataset.q); });
-$('#q-other').addEventListener('click', () => pickNative('#time-picker', '12:00', setTime));
+nativePicker($('#q-other-input'), (v) => { if ($('#d-when').open) setTime(v); }, { waitOnIos: true });
 $('#q-any').addEventListener('click', () => setTime(''));
 $('#q-say').addEventListener('click', () => {
   const id = whenState.id;
@@ -1911,6 +2052,106 @@ $('#v-detail').addEventListener('click', (e) => {
   if (id === 'edit-done') { state.lastEdit = null; draw(); }
 });
 $('#v-detail').addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.id === 'step-text') { e.preventDefault(); $('#step-save').click(); } });
+
+// ---------------------------------------------------------------- Bottom sheets: drag down or tap outside to close
+
+// Closing a sheet any of these ways means Cancel, except "Got it", where the tasks are already
+// saved: there it means Save.
+function dismissSheet(dlg) {
+  if (!dlg.open) return;
+  if (dlg.id === 'd-heard') { if (captured.length) finishCapture(); else dlg.close(); return; }
+  dlg.close();
+}
+
+const SHEET_CLOSE_SHARE = 0.3; // dragged past 30% of its height
+const SHEET_FLICK = 0.5; // px per ms
+const sheetDrag = { dlg: null };
+
+/** Something inside the sheet, between the finger and the sheet, that is scrolled down or scrolls sideways. */
+function blocksSheetDrag(target, dlg) {
+  if (target.closest('input, textarea, select, .chips.scroll, .seg')) return true;
+  for (let el = target; el && el !== dlg.parentNode; el = el.parentElement) {
+    if (el.scrollTop > 0) return true;
+    if (el === dlg) break;
+  }
+  return false;
+}
+
+function sheetStart(dlg, x, y, target) {
+  if (!dlg.open || dlg.classList.contains('leaving')) return;
+  // From the handle or header the sheet always moves; elsewhere only when its content is at the top.
+  const fromTop = Boolean(target.closest('.grab, .sheet-head, .form-head')) && !target.closest('button, input');
+  if (!fromTop && blocksSheetDrag(target, dlg)) return;
+  sheetDrag.dlg = dlg;
+  Object.assign(sheetDrag, { x0: x, y0: y, dy: 0, axis: null, samples: [[performance.now(), y]], height: dlg.offsetHeight });
+}
+
+function sheetMove(x, y, e) {
+  const s = sheetDrag;
+  if (!s.dlg) return;
+  const dx = x - s.x0;
+  const dy = y - s.y0;
+  if (!s.axis) {
+    if (Math.abs(dx) < 6 && Math.abs(dy) < 6) return;
+    if (dy <= 0 || Math.abs(dx) > Math.abs(dy)) { s.dlg = null; return; } // scrolling or swiping sideways
+    s.axis = 'y';
+    s.dlg.classList.remove('settling');
+    s.dlg.classList.add('dragging');
+    if (document.activeElement && s.dlg.contains(document.activeElement)) document.activeElement.blur();
+  }
+  if (e.cancelable) e.preventDefault();
+  s.dy = Math.max(0, dy);
+  s.dlg.style.transform = `translateY(${s.dy}px)`;
+  s.samples.push([performance.now(), y]);
+  if (s.samples.length > 5) s.samples.shift();
+}
+
+function sheetEnd(cancelled) {
+  const s = sheetDrag;
+  const dlg = s.dlg;
+  s.dlg = null;
+  if (!dlg || !s.axis) return;
+  dlg.classList.remove('dragging');
+  swipe.suppressClick = true; // the click that ends a drag isn't a tap
+  setTimeout(() => { swipe.suppressClick = false; }, 0);
+  const [t0, y0] = s.samples[0];
+  const [t1, y1] = s.samples[s.samples.length - 1];
+  const speed = t1 > t0 ? (y1 - y0) / (t1 - t0) : 0;
+  const close = !cancelled && (s.dy > s.height * SHEET_CLOSE_SHARE || (speed > SHEET_FLICK && s.dy > 24));
+  if (!close) {
+    dlg.classList.add('settling');
+    dlg.style.transform = '';
+    setTimeout(() => dlg.classList.remove('settling'), 260);
+    return;
+  }
+  if (REDUCED_MOTION) { dlg.style.transform = ''; dismissSheet(dlg); return; }
+  dlg.classList.add('leaving');
+  dlg.style.transform = `translateY(${s.height + 40}px)`;
+  setTimeout(() => {
+    dlg.classList.remove('leaving');
+    dismissSheet(dlg);
+    dlg.style.transform = '';
+  }, 200);
+}
+
+$$('dialog.sheet').forEach((dlg) => {
+  // Touch events, not pointer events: the browser cancels pointer events once it starts scrolling.
+  dlg.addEventListener('touchstart', (e) => { if (e.touches.length === 1) sheetStart(dlg, e.touches[0].clientX, e.touches[0].clientY, e.target); }, { passive: true });
+  dlg.addEventListener('touchmove', (e) => { if (sheetDrag.dlg === dlg) sheetMove(e.touches[0].clientX, e.touches[0].clientY, e); }, { passive: false });
+  dlg.addEventListener('touchend', () => sheetEnd(false));
+  dlg.addEventListener('touchcancel', () => sheetEnd(true));
+  dlg.addEventListener('mousedown', (e) => { if (e.button === 0) sheetStart(dlg, e.clientX, e.clientY, e.target); });
+  // A tap on the dimmed page around the sheet lands on the dialog itself, outside its box.
+  dlg.addEventListener('click', (e) => {
+    if (e.target !== dlg) return;
+    const r = dlg.getBoundingClientRect();
+    const outside = e.clientY < r.top || e.clientY > r.bottom || e.clientX < r.left || e.clientX > r.right;
+    if (outside) dismissSheet(dlg);
+  });
+  dlg.addEventListener('close', () => { dlg.style.transform = ''; dlg.classList.remove('dragging', 'settling', 'leaving'); });
+});
+window.addEventListener('mousemove', (e) => { if (sheetDrag.dlg) sheetMove(e.clientX, e.clientY, e); });
+window.addEventListener('mouseup', () => sheetEnd(false));
 
 // ---------------------------------------------------------------- Swiping task rows
 
@@ -2225,6 +2466,7 @@ if (PREVIEW) {
 setInterval(() => { if (!document.hidden) refresh(); }, REFRESH_EVERY);
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) {
+    releaseMic();
     flushHeld();
     // Phone put away mid-countdown: the tasks are saved already, so just settle the screen.
     if ($('#d-heard').open && captured.length) finishCapture();
@@ -2232,7 +2474,10 @@ document.addEventListener('visibilitychange', () => {
     refresh();
   }
 });
-window.addEventListener('pagehide', flushHeld);
+window.addEventListener('pagehide', () => { releaseMic(); flushHeld(); });
+
+// No zooming: iOS ignores user-scalable=no, so pinches are stopped here (double-tap is stopped by touch-action).
+['gesturestart', 'gesturechange', 'gestureend'].forEach((type) => document.addEventListener(type, (e) => e.preventDefault(), { passive: false }));
 
 if (perf.on) drawPerf();
 if (config || PREVIEW) {

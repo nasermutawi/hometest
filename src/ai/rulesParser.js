@@ -174,7 +174,7 @@ function cleanTitle(clause, members) {
     .replace(/\b(?:day after tomorrow|tomorrow|today|tonight|next week|this weekend|at the weekend|in \d+ (?:days?|weeks?))\b/gi, '')
     .replace(/\b(?:at|by|around)?\s*\d{1,2}(?::\d{2})?\s*(?:am|pm)\b/gi, '')
     .replace(/\bat \d{1,2}:\d{2}\b/gi, '')
-    .replace(/\b(?:in the )?(?:morning|afternoon|evening)\b/gi, '')
+    .replace(/\b(?:in the |this |on )?(?:morning|afternoon|evening)\b/gi, '')
     .replace(/\b\d{4}-\d{2}-\d{2}\b/g, '')
     .replace(new RegExp(`\\b(?:on )?(?:the )?\\d{1,2}(?:st|nd|rd|th)? (?:of )?(?:${MONTHS.join('|')})[a-z]*\\b`, 'gi'), '');
   for (const m of members) {
