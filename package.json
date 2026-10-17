@@ -8,7 +8,9 @@
     "dev": "node --no-warnings=ExperimentalWarning --watch src/server.js",
     "test": "node --no-warnings=ExperimentalWarning --test test/*.test.js google-sheets/test/*.test.js",
     "build:sheets": "node --no-warnings google-sheets/build-parser.mjs",
-    "preview:sheets": "node --no-warnings google-sheets/test/preview-server.mjs"
+    "preview:sheets": "node --no-warnings google-sheets/test/preview-server.mjs",
+    "gas:deploy": "node --no-warnings google-sheets/deploy.mjs",
+    "gas:login": "npx --yes @google/clasp@3 login"
   },
   "repository": {
     "type": "git",

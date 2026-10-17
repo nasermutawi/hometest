@@ -1,3 +1,8 @@
 node_modules/
 data/
 .env
+
+# clasp: personal IDs and logins stay off GitHub
+google-sheets/.clasp-ids.json
+.clasp.json
+.clasprc.json
