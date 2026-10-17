@@ -28,7 +28,8 @@ Only people with a personal link can use the app, and each link acts as that one
 | `Code.gs` | Everything server-side: sheet setup, the app's API (`doPost`) and personal links, task logic, capture and voice edits, repeats, reminder emails, calendar sync, Claude or the simple rules |
 | `Parser.gs` | The offline language parser. **Generated** from `src/ai/rulesParser.js` and `src/chat/rulesInterpreter.js` by `npm run build:sheets` |
 | `../docs/index.html` | The app itself, served by GitHub Pages |
-| `appsscript.json` | Manifest, only needed if you use `clasp` |
+| `appsscript.json` | Manifest. `deploy.mjs` keeps the live project's own settings and only adds permissions the code needs |
+| `deploy.mjs` | One-command update of the live server (`npm run gas:deploy`), see below |
 | `test/` | An in-memory imitation of the Apps Script services plus tests (`npm test`), a local preview (`npm run preview:sheets`, then open `http://localhost:3200/?as=naser@example.com`; add Sara in Settings → People, then open `?as=sara@example.com` in another window), and `measure.mjs`, which counts the sheet reads and writes each call makes |
 
 ## Installing
@@ -43,7 +44,24 @@ The non-technical step-by-step guide is linked from the project conversation. In
 6. In GitHub: **Settings → Pages → Deploy from a branch**, branch `claude/household-task-app-mfl3pq`, folder `/docs`. The app appears at `https://nasermutawi.github.io/hometest/` (the **App address** setting).
 7. Open your link on your phone, add it to the home screen, then add your partner in **Settings → People** and send them their link.
 
-**Updating the code later:** paste the new `Code.gs`/`Parser.gs`, run `setup` once more (it adds new settings and keeps your data), then **Deploy → Manage deployments → ✏️ → Version: New version → Deploy**. The app on GitHub Pages updates by itself when the repository changes.
+**Updating the code later:** run `npm run gas:deploy -- "what changed"` (set up once as below). By hand instead: paste the new `Code.gs`/`Parser.gs`, then **Deploy → Manage deployments → ✏️ → Version: New version → Deploy**. Either way, run `setup` once more in the script editor if the change added settings or permissions (it keeps your data). The app on GitHub Pages updates by itself when the repository changes.
+
+### Deploying with clasp
+
+`deploy.mjs` uses Google's `clasp` tool to do the paste-and-redeploy for you. It downloads the live project first, keeps its time zone and web app settings, refuses to run if the live project has files the repo doesn't, pushes `Code.gs` and `Parser.gs`, and redeploys the **same** web app as a new version, so links don't change.
+
+Once per computer:
+
+1. Node 22 or newer (`node --version`).
+2. Switch on **Google Apps Script API** at https://script.google.com/home/usersettings.
+3. `npm run gas:login` and sign in with the Google account that owns the script. This saves a login in `~/.clasprc.json` on your computer only.
+4. Copy `google-sheets/clasp-ids.example.json` to `google-sheets/.clasp-ids.json` and fill in:
+   - `scriptId`: Apps Script → ⚙️ Project Settings → IDs → Script ID.
+   - `deploymentId`: Deploy → Manage deployments → the active web app → Deployment ID (starts `AKfy`).
+
+   This file is ignored by git: the repository is public, so the IDs stay on your computer.
+
+Then: `npm run gas:deploy -- "what changed" --dry-run` to see what would change, and without `--dry-run` to do it.
 
 ### Turning on Claude (optional)
 
