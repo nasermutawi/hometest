@@ -945,17 +945,31 @@ const ERRAND_VERBS = 'buy|pick up|get|call|ring|phone|book|pay|order|send|email|
  * words like "also" or "and buy"; a follow-on sentence about the same thing ("we need to clear
  * it first", "Sara to handle it") stays with the task before it. Returns groups of
  * [lead, ...more]: errands joined by "and" share the lead's day and owner unless they say their own.
+ * A goal followed by the errands it needs ("I need to cook a ragu, so I need to go to the shop
+ * and then...") is one group with steps: { goal, steps }.
  */
 function splitCapture_(text) {
-  const sentences = String(text).split(/\n+|(?<=[.!?;])\s+|\s*,?\s*\b(?:and )?(?:also|plus|another thing is|and then)\b\s*,?\s*/i)
-    .map((p) => (p || '').trim()).filter((p) => p.replace(/[^a-z0-9]/gi, '').length > 1);
+  const pieces = String(text).replace(/\s*\u2026+/g, '.').split(/\n+|(?<=[.!?;])\s+|\s*,?\s*\b(?:and )?(?:also|plus|another thing is)\b\s*,?\s*/i);
+  const units = [];
+  pieces.forEach((piece) => {
+    const p = (piece || '').trim();
+    const goal = goalWithSteps_(p);
+    const so = !goal && GOAL_SO.exec(p);
+    if (goal) units.push(goal);
+    // "The car is making a noise, so I need to book the garage": the task is what comes after "so".
+    else if (so && !/\band then\b/i.test(so[2])) units.push(`${so[2].replace(/[.!?]+$/, '')} because ${/^i\b/i.test(so[1]) ? so[1] : so[1].charAt(0).toLowerCase() + so[1].slice(1)}`);
+    else p.split(/\s*,?\s*\band then\b\s*,?\s*/i).forEach((x) => units.push(x));
+  });
   const groups = [];
-  sentences.forEach((p) => {
+  units.forEach((u) => {
+    if (typeof u !== 'string') { groups.push(u); return; }
+    const p = u.trim();
+    if (p.replace(/[^a-z0-9]/gi, '').length <= 1) return;
     const followOn = EXPLICIT_PREP.test(p) || /^(before|make sure|remember|don't forget|dont forget|first|then)\b/i.test(p)
       || /\b(it|them|that|this|they)\b[.!?]?$/i.test(p) || /^(it|that|this|they|he|she)\b/i.test(p);
-    if (groups.length && followOn) {
-      const g = groups[groups.length - 1];
-      g[g.length - 1] += `. ${p}`;
+    const last = groups[groups.length - 1];
+    if (last && Array.isArray(last) && followOn) {
+      last[last.length - 1] += `. ${p}`;
       return;
     }
     groups.push(p.split(new RegExp(`\\s*,?\\s+and (?=(?:${ERRAND_VERBS})\\b)`, 'i')).map((x) => x.trim()).filter(Boolean));
@@ -963,19 +977,91 @@ function splitCapture_(text) {
   return groups.length ? groups : [[String(text)]];
 }
 
+// "<goal>, so I need to <step>, <step> and then <step>". Only when the goal is itself something
+// to do ("I need to cook...", "let's paint..."), so "the car is making a noise, so I need to book
+// the garage" stays an ordinary task.
+const GOAL_SO = /^(.+?)[,;]?\s+so\s+(?:i|we|you)(?:'ll| will)?\s+(?:need|have|got|'ve got|must|should)\s+to\s+(.+)$/i;
+const GOAL_IS_A_TASK = /\b(?:need|needs|have|has|want|wants|going|got) to\b|^\s*(?:i'll|we'll|let's|i will|we will)\b/i;
+
+function goalWithSteps_(sentence) {
+  const m = GOAL_SO.exec(String(sentence || '').replace(/’/g, "'"));
+  if (!m || !GOAL_IS_A_TASK.test(m[1])) return null;
+  const goalVerb = firstWord_(cleanTitle(m[1], []));
+  const steps = m[2].split(new RegExp(`\\s*,\\s*(?:and\\s+)?(?:then\\s+)?|\\s+and then\\s+|\\s+then\\s+|\\s+and (?=(?:${ERRAND_VERBS}|go)\\b)`, 'i'))
+    .map((x) => x.trim().replace(/^(?:(?:i|we|you)(?:'ll| will)?\s+)?(?:(?:need|have|got) to\s+|to\s+)?/i, '').replace(/[.!?]+$/, ''))
+    .filter((x) => x.replace(/[^a-z]/gi, '').length > 2)
+    // "...and then cook the meal": the goal itself, not a step.
+    .filter((x) => firstWord_(x) !== goalVerb);
+  if (!steps.length) return null;
+  return { goal: m[1], steps, said: sentence };
+}
+
+const firstWord_ = (s) => (String(s).trim().toLowerCase().match(/[a-z']+/) || [''])[0];
+
+// Titles stay short; whatever doesn't fit goes in the note.
+const TITLE_WORDS = 7;
+const TITLE_CHARS = 48;
+const TITLE_BREAK = /\s+(?:from|at|in|on|near|next to|for|with|because|so|which|that|who|when|while|after|before|to get|to pick|and)\s+/gi;
+
+/** A short title from a long one: [title, rest] (rest is '' when it already fits). */
+function shortTitle_(title) {
+  const t = String(title || '').trim();
+  if (t.split(/\s+/).length <= TITLE_WORDS && t.length <= TITLE_CHARS) return [t, ''];
+  let cut = 0;
+  let m;
+  TITLE_BREAK.lastIndex = 0;
+  while ((m = TITLE_BREAK.exec(t))) {
+    const head = t.slice(0, m.index);
+    const words = head.split(/\s+/).length;
+    if (words >= 2 && words <= TITLE_WORDS && head.length <= TITLE_CHARS) cut = m.index;
+    if (words > TITLE_WORDS) break;
+  }
+  if (!cut) {
+    const words = t.split(/\s+/);
+    let head = words.slice(0, 6).join(' ');
+    while (head.length > TITLE_CHARS && head.includes(' ')) head = head.slice(0, head.lastIndexOf(' '));
+    cut = head.length;
+  }
+  return [t.slice(0, cut).replace(/[\s,;:]+$/, ''), t.slice(cut).trim()];
+}
+
+function shortenDraft_(d) {
+  const [title, rest] = shortTitle_(d.title);
+  if (!rest) return d;
+  return { ...d, title, notes: [d.notes, `${d.title}.`].filter(Boolean).join('\n') };
+}
+
 function draftsFromRules_(text, speaker) {
   const drafts = [];
   splitCapture_(text).forEach((group) => {
-    const lead = draftFromRules_(group[0], speaker);
+    if (!Array.isArray(group)) { drafts.push(goalDraft_(group, speaker)); return; }
+    const lead = shortenDraft_(draftFromRules_(group[0], speaker));
     drafts.push(lead);
     group.slice(1).forEach((part) => {
-      const d = draftFromRules_(part, speaker);
+      const d = shortenDraft_(draftFromRules_(part, speaker));
       if (!d.dueDate) { d.dueDate = lead.dueDate; d.time = d.time || lead.time; }
       if (!d.owner) d.owner = lead.owner;
       drafts.push(d);
     });
   });
   return drafts;
+}
+
+/** One task for the goal, with the errands said for it as same-day steps (and nothing invented). */
+function goalDraft_({ goal, steps, said }, speaker) {
+  const d = shortenDraft_(draftFromRules_(goal, speaker));
+  const whole = draftFromRules_(said, speaker);
+  if (!d.dueDate) { d.dueDate = whole.dueDate; d.time = d.time || whole.time; }
+  if (!d.owner) d.owner = whole.owner;
+  const details = [];
+  d.prep = steps.map((s) => {
+    const title = s.charAt(0).toUpperCase() + s.slice(1);
+    const [short, rest] = shortTitle_(title);
+    if (rest) details.push(`${short}: ${rest}`);
+    return { title: short, daysBefore: 0 };
+  }).slice(0, 6);
+  if (details.length) d.notes = [d.notes, ...details].filter(Boolean).join('\n');
+  return d;
 }
 
 /**
@@ -1220,9 +1306,29 @@ Use only the task ids listed. Resolve relative dates ("next Tuesday", "in two we
 function capturePrompt_() {
   return `You turn what a household member said (often dictated, without punctuation) into tasks for a shared household task app. Reply with ONLY a JSON object, no other text: {"tasks": [ ... ]}, each task being ${draftFields_()}.
 
-Several separate things become separate tasks. Make one task with prep steps only when the person clearly describes one main task and the steps for it. Keep their wording for titles, tidied into a short instruction. Resolve relative dates from the current local date; leave due_date null if no day was said. Never ask questions and never invent details.
+Titles are short: about 2 to 6 words, starting with a verb ("Cook the ragu", "Book the car service"). Never use the whole sentence as a title. Details that don't fit in the title (where, which one, names, numbers) go in "notes".
 
-${OWNER_RULES}`;
+When the person describes one goal and the errands it needs ("I need to cook dinner, so I need to go to the shop and then..."), make ONE task for the goal and put the errands in its "prep_steps", in the order said. A step done the same day has days_before 0. Don't repeat the goal itself as a step ("and then cook the meal" is the task, not a step). Unrelated things become separate tasks. Never invent steps, details or tasks that weren't said.
+
+Resolve relative dates from the current local date; leave due_date null if no day was said. "This evening" or "tonight" is today at 19:00 unless a time was said. Never ask questions.
+
+${OWNER_RULES}
+
+Examples (said on Sunday 2026-10-11, by Naser):
+
+"I need to cook a ragu this evening, so I need to go to the grocery store, get the groceries, and then pick up the special sauce from the shop next to the grocery store, and then cook the meal"
+→ {"tasks": [{"title": "Cook the ragu", "due_date": "2026-10-11", "due_time": "19:00", "owner": "Naser", "repeats": "Never", "category": "shopping", "notes": "", "prep_steps": [{"title": "Get groceries at the supermarket", "days_before": 0}, {"title": "Pick up the special sauce next door", "days_before": 0}]}]}
+
+"Cook the ragu tonight, also book the car service next week and renew the gym membership"
+→ {"tasks": [{"title": "Cook the ragu", "due_date": "2026-10-11", "due_time": "19:00", "owner": null, "prep_steps": []}, {"title": "Book the car service", "due_date": "2026-10-18", "due_time": null, "owner": null, "category": "vehicle", "prep_steps": []}, {"title": "Renew the gym membership", "due_date": "2026-10-18", "due_time": null, "owner": null, "category": "admin", "prep_steps": []}]}
+
+"we need to get the boiler serviced on Thursday, the engineer is called Dave and his number is 07700 900123"
+→ {"tasks": [{"title": "Get the boiler serviced", "due_date": "2026-10-15", "due_time": null, "owner": "Shared", "category": "maintenance", "notes": "Engineer: Dave, 07700 900123", "prep_steps": []}]}
+
+"Sara can you pick up the dry cleaning tomorrow and I'll call the bank"
+→ {"tasks": [{"title": "Pick up the dry cleaning", "due_date": "2026-10-12", "due_time": null, "owner": "Sara", "prep_steps": []}, {"title": "Call the bank", "due_date": null, "due_time": null, "owner": "Naser", "prep_steps": []}]}
+
+(In the examples, fields left out take their defaults; always include every field in your reply.)`;
 }
 
 function editPrompt_() {
@@ -1348,7 +1454,7 @@ function claudeContext_(speaker) {
 /** Claude's split of a recording into task drafts. */
 function askClaudeCapture_(text, speaker) {
   const raw = jsonIn_(callClaude_(capturePrompt_(), `${claudeContext_(speaker)}\n\nWhat ${speaker} said:\n${text}`));
-  const drafts = (Array.isArray(raw.tasks) ? raw.tasks : []).map(cleanDraft_).filter((d) => d.title);
+  const drafts = (Array.isArray(raw.tasks) ? raw.tasks : []).map(cleanDraft_).filter((d) => d.title).map(shortenDraft_);
   if (!drafts.length) throw new Error('no tasks in the reply');
   return drafts;
 }

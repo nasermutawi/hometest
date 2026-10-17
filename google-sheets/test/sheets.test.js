@@ -360,6 +360,65 @@ test('one recording becomes separate tasks; follow-on sentences stay with their 
   assert.throws(() => gas.call(NASER, 'capture', '   '), /Nothing to save/);
 });
 
+const RAGU = 'I need to cook a ragu this evening, so I need to go to the grocery store, get the groceries, and then pick up the special sauce from the shop next to the grocery store, and then cook the meal.';
+const THREE = 'Cook the ragu tonight… also book the car service next week and renew the gym membership';
+
+test('rules: a goal and its errands become one task with prep steps, and titles stay short', () => {
+  const gas = household();
+  const [ragu, ...others] = captured(gas.call(NASER, 'capture', RAGU));
+  assert.equal(others.length, 0, 'one task, not one per errand');
+  assert.equal(ragu.title, 'Cook a ragu');
+  assert.deepEqual([ragu.dueDate, ragu.time, ragu.owner], ['2026-10-11', '19:00', 'Naser']);
+  assert.deepEqual(ragu.prep.map((p) => [p.title, p.daysBefore]), [
+    ['Go to the grocery store', 0], ['Get the groceries', 0], ['Pick up the special sauce', 0],
+  ], 'the errands said, in order; "cook the meal" is the task itself, and nothing is invented');
+  assert.match(ragu.notes, /special sauce: from the shop next to the grocery store/, 'details that were cut are kept in the note');
+
+  const three = captured(gas.call(NASER, 'capture', THREE));
+  assert.deepEqual(three.map((t) => [t.title, t.dueDate]), [
+    ['Cook the ragu', '2026-10-11'], ['Book the car service', '2026-10-18'], ['Renew the gym membership', '2026-10-18'],
+  ]);
+
+  const [garage] = captured(gas.call(NASER, 'capture', 'The car is making a noise so I need to book the garage on Monday'));
+  assert.equal(garage.title, 'Book the garage', 'a reason before "so" is not the task');
+  assert.equal(garage.dueDate, '2026-10-12');
+  assert.match(garage.notes, /the car is making a noise/);
+
+  const [long] = captured(gas.call(NASER, 'capture', 'remind me to pick up the parcel from the post office on the high street near the bakery tomorrow'));
+  assert.equal(long.title, 'Pick up the parcel');
+  assert.match(long.notes, /post office on the high street near the bakery/);
+  assert.ok(gas.rows('Tasks').every((r) => r.Task.split(' ').length <= 7), 'every title is short');
+});
+
+test('Claude: the capture prompt asks for short titles and goal-with-steps, and its split is saved as given', () => {
+  const gas = household();
+  withKey(gas);
+  gas.http.responder = () => claudeSays({ tasks: [{
+    title: 'Cook the ragu', due_date: '2026-10-11', due_time: '19:00', owner: 'Naser', category: 'shopping', notes: '',
+    prep_steps: [{ title: 'Get groceries at the supermarket', days_before: 0 }, { title: 'Pick up the special sauce next door', days_before: 0 }],
+  }] });
+  const [ragu, ...others] = captured(gas.call(NASER, 'capture', RAGU));
+  assert.equal(others.length, 0);
+  assert.equal(ragu.title, 'Cook the ragu');
+  assert.deepEqual([ragu.dueDate, ragu.time, ragu.owner], ['2026-10-11', '19:00', 'Naser']);
+  assert.deepEqual(ragu.prep.map((p) => [p.title, p.daysBefore]), [['Get groceries at the supermarket', 0], ['Pick up the special sauce next door', 0]]);
+  const sent = JSON.parse(gas.http.calls[0].opts.payload);
+  assert.match(sent.system, /about 2 to 6 words, starting with a verb/);
+  assert.match(sent.system, /make ONE task for the goal and put the errands in its "prep_steps"/);
+  assert.match(sent.system, /Never invent steps/);
+  assert.ok(sent.system.includes('"title": "Cook the ragu"') && sent.system.includes('"title": "Renew the gym membership"'), 'the ragu and three-task examples are in the prompt');
+  assert.match(sent.messages[0].content, /cook a ragu this evening/);
+
+  gas.http.responder = () => claudeSays({ tasks: [
+    { title: 'Cook the ragu', due_date: '2026-10-11', due_time: '19:00', owner: null },
+    { title: 'Book the car service', due_date: '2026-10-18', owner: null, category: 'vehicle' },
+    { title: 'Renew the gym membership', due_date: '2026-10-18', owner: null },
+  ] });
+  const three = captured(gas.call(NASER, 'capture', THREE));
+  assert.deepEqual(three.map((t) => t.title), ['Cook the ragu', 'Book the car service', 'Renew the gym membership']);
+  assert.ok(three.every((t) => !t.prep.length), 'no steps invented for Claude\'s tasks');
+});
+
 test('who owns a spoken task: me, you, we, a name, or nobody yet', () => {
   const gas = household();
   const ownerOf = (who, text) => captured(gas.call(who, 'capture', text))[0].owner;
