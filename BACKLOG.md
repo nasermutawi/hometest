@@ -67,3 +67,10 @@ Ideas parked for later. None of them blocks the current version (the Google Shee
 | Icon per task, picked automatically from the title | Structured | Easier to skim; never required | Medium |
 | Gentle shared moment when Today is cleared (no streaks or scores) | Todoist (karma), reworked | Feels good without turning chores into a scoreboard | Small |
 | Completion sound (off by default) | Structured, Things | Makes finishing feel finished | Small |
+
+## Look and feel
+
+| Idea | Why it matters | Effort |
+|---|---|---|
+| New app icon: **B6 · Us**, chosen. A round ticked checkbox ringed half teal (Nas), half apricot (Sandi), floating in a damson mic stand on an oat tile. Ready to use: `docs/design/icon-us.svg`. Replace `docs/icon.svg` with it and regenerate `docs/apple-touch-icon.png` (180×180). Options considered are on the "Melody — Look and feel" design canvas (row 5). | The icon matches the Hearth skin and says "the two of us" | Small |
+| Possible icon tweak: B6's split-ring dot on a damson tile (B3's background), if the light oat tile gets lost on the home screen | Bolder on light wallpapers | Small |
