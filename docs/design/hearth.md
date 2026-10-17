@@ -47,3 +47,11 @@ The two person colours differ in lightness as well as hue, so they still read ap
 ## Motion
 
 Short and soft: 120 ms taps, 220 ms UI changes, gentle springs on sheets. Everything respects "reduce motion".
+
+- Two curves, shared by everything: `--ease-out: cubic-bezier(0.23, 1, 0.32, 1)` for presses and things arriving, `--ease-drawer: cubic-bezier(0.32, 0.72, 0, 1)` for sheets. No `ease-in`.
+- Press: buttons and chips shrink to 0.97 in 120 ms; text links and full-width rows dim instead. Hover styles only on a real pointer.
+- Tick: the box fills and the mark draws (240 ms), the row holds 600 ms, then folds away (220 ms).
+- Sheets rise from the bottom edge (400 ms) and leave the same way at the speed they were flicked (150 to 320 ms).
+- Toasts rise 8 px and fade in (200 ms) and leave the same way (150 ms).
+- Lists and navigation never animate: they are used too often.
+- Text size (Standard, Larger 1.12x, Largest 1.25x) is a per-phone setting. Pinch zoom stays off.

@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>Melody</title>
 <meta name="description" content="Our household tasks">
+<script>try { const ts = localStorage.getItem('melody-text-size'); if (ts === 'l' || ts === 'xl') document.documentElement.dataset.ts = ts; } catch (e) { /* standard size */ }</script>
 <meta name="referrer" content="no-referrer">
 <meta name="theme-color" content="#F6EFE4" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#1C1714" media="(prefers-color-scheme: dark)">
@@ -31,8 +32,12 @@
   --danger: #A63A2B; --done: #557A4A; --toast-bg: #2E2620; --toast-ink: #FFFBF4; --toast-link: #F0B9C6; --scrim: rgb(46 38 32 / 0.42);
   --font: 'Figtree', -apple-system, 'Segoe UI', system-ui, sans-serif;
   --display: 'Fraunces', Georgia, 'Times New Roman', serif;
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1); --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+  --ts: 1; /* text size, from Settings: 1, 1.12 or 1.25 */
   color-scheme: light;
 }
+:root[data-ts="l"] { --ts: 1.12; }
+:root[data-ts="xl"] { --ts: 1.25; }
 @media (prefers-color-scheme: dark) {
   :root {
     --bg: #1C1714; --surface: #28211C; --soft: #221C18; --chip: #332A24; --line: #352C26; --border: #3A302A; --border-strong: #4A3F37;
@@ -49,7 +54,10 @@
 }
 * { box-sizing: border-box; }
 html { touch-action: manipulation; -webkit-text-size-adjust: 100%; }
-html, body { margin: 0; background: var(--bg); padding-top: env(safe-area-inset-top); color: var(--text); font: 500 16px/1.45 var(--font); -webkit-tap-highlight-color: transparent; }
+html, body { overscroll-behavior: none; }
+/* Controls never select their own label on a long press. Titles and notes stay selectable. */
+button:not(.notes):not(.row-main), [role="button"], .chip, .bar, .seg, .grab { user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+html, body { margin: 0; background: var(--bg); padding-top: env(safe-area-inset-top); color: var(--text); font: 500 calc(16px * var(--ts))/1.45 var(--font); -webkit-tap-highlight-color: transparent; }
 [hidden] { display: none !important; }
 h1, h2, h3, p { margin: 0; }
 button, input, textarea, select { font: inherit; color: inherit; }
@@ -64,79 +72,77 @@ svg { flex: 0 0 auto; }
 /* Layout */
 .screen { min-height: 100dvh; max-width: 480px; margin: 0 auto; display: flex; flex-direction: column; }
 .pad { padding: 0 20px; }
-.eyebrow { font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
-.title-xl { font-family: var(--display); font-variation-settings: 'SOFT' 100; font-size: 32px; line-height: 1.05; font-weight: 600; letter-spacing: -0.01em; }
-.title-l { font-family: var(--display); font-variation-settings: 'SOFT' 100; font-size: 24px; line-height: 1.15; font-weight: 600; }
+.eyebrow { font-size: calc(12px * var(--ts)); font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.title-xl { font-family: var(--display); font-variation-settings: 'SOFT' 100; font-size: calc(32px * var(--ts)); line-height: 1.05; font-weight: 600; letter-spacing: -0.02em; }
+.title-l { font-family: var(--display); font-variation-settings: 'SOFT' 100; font-size: calc(24px * var(--ts)); line-height: 1.15; font-weight: 600; }
 .muted { color: var(--muted); }
-.small { font-size: 14px; }
+.small { font-size: calc(14px * var(--ts)); }
 .head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; padding: 28px 20px 0; }
 .head > div { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 .topnav { display: flex; justify-content: space-between; align-items: center; padding: 16px 12px 0; }
-.textbtn { display: inline-flex; align-items: center; gap: 2px; padding: 10px 8px; font-size: 15px; font-weight: 700; color: var(--accent); border-radius: 10px; }
-.textbtn:hover { color: var(--accent-hover); }
+.textbtn { display: inline-flex; align-items: center; gap: 2px; padding: 10px 8px; font-size: calc(15px * var(--ts)); font-weight: 700; color: var(--accent); border-radius: 10px; }
 .round { width: 44px; height: 44px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; color: var(--text); }
 .round.outline { border: 1px solid var(--border); }
-.pillbtn { height: 44px; padding: 0 16px; border-radius: 22px; border: 1px solid var(--border); display: inline-flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 700; flex: 0 0 auto; }
-.primary { height: 56px; border-radius: 18px; background: var(--accent); color: var(--on-accent); font-size: 16px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; }
-.primary:hover { background: var(--accent-hover); }
-.secondary { height: 52px; border-radius: 18px; border: 1.5px solid var(--border-strong); background: var(--surface); font-size: 16px; font-weight: 700; display: flex; align-items: center; justify-content: center; width: 100%; }
-.error { color: var(--danger); font-size: 14px; }
+.pillbtn { height: 44px; padding: 0 16px; border-radius: 22px; border: 1px solid var(--border); display: inline-flex; align-items: center; gap: 8px; font-size: calc(15px * var(--ts)); font-weight: 700; flex: 0 0 auto; }
+.primary { height: 56px; border-radius: 18px; background: var(--accent); color: var(--on-accent); font-size: calc(16px * var(--ts)); font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; }
+.secondary { height: 52px; border-radius: 18px; border: 1.5px solid var(--border-strong); background: var(--surface); font-size: calc(16px * var(--ts)); font-weight: 700; display: flex; align-items: center; justify-content: center; width: 100%; }
+.error { color: var(--danger); font-size: calc(14px * var(--ts)); }
 
 /* Chips and pills */
 .chips { display: flex; flex-wrap: wrap; gap: 8px; }
 .chip-set { display: contents; }
 .chips.scroll { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin: 0 -20px; padding: 0 20px; }
 .chips.scroll::-webkit-scrollbar { display: none; }
-.chip { height: 40px; padding: 0 16px; border-radius: 10px; background: var(--chip); font-size: 14px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; flex: 0 0 auto; }
+/* A fade on the right while more chips are off screen. */
+.chips.scroll.more { -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 52px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 52px), transparent); }
+.chip { height: 40px; padding: 0 16px; border-radius: 10px; background: var(--chip); font-size: calc(14px * var(--ts)); font-weight: 600; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; flex: 0 0 auto; }
 .chip.sm { height: 36px; padding: 0 14px; border-radius: 10px; }
 .chip.outline { background: var(--surface); border: 1px solid var(--border); }
 .chip[aria-pressed="true"], .chip.on { background: var(--accent); color: var(--on-accent); font-weight: 700; border-color: var(--accent); }
 .chip.dashed { background: var(--surface); border: 1px dashed var(--faint); color: var(--muted); }
 .chip.amber { background: var(--amber-bg); color: var(--amber-ink); font-weight: 700; }
 .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--amber-dot); flex: 0 0 auto; }
-.pill { padding: 4px 10px; border-radius: 10px; font-size: 12px; font-weight: 700; flex: 0 0 auto; white-space: nowrap; }
+.pill { padding: 4px 10px; border-radius: 10px; font-size: calc(12px * var(--ts)); font-weight: 700; flex: 0 0 auto; white-space: nowrap; }
 .o-p1 { background: var(--p1-bg); color: var(--p1-ink); }
 .o-p2 { background: var(--p2-bg); color: var(--p2-ink); }
 .o-shared { background: var(--shared-bg); color: var(--shared-ink); }
 .o-none { background: var(--none-bg); color: var(--none-ink); box-shadow: inset 0 0 0 1.5px var(--faint); }
 .pill.o-none { border: 1.5px dashed var(--faint); box-shadow: none; padding: 2.5px 8.5px; }
 .seg { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 4px; padding: 4px; border-radius: 14px; background: var(--chip); }
-.seg button { height: 36px; border-radius: 10px; font-size: 14px; font-weight: 600; color: var(--muted); padding: 0 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.seg button { height: 36px; border-radius: 10px; font-size: calc(14px * var(--ts)); font-weight: 600; color: var(--muted); padding: 0 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .seg button[aria-checked="true"] { background: var(--accent); color: var(--on-accent); font-weight: 700; }
-.seg.sm button { height: 32px; font-size: 13px; padding: 0 12px; }
-.attention { display: flex; align-items: center; gap: 10px; padding: 14px 16px; border-radius: 14px; background: var(--amber-bg); color: var(--amber-ink); font-size: 15px; font-weight: 600; text-align: left; width: 100%; }
+.seg.sm button { height: 32px; font-size: calc(13px * var(--ts)); padding: 0 12px; }
+.attention { display: flex; align-items: center; gap: 10px; padding: 14px 16px; border-radius: 14px; background: var(--amber-bg); color: var(--amber-ink); font-size: calc(15px * var(--ts)); font-weight: 600; text-align: left; width: 100%; }
 .attention span:nth-child(2) { flex: 1; }
 
 /* Capture (home) */
 .capture-main { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px; padding: 24px 20px; text-align: center; }
 .bigmic { width: 132px; height: 132px; border-radius: 42%; background: var(--accent); color: var(--on-accent); display: flex; align-items: center; justify-content: center; box-shadow: 0 12px 30px rgb(142 59 82 / 0.22); transition: transform 0.15s; }
-.bigmic:hover { background: var(--accent-hover); }
 .bigmic:active { transform: scale(0.96); }
 .capture-copy { display: flex; flex-direction: column; align-items: center; gap: 6px; }
-.capture-copy strong { font-family: var(--display); font-variation-settings: 'SOFT' 100; font-size: 24px; font-weight: 600; }
-.capture-copy span { font-size: 15px; color: var(--muted); max-width: 260px; }
+.capture-copy strong { font-family: var(--display); font-variation-settings: 'SOFT' 100; font-size: calc(24px * var(--ts)); font-weight: 600; }
+.capture-copy span { font-size: calc(15px * var(--ts)); color: var(--muted); max-width: 260px; }
 .capture-foot { padding: 0 20px 32px; display: flex; flex-direction: column; gap: 10px; }
 .today-card { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 18px; background: var(--surface); text-align: left; width: 100%; }
 .today-card > span { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.today-card b { font-size: 15px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.today-card b { font-size: calc(15px * var(--ts)); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* Task list */
 .list-top { display: flex; flex-direction: column; gap: 16px; padding: 28px 20px 0; }
 .list { padding: 4px 14px 120px; }
 .group { margin: 14px 0 0; background: var(--surface); border-radius: 22px; padding: 14px 16px 2px; overflow: hidden; }
 .group:first-child { margin-top: 4px; }
-.group > .eyebrow { display: inline-block; font-family: var(--display); font-variation-settings: 'SOFT' 100; font-style: italic; font-size: 22px; font-weight: 500; letter-spacing: 0; text-transform: none; color: var(--text); padding-bottom: 8px; margin-bottom: 2px;
+.group > .eyebrow { display: inline-block; font-family: var(--display); font-variation-settings: 'SOFT' 100; font-style: italic; font-size: calc(22px * var(--ts)); font-weight: 500; letter-spacing: 0; text-transform: none; color: var(--text); padding-bottom: 8px; margin-bottom: 2px;
   background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='8' viewBox='0 0 80 8'%3E%3Cpath d='M2 5 C 20 1, 46 8, 78 3' fill='none' stroke='%238E3B52' stroke-width='2.2' stroke-linecap='round'/%3E%3C/svg%3E") left bottom / 72px 7px no-repeat; }
 .group.late, .group.late .swipe .row { background: var(--late-bg); }
 @media (prefers-color-scheme: dark) {
   .group > .eyebrow { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='8' viewBox='0 0 80 8'%3E%3Cpath d='M2 5 C 20 1, 46 8, 78 3' fill='none' stroke='%23E08AA0' stroke-width='2.2' stroke-linecap='round'/%3E%3C/svg%3E"); }
 }
 .group.late .eyebrow { color: var(--danger); }
-.row { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px dashed var(--border-strong); }
+.row { display: flex; align-items: flex-start; gap: 12px; padding: 12px 0; border-bottom: 1px dashed var(--border-strong); }
 .swipe:last-child .row { border-bottom: none; }
 /* Pebble checks, ringed in the owner's colour: solid for one person, split for both, dashed for anyone. */
 .check { width: 26px; height: 26px; border-radius: 40%; border: 2.5px solid var(--faint); flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center; color: transparent; background: var(--surface); }
-.check:hover { border-color: var(--accent); }
 .check.c-p1 { border-color: var(--p1); }
 .check.c-p2 { border-color: var(--p2); }
 .check.c-shared { border-color: transparent; background: linear-gradient(var(--surface), var(--surface)) padding-box, linear-gradient(90deg, var(--p1) 50%, var(--p2) 50%) border-box; }
@@ -147,77 +153,90 @@ svg { flex: 0 0 auto; }
 .check.on.c-shared { border-color: transparent; background: linear-gradient(90deg, var(--p1) 50%, var(--p2-fill) 50%); color: var(--on-p1); }
 .check.on.c-none { border-style: solid; background: var(--faint); border-color: var(--faint); color: var(--surface); }
 .row-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; text-align: left; }
-.row-title { font-size: 16px; font-weight: 600; overflow-wrap: anywhere; }
+.row-title { font-size: calc(16px * var(--ts)); font-weight: 600; overflow-wrap: anywhere; text-align: start; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; }
+.row > .check { margin-top: -1px; }
+.row > .pill { margin-top: 1px; }
+#cap-pending .row { align-items: center; }
 .row.done .row-title { text-decoration: line-through; color: var(--muted); }
-.row-meta { font-size: 13px; color: var(--muted); }
+.row-meta { font-size: calc(13px * var(--ts)); color: var(--muted); font-variant-numeric: tabular-nums; }
 .row-meta .late { color: var(--danger); font-weight: 700; }
 .empty { padding: 48px 8px; text-align: center; color: var(--muted); }
-.bar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 10; background: var(--bg); border-top: 1px solid var(--line); }
+.allclear { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 56px 8px; text-align: center; animation: settle 300ms var(--ease-out) both; }
+.allclear img { width: 72px; height: 72px; border-radius: 22px; box-shadow: 0 10px 24px rgb(46 38 32 / 0.12); }
+.allclear strong { font-family: var(--display); font-variation-settings: 'SOFT' 100; font-style: italic; font-size: calc(28px * var(--ts)); font-weight: 500; letter-spacing: -0.01em; }
+.allclear span { color: var(--muted); }
+@keyframes settle { from { opacity: 0; transform: scale(0.96); } }
+/* A see-through bar: the list carries on underneath it. */
+.bar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 10; background: color-mix(in srgb, var(--bg) 78%, transparent); -webkit-backdrop-filter: blur(20px) saturate(160%); backdrop-filter: blur(20px) saturate(160%); box-shadow: 0 -1px 0 color-mix(in srgb, var(--line) 60%, transparent); }
+@media (prefers-reduced-transparency: reduce) { .bar { background: var(--bg); -webkit-backdrop-filter: none; backdrop-filter: none; box-shadow: 0 -1px 0 var(--line); } }
 .bar-inner { max-width: 480px; margin: 0 auto; padding: 14px 20px calc(20px + env(safe-area-inset-bottom)); display: flex; align-items: center; justify-content: space-between; }
 .bar .round { width: 52px; height: 52px; border: 1px solid var(--border); }
 .midmic { width: 68px; height: 68px; border-radius: 40%; background: var(--accent); color: var(--on-accent); display: flex; align-items: center; justify-content: center; }
-.midmic:hover { background: var(--accent-hover); }
 
 /* Detail */
 .detail { flex: 1; padding: 8px 24px 24px; display: flex; flex-direction: column; gap: 24px; }
 .detail-title { display: flex; align-items: flex-start; gap: 14px; }
 .detail-title .check { width: 30px; height: 30px; margin-top: 4px; }
-.detail-title h1 { font-family: var(--display); font-variation-settings: 'SOFT' 100; font-size: 30px; line-height: 1.15; font-weight: 600; overflow-wrap: anywhere; }
+.detail-title h1 { font-family: var(--display); font-variation-settings: 'SOFT' 100; font-size: calc(30px * var(--ts)); line-height: 1.15; font-weight: 600; letter-spacing: -0.02em; overflow-wrap: anywhere; }
+.detail-title h1.long { font-size: calc(24px * var(--ts)); line-height: 1.2; letter-spacing: -0.01em; }
 .facts { margin: 0; display: flex; flex-direction: column; }
 .fact { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 0; border-bottom: 1px solid var(--line); }
-.fact dt { font-size: 14px; color: var(--muted); display: flex; flex-direction: column; gap: 2px; }
-.fact dt small { font-size: 12px; color: var(--amber-ink); font-weight: 700; }
+.fact dt { font-size: calc(14px * var(--ts)); color: var(--muted); display: flex; flex-direction: column; gap: 2px; }
+.fact dt small { font-size: calc(12px * var(--ts)); color: var(--amber-ink); font-weight: 700; }
 .fact dd { margin: 0; display: flex; align-items: center; gap: 8px; min-width: 0; }
 .fact.changed { background: var(--accent-soft); margin: 0 -12px; padding: 14px 12px; border-radius: 10px; border-color: transparent; }
-.updated { font-size: 12px; font-weight: 700; color: var(--accent); }
+.updated { font-size: calc(12px * var(--ts)); font-weight: 700; color: var(--accent); }
 .section-h { margin: 0 0 4px; }
 .step { display: flex; align-items: center; gap: 12px; padding: 10px 0; width: 100%; text-align: left; }
 .step .box { width: 22px; height: 22px; border-radius: 40%; border: 2px solid var(--faint); flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center; color: transparent; }
 .step.on .box { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
 .step.on .step-title { text-decoration: line-through; color: var(--muted); }
-.step-title { flex: 1; font-size: 16px; }
-.step-when { font-size: 13px; color: var(--muted); white-space: nowrap; }
+.step-title { flex: 1; font-size: calc(16px * var(--ts)); text-align: start; }
+.step-when { font-size: calc(13px * var(--ts)); color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
 .step.changed { background: var(--accent-soft); margin: 0 -12px; padding: 10px 12px; border-radius: 10px; width: calc(100% + 24px); }
-.addline { align-self: flex-start; height: 40px; font-size: 15px; font-weight: 700; color: var(--accent); }
+.addline { align-self: flex-start; height: 40px; font-size: calc(15px * var(--ts)); font-weight: 700; color: var(--accent); }
 .inline-add { display: flex; gap: 8px; }
-.field { width: 100%; border: 1px solid var(--border-strong); background: var(--surface); border-radius: 12px; padding: 10px 12px; font-size: 16px; min-width: 0; }
+.field { width: 100%; border: 1px solid var(--border-strong); background: var(--surface); border-radius: 12px; padding: 10px 12px; font-size: calc(16px * var(--ts)); min-width: 0; }
 .field:focus { border-color: var(--accent); outline: none; }
 textarea.field { resize: vertical; min-height: 88px; }
-.notes { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 15px; text-align: left; }
-.saybtn { height: 60px; border-radius: 22px; background: var(--accent); color: var(--on-accent); display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 16px; font-weight: 700; width: 100%; }
-.saybtn:hover { background: var(--accent-hover); }
+.notes { white-space: pre-wrap; overflow-wrap: anywhere; font-size: calc(15px * var(--ts)); text-align: start; }
+.saybtn { height: 60px; border-radius: 22px; background: var(--accent); color: var(--on-accent); display: flex; align-items: center; justify-content: center; gap: 10px; font-size: calc(16px * var(--ts)); font-weight: 700; width: 100%; }
 .detail-foot { padding: 0 20px calc(24px + env(safe-area-inset-bottom)); position: sticky; bottom: 0; background: linear-gradient(transparent, var(--bg) 24px); padding-top: 24px; }
 .voice-card { border-radius: 20px; background: var(--toast-bg); color: var(--toast-ink); padding: 16px 16px 14px; display: flex; flex-direction: column; gap: 12px; }
-.voice-card q { font-size: 16px; line-height: 1.4; }
-.voice-card .result { flex: 1; display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--toast-link); font-weight: 700; }
+.voice-card q { font-size: calc(16px * var(--ts)); line-height: 1.4; }
+.voice-card .result { flex: 1; display: flex; align-items: center; gap: 8px; font-size: calc(14px * var(--ts)); color: var(--toast-link); font-weight: 700; }
 .voice-card .actions { display: flex; align-items: center; gap: 10px; }
 .voice-card .ghost { color: var(--toast-link); font-weight: 700; padding: 10px 6px; }
-.voice-card .done { height: 40px; padding: 0 18px; border-radius: 20px; background: var(--toast-ink); color: var(--toast-bg); font-size: 15px; font-weight: 700; }
+.voice-card .done { height: 40px; padding: 0 18px; border-radius: 20px; background: var(--toast-ink); color: var(--toast-bg); font-size: calc(15px * var(--ts)); font-weight: 700; }
 
 /* Review */
 .review { background: var(--bg); }
 .review-list { flex: 1; padding: 4px 16px 0; display: flex; flex-direction: column; gap: 10px; }
 .rcard { background: var(--surface); border-radius: 20px; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
 .rcard.needs { box-shadow: inset 0 0 0 2px var(--amber-line); }
-.rcard-title { font-family: var(--display); font-variation-settings: 'SOFT' 100; font-size: 19px; font-weight: 600; text-align: left; overflow-wrap: anywhere; }
-.rcard .chip { height: 32px; padding: 0 12px; border-radius: 10px; font-size: 13px; }
-.badge { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; color: var(--accent); }
+.rcard-title { font-family: var(--display); font-variation-settings: 'SOFT' 100; font-size: calc(19px * var(--ts)); font-weight: 600; text-align: start; overflow-wrap: anywhere; }
+.rcard.enter { animation: rise 250ms var(--ease-out) both; animation-delay: calc(var(--i, 0) * 40ms); }
+@keyframes rise { from { opacity: 0; transform: translateY(8px); } }
+.rcard .chip { height: 32px; padding: 0 12px; border-radius: 10px; font-size: calc(13px * var(--ts)); }
+.badge { display: inline-flex; align-items: center; gap: 6px; font-size: calc(13px * var(--ts)); font-weight: 700; color: var(--accent); }
 
 /* Dialogs: bottom sheets and full screens */
 dialog { border: none; padding: 0; background: var(--surface); color: var(--text); max-width: 480px; width: 100%; }
 dialog.full { background: var(--bg); }
-dialog::backdrop { background: var(--scrim); }
+dialog::backdrop { background: var(--scrim); transition: opacity 0.2s ease; }
+@starting-style { dialog[open]::backdrop { opacity: 0; } }
 dialog.sheet { margin: auto auto 0; border-radius: 28px 28px 0 0; max-height: 92dvh; overflow-y: auto; overscroll-behavior: contain; }
+/* Sheets rise from the bottom edge and leave the same way, on the iOS drawer curve. A transition, so a quick close can take over mid-way. */
+dialog.sheet[open] { transition: transform 0.4s var(--ease-drawer); }
+@starting-style { dialog.sheet[open] { transform: translateY(100%); } }
 dialog.sheet.dragging { transition: none !important; overflow: hidden; }
-dialog.sheet.settling { transition: transform 0.24s cubic-bezier(0.2, 0.8, 0.2, 1); }
-dialog.sheet.leaving { transition: transform 0.2s ease-in; }
+dialog.sheet.settling { transition: transform 0.3s var(--ease-drawer); }
+dialog.sheet.leaving { transition: transform var(--leave, 0.24s) var(--ease-drawer); }
 /* The new-task card: a tall sheet with its own scrolling form, so the dimmed page shows above it. */
 dialog.sheet.tall { height: 92dvh; overflow: hidden; }
 dialog.sheet.tall[open] { display: flex; flex-direction: column; }
 dialog.sheet.tall .grab { margin-top: 10px; flex: 0 0 auto; }
 dialog.sheet.tall .form-head { padding-top: 4px; }
-dialog.sheet[open] { animation: up 0.2s ease-out; }
-@keyframes up { from { transform: translateY(24px); opacity: 0.6; } }
 dialog.full { margin: 0 auto; height: 100dvh; max-height: 100dvh; }
 dialog.full[open] { display: flex; flex-direction: column; }
 .sheet-body { padding: 12px 20px calc(28px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: 18px; }
@@ -225,7 +244,7 @@ dialog.full[open] { display: flex; flex-direction: column; }
 .sheet-head { display: flex; flex-direction: column; gap: 4px; }
 .two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 .heard-list { list-style: none; margin: 0; padding: 0; }
-.heard-list li { display: flex; justify-content: space-between; gap: 12px; padding: 11px 0; border-bottom: 1px dashed var(--border-strong); font-size: 15px; }
+.heard-list li { display: flex; justify-content: space-between; gap: 12px; padding: 11px 0; border-bottom: 1px dashed var(--border-strong); font-size: calc(15px * var(--ts)); }
 .heard-list li:last-child { border-bottom: none; }
 .heard-list b { font-weight: 600; overflow-wrap: anywhere; }
 .heard-list span { color: var(--muted); white-space: nowrap; display: inline-flex; align-items: center; gap: 6px; }
@@ -236,24 +255,24 @@ dialog.full[open] { display: flex; flex-direction: column; }
 .ring .fill { stroke: var(--on-accent); stroke-dasharray: 56.5; stroke-dashoffset: 0; }
 .ring.go .fill { animation: drain 5s linear forwards; }
 @keyframes drain { to { stroke-dashoffset: 56.5; } }
-.quoted { font-family: var(--display); font-size: 16px; color: var(--muted); font-style: italic; overflow-wrap: anywhere; background: var(--bg); border-radius: 14px; padding: 12px 14px; }
-.linkbtn { align-self: center; padding: 8px 12px; font-size: 15px; font-weight: 700; color: var(--accent); }
+.quoted { font-family: var(--display); font-size: calc(16px * var(--ts)); color: var(--muted); font-style: italic; overflow-wrap: anywhere; background: var(--bg); border-radius: 14px; padding: 12px 14px; }
+.linkbtn { align-self: center; padding: 8px 12px; font-size: calc(15px * var(--ts)); font-weight: 700; color: var(--accent); }
 .linkbtn.quiet { color: var(--muted); font-weight: 600; }
 
 /* Recording */
 .rec { padding: 20px 24px calc(40px + env(safe-area-inset-bottom)); flex: 1; display: flex; flex-direction: column; }
 .rec-top { display: flex; justify-content: space-between; align-items: center; }
-.rec-top span { font-size: 14px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.rec-top span { font-size: calc(14px * var(--ts)); color: var(--muted); font-variant-numeric: tabular-nums; }
 .rec-mid { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 28px; }
-.rec-label { font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
-.rec-text { font-family: var(--display); font-variation-settings: 'SOFT' 100; font-size: 28px; line-height: 1.3; font-weight: 500; min-height: 2.7em; overflow-wrap: anywhere; }
+.rec-label { font-size: calc(13px * var(--ts)); font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+.rec-text { font-family: var(--display); font-variation-settings: 'SOFT' 100; font-size: calc(28px * var(--ts)); line-height: 1.3; font-weight: 500; min-height: 2.7em; overflow-wrap: anywhere; }
 .rec-text .interim { color: var(--faint); }
 .rec-text.placeholder { color: var(--faint); }
 .bars { display: flex; align-items: center; gap: 5px; height: 48px; }
 .bars span { width: 5px; border-radius: 3px; background: var(--accent); height: 10px; animation: bar 1s ease-in-out infinite; }
 .bars span:nth-child(3n) { animation-delay: -0.3s; } .bars span:nth-child(3n+1) { animation-delay: -0.6s; } .bars span:nth-child(4n) { animation-delay: -0.15s; }
 @keyframes bar { 50% { height: 42px; } }
-@media (prefers-reduced-motion: reduce) { .bars span { animation: none; height: 20px; } .ring.go .fill { animation: none; } dialog.sheet[open] { animation: none; } dialog.sheet.settling, dialog.sheet.leaving { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .bars span { animation: none; height: 20px; } .ring.go .fill { animation: none; } dialog.sheet[open], dialog::backdrop { transition: none; } dialog.sheet.settling, dialog.sheet.leaving { transition: none; } }
 .rec-bottom { display: flex; flex-direction: column; align-items: center; gap: 10px; }
 .stop { width: 80px; height: 80px; border-radius: 40%; background: var(--accent); display: flex; align-items: center; justify-content: center; }
 .stop span { width: 26px; height: 26px; border-radius: 6px; background: var(--on-accent); }
@@ -261,29 +280,28 @@ dialog.full[open] { display: flex; flex-direction: column; }
 /* Typed add / edit form */
 .form { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 16px 20px 0; display: flex; flex-direction: column; gap: 24px; }
 .form-head { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: center; padding: 16px 12px 0; }
-.form-head h2 { justify-self: center; font-family: var(--display); font-variation-settings: 'SOFT' 100; font-size: 18px; font-weight: 600; }
-.label { font-size: 13px; font-weight: 700; color: var(--muted); margin-bottom: 10px; display: block; }
-.bigtitle { width: 100%; border: none; border-bottom: 2px solid var(--accent); padding: 6px 0 10px; font-family: var(--display); font-variation-settings: 'SOFT' 100; font-size: 24px; font-weight: 600; background: transparent; outline: none; border-radius: 0; }
+.form-head h2 { justify-self: center; font-family: var(--display); font-variation-settings: 'SOFT' 100; font-size: calc(18px * var(--ts)); font-weight: 600; }
+.label { font-size: calc(13px * var(--ts)); font-weight: 700; color: var(--muted); margin-bottom: 10px; display: block; }
+.bigtitle { width: 100%; border: none; border-bottom: 2px solid var(--accent); padding: 6px 0 10px; font-family: var(--display); font-variation-settings: 'SOFT' 100; font-size: calc(24px * var(--ts)); font-weight: 600; background: transparent; outline: none; border-radius: 0; }
 fieldset { border: none; margin: 0; padding: 0; min-width: 0; }
 legend { padding: 0; }
 .stack { display: flex; flex-direction: column; gap: 10px; }
 .extras { display: flex; flex-wrap: wrap; gap: 4px 18px; }
-.extras button { height: 40px; font-size: 15px; font-weight: 700; color: var(--accent); }
+.extras button { height: 40px; font-size: calc(15px * var(--ts)); font-weight: 700; color: var(--accent); }
 .prep-row { display: grid; grid-template-columns: 1fr auto 36px; gap: 6px; align-items: center; }
-.prep-row select { border: 1px solid var(--border-strong); border-radius: 12px; padding: 10px 8px; background: var(--surface); font-size: 16px; }
+.prep-row select { border: 1px solid var(--border-strong); border-radius: 12px; padding: 10px 8px; background: var(--surface); font-size: calc(16px * var(--ts)); }
 .form-foot { padding: 16px 20px calc(24px + env(safe-area-inset-bottom)); }
 .picker { position: relative; overflow: hidden; }
 .pick-label { display: inline-flex; align-items: center; gap: 6px; }
 /* The phone's own date or time picker: a real input, invisible, covering the chip, so the tap lands on it. */
-.picker input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; padding: 0; border: 0; opacity: 0; font-size: 16px; cursor: pointer; -webkit-appearance: none; appearance: none; background: transparent; color: transparent; }
+.picker input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; padding: 0; border: 0; opacity: 0; font-size: calc(16px * var(--ts)); cursor: pointer; -webkit-appearance: none; appearance: none; background: transparent; color: transparent; }
 .picker input::-webkit-calendar-picker-indicator { position: absolute; inset: 0; width: auto; height: auto; opacity: 0; cursor: pointer; }
 .picker:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 /* Time picker */
 .times { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
-.times button { height: 60px; border-radius: 16px; border: 1.5px solid var(--border-strong); background: var(--surface); font-size: 17px; font-weight: 700; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; }
-.times button small { font-size: 12px; font-weight: 500; color: var(--muted); }
-.times button:hover { border-color: var(--accent); }
+.times button { height: 60px; border-radius: 16px; border: 1.5px solid var(--border-strong); background: var(--surface); font-size: calc(17px * var(--ts)); font-weight: 700; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; }
+.times button small { font-size: calc(12px * var(--ts)); font-weight: 500; color: var(--muted); }
 .mic-row { display: flex; gap: 8px; }
 .mic-row .micbtn { width: 52px; height: 52px; border-radius: 40%; background: var(--accent); color: var(--on-accent); display: flex; align-items: center; justify-content: center; flex: 0 0 auto; }
 .mic-row .secondary { flex: 1; }
@@ -291,23 +309,23 @@ legend { padding: 0; }
 
 /* Settings */
 .settings { flex: 1; overflow-y: auto; padding: 8px 20px 32px; display: flex; flex-direction: column; gap: 26px; }
-.toggle { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 12px 0; border-bottom: 1px solid var(--line); font-size: 15px; }
+.toggle { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 12px 0; border-bottom: 1px solid var(--line); font-size: calc(15px * var(--ts)); }
 .toggle input { width: 22px; height: 22px; accent-color: var(--accent); flex: 0 0 auto; margin: 0; }
 .members { list-style: none; padding: 0; margin: 0; }
-.members li { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--line); font-size: 15px; }
-.members li span:last-child { color: var(--muted); font-size: 13px; overflow: hidden; text-overflow: ellipsis; }
-.steps { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; font-size: 15px; }
+.members li { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--line); font-size: calc(15px * var(--ts)); }
+.members li span:last-child { color: var(--muted); font-size: calc(13px * var(--ts)); overflow: hidden; text-overflow: ellipsis; }
+.steps { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; font-size: calc(15px * var(--ts)); }
 .copyrow { display: flex; gap: 8px; }
-.copyrow .field { font-size: 16px; text-overflow: ellipsis; }
-.copyrow button { padding: 0 16px; border-radius: 12px; border: 1px solid var(--border-strong); font-weight: 700; font-size: 14px; }
+.copyrow .field { font-size: calc(16px * var(--ts)); text-overflow: ellipsis; }
+.copyrow button { padding: 0 16px; border-radius: 12px; border: 1px solid var(--border-strong); font-weight: 700; font-size: calc(14px * var(--ts)); }
 .activity { list-style: none; padding: 0; margin: 0; }
-.activity li { padding: 10px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
-.activity time { display: block; font-size: 12px; color: var(--muted); }
+.activity li { padding: 10px 0; border-bottom: 1px solid var(--line); font-size: calc(14px * var(--ts)); }
+.activity time { display: block; font-size: calc(12px * var(--ts)); color: var(--muted); }
 .menu { display: flex; flex-direction: column; }
-.menu button { height: 52px; text-align: left; font-size: 16px; font-weight: 600; border-bottom: 1px solid var(--line); }
+.menu button { height: 52px; text-align: left; font-size: calc(16px * var(--ts)); font-weight: 600; border-bottom: 1px solid var(--line); }
 .menu button.danger { color: var(--danger); }
 .options { display: flex; flex-direction: column; }
-.options button { height: 52px; display: flex; align-items: center; justify-content: space-between; font-size: 16px; font-weight: 600; border-bottom: 1px solid var(--line); text-align: left; }
+.options button { height: 52px; display: flex; align-items: center; justify-content: space-between; font-size: calc(16px * var(--ts)); font-weight: 600; border-bottom: 1px solid var(--line); text-align: left; }
 .options button[aria-checked="true"] { color: var(--accent); }
 
 /* Join / blocked */
@@ -316,31 +334,49 @@ legend { padding: 0; }
 
 /* Toast */
 .toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom)); transform: translateX(-50%); width: min(440px, calc(100vw - 32px));
-  background: var(--toast-bg); color: var(--toast-ink); border-radius: 14px; padding: 8px 8px 8px 16px; display: flex; align-items: center; gap: 4px; font-size: 15px; z-index: 50; box-shadow: 0 8px 30px rgb(0 0 0 / 0.2); }
+  background: var(--toast-bg); color: var(--toast-ink); border-radius: 14px; padding: 8px 8px 8px 16px; display: flex; align-items: center; gap: 4px; font-size: calc(15px * var(--ts)); z-index: 50; box-shadow: 0 8px 30px rgb(0 0 0 / 0.2); }
+.toast { translate: 0 0; opacity: 1; transition: translate 200ms var(--ease-out), opacity 200ms var(--ease-out); }
+@starting-style { .toast { translate: 0 8px; opacity: 0; } }
+.toast.out { translate: 0 8px; opacity: 0; transition-duration: 150ms; }
 .toast.lift { bottom: calc(110px + env(safe-area-inset-bottom)); }
 .toast svg { color: var(--toast-link); }
 .toast .msg { flex: 1; margin-left: 6px; font-weight: 600; padding: 8px 0; }
 .toast button { color: var(--toast-link); font-weight: 700; padding: 10px; }
 
 /* Instant feel: pressed states, the done tick, swipes, progress */
-.chip:active, .pillbtn:active, .round:active, .primary:active, .secondary:active, .textbtn:active, .addline:active, .linkbtn:active,
-.options button:active, .menu button:active, .step:active, .seg button:active, .attention:active, .today-card:active, .toast button:active { opacity: 0.7; }
+/* Hover only where there is a real pointer: on a phone a tapped button would keep its hover colour. */
+@media (hover: hover) and (pointer: fine) {
+  .textbtn:hover { color: var(--accent-hover); }
+  .primary:hover, .bigmic:hover, .midmic:hover, .saybtn:hover { background: var(--accent-hover); }
+  .check:hover, .times button:hover { border-color: var(--accent); }
+}
+/* Presses answer on touch-down: things you press shrink a little, text links and full-width rows dim. */
+.chip, .pillbtn, .round, .primary, .secondary, .seg button, .attention, .today-card, .bigmic, .midmic, .saybtn, .stop, .times button { transition: transform 120ms var(--ease-out); }
+.chip:active, .pillbtn:active, .round:active, .primary:active, .secondary:active, .seg button:active, .attention:active, .today-card:active, .times button:active { transform: scale(0.97); }
+.textbtn:active, .addline:active, .linkbtn:active, .options button:active, .menu button:active, .step:active, .toast button:active { opacity: 0.6; }
 .bigmic:active, .midmic:active, .saybtn:active, .stop:active { transform: scale(0.96); }
-.check { transition: background-color 0.12s, border-color 0.12s, color 0.12s; }
-.check:active { transform: scale(0.88); }
+.check { position: relative; transition: background-color 0.12s, border-color 0.12s, color 0.12s, transform 120ms var(--ease-out); }
+.check::before { content: ''; position: absolute; inset: -10px; } /* a 46px target around the 26px box */
+.check:active { transform: scale(0.92); }
+/* The tick: the box fills and the mark draws itself. */
+.check svg { stroke-dasharray: 22; }
+.check.pop { animation: tickfill 200ms var(--ease-out) var(--pop, 0ms) both; }
+.check.pop svg { animation: tickdraw 240ms var(--ease-out) calc(var(--pop, 0ms) + 40ms) both; }
+@keyframes tickfill { from { transform: scale(0.86); } }
+@keyframes tickdraw { from { stroke-dashoffset: 22; } }
 .row-title, .row-meta { transition: color 0.2s; }
 .swipe { position: relative; overflow: hidden; margin: 0 -16px; }
-.swipe .row { position: relative; z-index: 1; background: var(--surface); padding: 12px 16px; touch-action: pan-y; transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), background-color 0.15s; }
+.swipe .row { position: relative; z-index: 1; background: var(--surface); padding: 12px 16px; touch-action: pan-y; transition: transform 0.25s var(--ease-out), background-color 0.15s; }
 .swipe.dragging .row { transition: none; user-select: none; -webkit-user-select: none; }
 .swipe .row:has(.row-main:active) { background: var(--soft); }
-.swipe-act { position: absolute; inset: 0; display: none; align-items: center; gap: 8px; padding: 0 24px; color: #fff; font-weight: 700; font-size: 15px; }
+.swipe-act { position: absolute; inset: 0; display: none; align-items: center; gap: 8px; padding: 0 24px; color: #fff; font-weight: 700; font-size: calc(15px * var(--ts)); }
 .act-done { background: var(--done); justify-content: flex-start; }
 .act-del { background: var(--danger); justify-content: flex-end; padding: 0; }
 .swipe[data-dir="right"] .act-done, .swipe[data-dir="left"] .act-del { display: flex; }
-.swipe-del { height: 100%; width: 96px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; color: #fff; font-size: 13px; font-weight: 700; }
+.swipe-del { height: 100%; width: 96px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; color: #fff; font-size: calc(13px * var(--ts)); font-weight: 700; }
 .swipe.armed .swipe-act svg { transform: scale(1.25); }
 .swipe-act svg { transition: transform 0.15s; }
-.swipe.leaving { max-height: 0 !important; opacity: 0; transition: max-height 0.2s ease-in, opacity 0.2s; }
+.swipe.leaving { max-height: 0 !important; opacity: 0; transition: max-height 0.22s var(--ease-out), opacity 0.18s ease; }
 .swipe.fresh .row { animation: fresh 1.6s ease-out; }
 @keyframes fresh { from { background: var(--accent-soft); } }
 .row.pending { opacity: 0.85; }
@@ -356,7 +392,8 @@ legend { padding: 0; }
 @keyframes slide { from { background-position: -40% 0; } to { background-position: 140% 0; } }
 @media (prefers-reduced-motion: reduce) {
   .swipe .row, .check, .row-title, .row-meta, .swipe.leaving { transition: none; }
-  .swipe.fresh .row, .spinner { animation: none; }
+  .swipe.fresh .row, .spinner, .check.pop, .check.pop svg, .rcard.enter, .allclear { animation: none; }
+  .toast, .toast.out, .chip, .round, .primary, .secondary, .check { transition: none; }
   .syncbar.on { animation: none; background: var(--accent); opacity: 0.5; }
 }
 
@@ -530,7 +567,7 @@ legend { padding: 0; }
   <form class="form" id="task-form" novalidate>
     <div>
       <label class="label" for="f-title">What needs doing</label>
-      <input id="f-title" class="bigtitle" maxlength="200" autocomplete="off" placeholder="e.g. Renew the car insurance">
+      <input id="f-title" class="bigtitle" maxlength="120" autocomplete="off" placeholder="e.g. Renew the car insurance">
     </div>
     <fieldset class="stack"><legend class="label">When</legend>
       <div class="chips" id="f-dates"></div>
@@ -591,6 +628,13 @@ legend { padding: 0; }
       <label class="toggle" for="p-summary">A morning summary<input type="checkbox" id="p-summary"></label>
       <label class="toggle" for="p-calendar">Add tasks to my Google Calendar<input type="checkbox" id="p-calendar"></label>
       <p class="muted small" style="margin-top:10px">Turn on Gmail notifications on your phone so reminders pop up.</p>
+    </section>
+    <section class="stack" style="gap:10px">
+      <h2 class="eyebrow">Text size</h2>
+      <div class="seg" role="radiogroup" aria-label="Text size" id="text-size">
+        <button type="button" role="radio" data-ts="">Standard</button><button type="button" role="radio" data-ts="l">Larger</button><button type="button" role="radio" data-ts="xl">Largest</button>
+      </div>
+      <p class="muted small">For this phone only.</p>
     </section>
     <section class="stack" style="gap:6px">
       <h2 class="eyebrow">People</h2>
@@ -683,7 +727,7 @@ async function run(fn, ...args) {
 
 const state = {
   data: null, view: 'capture', filter: 'all', detailId: null, reviewIds: [], lastEdit: null, deepLinked: false,
-  linger: new Set(), fresh: new Set(), renderLater: false,
+  linger: new Set(), fresh: new Set(), pop: new Map(), renderLater: false,
 };
 
 // ---------------------------------------------------------------- Performance panel (?perf=1)
@@ -1072,11 +1116,21 @@ function toast(msg, actions = [], ms = 3500, kind = 'ok') {
   const host = $$('dialog[open]').pop() || document.body;
   if (el.parentNode !== host) host.append(el);
   el.innerHTML = `${kind === 'alert' ? icon('alert', 20) : icon('tick', 20)}<span class="msg">${esc(msg)}</span>${actions.map((a, i) => `<button type="button" data-t="${i}">${esc(a.label)}</button>`).join('')}`;
-  actions.forEach((a, i) => el.querySelector(`[data-t="${i}"]`).addEventListener('click', () => { el.hidden = true; a.fn(); }));
+  actions.forEach((a, i) => el.querySelector(`[data-t="${i}"]`).addEventListener('click', () => { hideToast(); a.fn(); }));
   el.classList.toggle('lift', state.view === 'tasks');
+  el.classList.remove('out');
   el.hidden = false;
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => { el.hidden = true; }, actions.length ? Math.max(ms, 6000) : ms);
+  toastTimer = setTimeout(hideToast, actions.length ? Math.max(ms, 6000) : ms);
+}
+/** Slides the toast back down the way it came, then hides it. */
+function hideToast() {
+  const el = $('#toast');
+  clearTimeout(toastTimer);
+  if (el.hidden) return;
+  if (REDUCED_MOTION) { el.hidden = true; return; }
+  el.classList.add('out');
+  toastTimer = setTimeout(() => { el.hidden = true; el.classList.remove('out'); }, 150);
 }
 const fail = (err) => toast(err.message || String(err), [], 4500, 'alert');
 
@@ -1111,6 +1165,7 @@ function render() {
   if (state.view === 'detail') renderDetail();
   if (state.view === 'review') renderReview();
   show('v-' + state.view);
+  if (state.view === 'tasks') markChipOverflow(); // needs the screen showing to measure
   $('#toast').classList.toggle('lift', state.view === 'tasks');
 }
 
@@ -1143,8 +1198,10 @@ function renderCapture() {
   const next = openTasks().filter((t) => t.dueDate && t.dueDate > t0).sort(byWhen)[0];
   let label;
   let line;
+  const late = due.filter((t) => t.dueDate < t0).length;
   if (due.length) {
-    label = `Today · ${due.length} task${due.length > 1 ? 's' : ''}`;
+    const onToday = due.length - late;
+    label = late ? `${late} overdue${onToday ? ` · ${onToday} today` : ''}` : `Today · ${due.length} task${due.length > 1 ? 's' : ''}`;
     line = `${due[0].title}${due[0].time ? ` · ${due[0].time}` : ''}`;
   } else if (next) {
     label = 'Nothing else today';
@@ -1216,8 +1273,8 @@ function taskRow(t, group) {
     <div class="swipe-act act-done" aria-hidden="true">${icon(t.done ? 'undo' : 'tick', 22)}<span>${t.done ? 'Reopen' : 'Done'}</span></div>
     <div class="swipe-act act-del" aria-hidden="true"><button type="button" class="swipe-del" data-swipe-del="${t.id}" tabindex="-1">${icon('bin', 20)}<span>Delete</span></button></div>
     <div class="row ${t.done ? 'done' : ''}">
-      <button type="button" class="check ${checkClass(t.owner)} ${t.done ? 'on' : ''}" data-done="${t.id}" aria-label="${t.done ? 'Mark not done' : 'Mark done'}: ${esc(t.title)}">${icon('tick', 14)}</button>
-      <button type="button" class="row-main" data-open="${t.id}"><span class="row-title">${esc(t.title)}</span><span class="row-meta">${rowMeta(t, group)}</span></button>
+      <button type="button" class="check ${checkClass(t.owner)} ${t.done ? 'on' : ''}${popAttr(t.id)} data-done="${t.id}" aria-label="${t.done ? 'Mark not done' : 'Mark done'}: ${esc(t.title)}">${icon('tick', 14)}</button>
+      <button type="button" class="row-main" data-open="${t.id}"><span class="row-title" dir="auto">${esc(t.title)}</span><span class="row-meta">${rowMeta(t, group)}</span></button>
       ${pill(t.owner)}
     </div>
   </div>`;
@@ -1235,7 +1292,26 @@ function renderTasks() {
   const pending = state.filter === 'done' ? '' : pendingHtml();
   $('#list').innerHTML = (pending ? `<section class="group">${pending}</section>` : '') + (groups.length
     ? groups.map(([name, list]) => `<section class="group ${name === 'Overdue' ? 'late' : ''}"><h2 class="eyebrow">${esc(name)}</h2>${list.map((t) => taskRow(t, name)).join('')}</section>`).join('')
-    : (pending ? '' : `<p class="empty">${state.filter === 'done' ? 'Nothing finished yet.' : 'Nothing here. Tap the microphone or + to add a task.'}</p>`));
+    : (pending ? '' : emptyHtml()));
+}
+
+/** The empty list: a finish line when everything is done, a hint otherwise. */
+function emptyHtml() {
+  if (state.filter === 'done') return '<p class="empty">Nothing finished yet.</p>';
+  if (state.filter === 'all' && !openTasks().length && state.data.tasks.some((t) => t.done)) {
+    return '<div class="allclear"><img src="icon.svg?v=us" alt=""><strong>All clear</strong><span>Nothing left to do. Enjoy it.</span></div>';
+  }
+  if (state.filter === 'all' && !openTasks().length) return '<p class="empty">Nothing here yet. Tap the microphone or + to add a task.</p>';
+  return '<p class="empty">Nothing here.</p>';
+}
+
+$('#filters').addEventListener('scroll', () => markChipOverflow(), { passive: true });
+window.addEventListener('resize', () => markChipOverflow());
+if (document.fonts) document.fonts.ready.then(() => markChipOverflow());
+/** Fades the right edge of the filter chips while some are still off screen. */
+function markChipOverflow() {
+  const nav = $('#filters');
+  nav.classList.toggle('more', nav.scrollLeft + nav.clientWidth < nav.scrollWidth - 4);
 }
 
 // ---------------------------------------------------------------- Changes (all through mutate)
@@ -1260,6 +1336,7 @@ function toggleDone(id, { linger = true } = {}) {
   if (!t) return;
   const done = !t.done;
   const repeating = done && t.repeats !== 'Never' && t.dueDate;
+  if (done) state.pop.set(t.id, performance.now());
   if (linger && state.view === 'tasks') lingerRow(t.id);
   doneChange(t.id, done, {
     done: (reply) => {
@@ -1272,7 +1349,19 @@ function toggleDone(id, { linger = true } = {}) {
   else toast('Done', [{ label: 'Undo', fn: () => doneChange(t.id, false) }]);
 }
 
-const LINGER_MS = 400;
+/**
+ * The tick's animation, for a box ticked in the last 300ms. A redraw makes a new box, so it starts
+ * the animation part-way through (a negative delay) instead of playing it again from the start.
+ */
+function popAttr(id) {
+  const at = state.pop.get(realId(id)) || state.pop.get(Number(id));
+  if (at === undefined) return '"';
+  const since = Math.round(performance.now() - at);
+  if (since > 300) { state.pop.delete(realId(id)); state.pop.delete(Number(id)); return '"'; }
+  return ` pop" style="--pop:-${since}ms"`;
+}
+
+const LINGER_MS = 600; // long enough to see the tick land
 function lingerRow(id) {
   state.linger.add(id);
   setTimeout(() => {
@@ -1370,8 +1459,8 @@ function renderDetail() {
   const newPrep = e && !e.pending && e.id === t.id && e.changed.includes('prep') ? e.before.prep.length : Infinity;
   $('#detail').innerHTML = `
     <div class="detail-title">
-      <button type="button" class="check ${checkClass(t.owner)} ${t.done ? 'on' : ''}" data-done="${t.id}" aria-label="${t.done ? 'Mark not done' : 'Mark done'}">${icon('tick', 16)}</button>
-      <h1>${esc(t.title)}</h1>
+      <button type="button" class="check ${checkClass(t.owner)} ${t.done ? 'on' : ''}${popAttr(t.id)} data-done="${t.id}" aria-label="${t.done ? 'Mark not done' : 'Mark done'}">${icon('tick', 16)}</button>
+      <h1 dir="auto"${t.title.length > 40 ? ' class="long"' : ''}>${esc(t.title)}</h1>
     </div>
     <dl class="facts">
       <div class="fact${changedClass(['date', 'time'])}"><dt>When</dt><dd>${updatedTag(['date', 'time'])}${whenChip(t)}</dd></div>
@@ -1382,13 +1471,13 @@ function renderDetail() {
     <section class="stack" style="gap:4px">
       <h2 class="eyebrow section-h">Prep${t.prep.length ? ` · ${done} of ${t.prep.length}` : ''}</h2>
       ${t.prep.map((s, i) => `<button type="button" class="step ${s.done ? 'on' : ''}${i >= newPrep ? ' changed' : ''}" data-step="${i}" aria-pressed="${s.done}">
-        <span class="box">${icon('tick', 13)}</span><span class="step-title">${esc(s.title)}</span><span class="step-when">${esc(t.dueDate ? stepWhen(s) : '')}</span></button>`).join('')}
+        <span class="box">${icon('tick', 13)}</span><span class="step-title" dir="auto">${esc(s.title)}</span><span class="step-when">${esc(t.dueDate && s.daysBefore ? stepWhen(s) : '')}</span></button>`).join('')}
       <div class="inline-add" id="step-add" hidden><input class="field" id="step-text" placeholder="e.g. Find the insurance card" maxlength="200"><button type="button" class="chip on" id="step-save">Add</button></div>
       <button type="button" class="addline" id="step-open">+ Add a step</button>
     </section>
     <section class="stack" style="gap:6px">
       <h2 class="eyebrow">Notes${changedClass(['notes']) ? ' · <span class="updated">Updated</span>' : ''}</h2>
-      ${t.notes ? `<button type="button" class="notes" id="notes-open">${esc(t.notes)}</button>` : '<button type="button" class="addline" id="notes-open" style="color:var(--muted);font-weight:600">Add a note</button>'}
+      ${t.notes ? `<button type="button" class="notes" id="notes-open" dir="auto">${esc(t.notes)}</button>` : '<button type="button" class="addline" id="notes-open" style="color:var(--muted);font-weight:600">Add a note</button>'}
       <div class="stack" id="notes-edit" hidden><textarea class="field" id="notes-text" rows="4"></textarea><button type="button" class="chip on" id="notes-save" style="align-self:flex-start">Save note</button></div>
     </section>`;
   renderDetailFoot();
@@ -1454,8 +1543,16 @@ function undoVoiceEdit() {
 function renderReview() {
   const tasks = state.reviewIds.map(taskById).filter(Boolean);
   if (!tasks.length) { state.view = 'capture'; renderCapture(); show('v-capture'); return; }
-  $('#review-list').innerHTML = tasks.map((t) => `<article class="rcard ${t.dueDate ? '' : 'needs'}">
-    <button type="button" class="rcard-title" data-open="${t.id}">${esc(t.title)}</button>
+  // A new set of cards (not the same ones with their saved ids filled in) animates in, once.
+  const ids = state.reviewIds.map(realId);
+  if (!ids.some((id) => reviewSeen.ids.has(id))) reviewSeen = { at: Date.now(), ids: new Set() };
+  const entering = Date.now() - reviewSeen.at < 800;
+  let fresh = 0;
+  $('#review-list').innerHTML = tasks.map((t) => {
+    const enter = entering && !reviewSeen.ids.has(realId(t.id));
+    reviewSeen.ids.add(realId(t.id));
+    return `<article class="rcard ${t.dueDate ? '' : 'needs'}${enter ? ' enter' : ''}"${enter ? ` style="--i:${fresh++}"` : ''}>
+    <button type="button" class="rcard-title" data-open="${t.id}" dir="auto">${esc(t.title)}</button>
     <div class="chips" style="gap:6px">
       ${t.dueDate ? `<button type="button" class="chip" data-when="${t.id}">${esc(shortDate(t.dueDate))}</button>` : `<button type="button" class="chip amber" data-when="${t.id}"><span class="dot"></span>Add a date</button>`}
       ${t.dueDate ? (t.time ? `<button type="button" class="chip" data-time="${t.id}">${esc(t.time)}</button>` : `<button type="button" class="chip dashed" data-time="${t.id}">+ Time</button>`) : ''}
@@ -1463,8 +1560,11 @@ function renderReview() {
       ${t.prep.length ? `<button type="button" class="chip" data-open="${t.id}">Prep ${t.prep.length}</button>` : ''}
       ${t.repeats !== 'Never' ? `<button type="button" class="chip" data-open="${t.id}">${esc(t.repeats)}</button>` : ''}
     </div>
-  </article>`).join('');
+  </article>`;
+  }).join('');
 }
+// Cards animate in once, the first time each is shown, not on every redraw.
+let reviewSeen = { at: 0, ids: new Set() };
 
 // ---------------------------------------------------------------- Listening
 
@@ -1880,7 +1980,7 @@ function chooseRepeat(id) {
 
 // ---------------------------------------------------------------- Changing a task by voice
 
-function sayChange(id, label = 'What should change?', example = 'e.g. make it Tuesday at 4, give it to Sara') {
+function sayChange(id, label = 'What should change?', example = 'e.g. make it Tuesday at 4, give it to Sandi') {
   listen({
     label,
     onText: (said) => voiceEdit(id, said),
@@ -2064,7 +2164,7 @@ function dismissSheet(dlg) {
 }
 
 const SHEET_CLOSE_SHARE = 0.3; // dragged past 30% of its height
-const SHEET_FLICK = 0.5; // px per ms
+const SHEET_FLICK = 0.15; // px per ms: a quick flick closes it, however short
 const sheetDrag = { dlg: null };
 
 /** Something inside the sheet, between the finger and the sheet, that is scrolled down or scrolls sideways. */
@@ -2125,13 +2225,18 @@ function sheetEnd(cancelled) {
     return;
   }
   if (REDUCED_MOTION) { dlg.style.transform = ''; dismissSheet(dlg); return; }
+  // Carry on at the finger's speed: the drawer curve starts about 2.25 times faster than its average.
+  const left = s.height + 40 - s.dy;
+  const ms = Math.round(Math.min(320, Math.max(150, speed > 0.05 ? (2.25 * left) / speed : 260)));
+  dlg.style.setProperty('--leave', `${ms}ms`);
   dlg.classList.add('leaving');
   dlg.style.transform = `translateY(${s.height + 40}px)`;
   setTimeout(() => {
     dlg.classList.remove('leaving');
     dismissSheet(dlg);
     dlg.style.transform = '';
-  }, 200);
+    dlg.style.removeProperty('--leave');
+  }, ms);
 }
 
 $$('dialog.sheet').forEach((dlg) => {
@@ -2161,6 +2266,7 @@ window.addEventListener('mouseup', () => sheetEnd(false));
 const SWIPE_LOCK = 10;
 const SWIPE_FULL = 0.6;
 const SWIPE_OPEN = 96;
+const SWIPE_FLICK = 0.4; // px per ms
 const swipe = { tracking: null, open: null, animating: false, suppressClick: false };
 
 const rowOf = (wrap) => wrap.querySelector('.row');
@@ -2199,7 +2305,7 @@ $('#list').addEventListener('pointerdown', (e) => {
   if (e.pointerType === 'mouse' && e.button !== 0) return;
   const wrap = e.target.closest('.swipe');
   if (!wrap || swipe.animating || swipe.suppressClick || e.target.closest('[data-swipe-del]')) return;
-  swipe.tracking = { wrap, id: Number(wrap.dataset.row), x0: e.clientX, y0: e.clientY, dx: 0, axis: null, pointerId: e.pointerId, width: wrap.offsetWidth, armed: false };
+  swipe.tracking = { wrap, id: Number(wrap.dataset.row), x0: e.clientX, y0: e.clientY, dx: 0, axis: null, pointerId: e.pointerId, width: wrap.offsetWidth, armed: false, samples: [] };
 });
 
 window.addEventListener('pointermove', (e) => {
@@ -2215,6 +2321,8 @@ window.addEventListener('pointermove', (e) => {
   }
   e.preventDefault();
   s.dx = dx;
+  s.samples.push([e.timeStamp || performance.now(), dx]);
+  if (s.samples.length > 5) s.samples.shift();
   setOffset(s.wrap, dx, false);
   const armed = Math.abs(dx) > s.width * SWIPE_FULL;
   if (armed !== s.armed) {
@@ -2232,10 +2340,15 @@ function endSwipe(e, cancelled) {
   swipe.suppressClick = !cancelled; // the click that ends a drag isn't a tap
   if (perf.on) { perf.tapAt = e.timeStamp || performance.now(); perf.tapLabel = 'swipe'; }
   s.wrap.classList.remove('armed');
-  const full = Math.abs(s.dx) > s.width * SWIPE_FULL;
+  // A quick flick counts: right finishes the task (it can be undone), left only shows Delete.
+  const [t0, x0] = s.samples[0] || [0, 0];
+  const [t1, x1] = s.samples[s.samples.length - 1] || [0, 0];
+  const vx = t1 > t0 ? (x1 - x0) / (t1 - t0) : 0;
+  const flick = Math.abs(vx) > SWIPE_FLICK && Math.abs(s.dx) > 40 && Math.sign(vx) === Math.sign(s.dx);
+  const full = Math.abs(s.dx) > s.width * SWIPE_FULL || (flick && s.dx > 0);
   if (!cancelled && full && s.dx > 0) swipeAway(s.wrap, 1, () => toggleDone(s.id, { linger: false }));
   else if (!cancelled && full && s.dx < 0) swipeDelete(s.wrap);
-  else if (!cancelled && s.dx < -SWIPE_OPEN / 2) { setOffset(s.wrap, -SWIPE_OPEN, true); swipe.open = s.wrap; }
+  else if (!cancelled && (s.dx < -SWIPE_OPEN / 2 || (flick && s.dx < 0))) { setOffset(s.wrap, -SWIPE_OPEN, true); swipe.open = s.wrap; }
   else { setOffset(s.wrap, 0, true); if (state.renderLater) setTimeout(quietDraw, 260); }
 }
 window.addEventListener('pointerup', (e) => endSwipe(e, false));
@@ -2266,6 +2379,8 @@ function swipeDelete(wrap) {
 // ---------------------------------------------------------------- Settings
 
 function fillPrefs() {
+  const ts = document.documentElement.dataset.ts || '';
+  $$('#text-size button').forEach((b) => b.setAttribute('aria-checked', String(b.dataset.ts === ts)));
   const p = state.data.me.prefs;
   $('#p-reminders').checked = p.emailReminders;
   $('#p-updates').checked = p.emailUpdates;
@@ -2295,6 +2410,17 @@ $$('#d-settings .toggle input').forEach((box) => box.addEventListener('change', 
   });
   toast('Saved');
 }));
+
+// Text size: kept on this phone, and applied before the page draws (see the top of the page).
+$('#text-size').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-ts]');
+  if (!b) return;
+  if (b.dataset.ts) document.documentElement.dataset.ts = b.dataset.ts;
+  else delete document.documentElement.dataset.ts;
+  try { localStorage.setItem('melody-text-size', b.dataset.ts); } catch (err) { /* this visit only */ }
+  $$('#text-size button').forEach((x) => x.setAttribute('aria-checked', String(x === b)));
+  markChipOverflow();
+});
 
 $('#activity-btn').addEventListener('click', async () => {
   const list = $('#activity-list');
