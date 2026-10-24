@@ -598,6 +598,16 @@ legend { padding: 0; }
   </form>
 </dialog>
 
+<!-- The microphone didn't work: what happened, what to do, and a way to carry on -->
+<dialog id="d-mic" class="sheet" aria-labelledby="mic-title">
+  <div class="sheet-body">
+    <span class="grab" aria-hidden="true"></span>
+    <h2 class="title-l" id="mic-title" tabindex="-1" autofocus></h2>
+    <p class="muted" id="mic-help"></p>
+    <div class="two"><button type="button" class="secondary" id="mic-type">Type it instead</button><button type="button" class="primary" id="mic-again" style="height:52px;border-radius:14px">Try again</button></div>
+  </div>
+</dialog>
+
 <!-- Adding or editing by typing -->
 <dialog id="d-form" class="sheet tall" aria-labelledby="form-title">
   <span class="grab" aria-hidden="true"></span>
@@ -680,6 +690,7 @@ legend { padding: 0; }
       <label class="toggle local" for="p-sound">A sound when a task is done<input type="checkbox" id="p-sound"></label>
       <p class="muted small" style="margin-top:10px">For this phone only. Taps work on Android and on iPhone with iOS 18 or later.</p>
       <p class="muted small" style="margin-top:6px">If your iPhone asks for the microphone every time: Settings → Apps → Safari → Microphone → Allow (on iOS 17: Settings → Safari → Microphone).</p>
+      <p class="muted small" style="margin-top:6px" id="mic-last" hidden></p>
     </section>
     <section class="stack" style="gap:6px">
       <h2 class="eyebrow">People</h2>
@@ -1718,13 +1729,15 @@ let recClock = null;
  * recognizer left running is what makes the phone play its microphone sound when the app is put away.
  */
 function listen({ label = 'Listening', onText, onUnavailable, retried = false }) {
-  if (!SpeechRec) { onUnavailable('none'); return; }
+  const again = () => listen({ label, onText, onUnavailable });
+  if (!SpeechRec) { logMic('none'); micProblem('none', { again, instead: () => onUnavailable('none') }); return; }
   if (recording) recording.finish('cancel');
   const dlg = $('#d-record');
   const out = $('#rec-text');
   let finalText = '';
   let interim = '';
   let failed = false;
+  let retryNext = false;
   let finished = false;
   let stopGuard = null;
   $('#rec-label').textContent = label;
@@ -1759,6 +1772,12 @@ function listen({ label = 'Listening', onText, onUnavailable, retried = false })
     if (recording && recording.r === r) recording = null;
     if (dlg.open) dlg.close();
     const said = `${finalText} ${interim}`.trim();
+    if (retryNext) {
+      // One quiet second try, with a fresh recognizer, before showing a problem.
+      recognizer = null;
+      setTimeout(() => listen({ label, onText, onUnavailable, retried: true }), 300);
+      return;
+    }
     if (how === 'cancel' || failed) return;
     if (said) onText(said);
     else if (how !== 'hidden') toast("Didn't hear anything. Tap the microphone and speak.");
@@ -1774,9 +1793,13 @@ function listen({ label = 'Listening', onText, onUnavailable, retried = false })
   };
   r.onerror = (ev) => {
     if (ev.error === 'aborted') return;
+    logMic(ev.error, ev.message);
+    if (ev.error === 'no-speech') return; // ends with "Didn't hear anything"
     failed = true;
-    if (['not-allowed', 'service-not-allowed', 'audio-capture'].includes(ev.error)) onUnavailable('blocked');
-    else if (ev.error !== 'no-speech') toast("Didn't catch that. Try again.");
+    const heard = `${finalText} ${interim}`.trim();
+    if (heard) { failed = false; return; } // keep what was said before it went wrong
+    if (!retried && MIC_RETRY.includes(ev.error)) { retryNext = true; return; }
+    micProblem(ev.error, { again, instead: () => onUnavailable(ev.error) });
   };
   r.onend = () => finish('ended');
   $('#rec-cancel').onclick = () => finish('cancel');
@@ -1794,7 +1817,8 @@ function listen({ label = 'Listening', onText, onUnavailable, retried = false })
     haptic();
   } catch (err) {
     // A recognizer that's still winding down can't start again yet: use a fresh one this time.
-    if (err && err.name === 'InvalidStateError' && !retried) {
+    logMic('start', err && `${err.name}: ${err.message}`);
+    if (!retried) {
       recognizer = null;
       finished = true;
       clearInterval(recClock);
@@ -1805,8 +1829,58 @@ function listen({ label = 'Listening', onText, onUnavailable, retried = false })
     }
     failed = true;
     finish('cancel');
-    onUnavailable('blocked');
+    micProblem('start', { again, instead: () => onUnavailable('start') });
   }
+}
+
+// ---------------------------------------------------------------- When the microphone fails
+
+// Problems that often clear up on a second try.
+const MIC_RETRY = ['network', 'audio-capture', 'service-not-allowed'];
+
+/** What went wrong, in words, and what to do about it. */
+const MIC_PROBLEMS = {
+  'not-allowed': ['Melody isn\'t allowed to use the microphone', 'On iPhone: Settings → Apps → Safari → Microphone → Allow (on iOS 17: Settings → Safari → Microphone). Then try again.'],
+  'service-not-allowed': ['Speech recognition is switched off', 'On iPhone: Settings → General → Keyboard → turn on Enable Dictation. If it still fails, check Settings → Screen Time → Content & Privacy → Siri & Dictation.'],
+  'audio-capture': ['Another app has the microphone', 'Finish the call, voice note or recording in the other app, then try again.'],
+  network: ['Couldn\'t reach the speech service', 'Your phone turns speech into text online. Check Wi‑Fi or mobile data, then try again.'],
+  'language-not-supported': ['Your phone\'s language isn\'t supported here', 'Try again after setting the phone\'s language to English, or type the task instead.'],
+  none: ['This browser can\'t listen', 'Open Melody from its icon on the home screen, or in Safari or Chrome. You can still add the task by typing.'],
+  start: ['The microphone didn\'t start', 'Close Melody fully (swipe it away), open it again and try once more. If it keeps happening, type the task for now.'],
+};
+
+/** Shows the problem with Try again and Type it instead, so nothing that was meant to be said gets lost. */
+function micProblem(code, { again, instead }) {
+  const [title, help] = MIC_PROBLEMS[code] || ['The microphone stopped unexpectedly', `Try again. If it keeps happening, type the task for now. (Code: ${code})`];
+  $('#mic-title').textContent = title;
+  $('#mic-help').textContent = help;
+  $('#mic-again').hidden = code === 'none';
+  $('#mic-again').onclick = () => { $('#d-mic').close(); again(); };
+  $('#mic-type').onclick = () => { $('#d-mic').close(); instead(); };
+  const open = $$('dialog[open]').filter((d) => d.id !== 'd-record');
+  open.forEach((d) => d.close());
+  if ($('#d-record').open) $('#d-record').close();
+  $('#d-mic').showModal();
+}
+
+/** Keeps the last few microphone problems on this phone, so a pattern can be reported (Settings shows the latest). */
+function logMic(code, message = '') {
+  console.warn('Microphone:', code, message);
+  try {
+    const list = JSON.parse(localStorage.getItem('melody-mic-log') || '[]');
+    list.push({ at: new Date().toISOString(), code, message: String(message || '').slice(0, 120) });
+    localStorage.setItem('melody-mic-log', JSON.stringify(list.slice(-10)));
+  } catch (err) { /* fine */ }
+}
+function lastMicProblem() {
+  try {
+    const list = JSON.parse(localStorage.getItem('melody-mic-log') || '[]').filter((x) => x.code !== 'no-speech');
+    const last = list[list.length - 1];
+    if (!last) return '';
+    const when = new Date(last.at);
+    const label = (MIC_PROBLEMS[last.code] || [last.code])[0];
+    return `Last microphone problem: ${label} (${when.toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}, code ${last.code}).`;
+  } catch (err) { return ''; }
 }
 
 /** The app is being put away: end any recording now (keeping what was heard) so the microphone is released. */
@@ -1838,7 +1912,7 @@ const MIC_HELP = {
 function startCapture() {
   listen({
     onText: handleCapture,
-    onUnavailable: (why) => openTypeCapture(MIC_HELP[why]),
+    onUnavailable: () => openForm(null), // the same sheet as the + button
   });
 }
 
@@ -2153,7 +2227,7 @@ function sayChange(id, label = 'What should change?', example = 'e.g. make it Tu
     label,
     onText: (said) => voiceEdit(id, said),
     onUnavailable: (why) => typeInstead({
-      title: label, hint: MIC_HELP[why], placeholder: example, onText: (said) => voiceEdit(id, said),
+      title: label, hint: MIC_HELP[why] || 'Type the change instead.', placeholder: example, onText: (said) => voiceEdit(id, said),
     }),
   });
 }
@@ -2731,6 +2805,9 @@ function pullShow(d) {
 // ---------------------------------------------------------------- Settings
 
 function fillPrefs() {
+  const micLast = lastMicProblem();
+  $('#mic-last').hidden = !micLast;
+  $('#mic-last').textContent = micLast;
   $('#p-haptics').checked = hapticsOn();
   $('#p-sound').checked = soundOn();
   const ts = document.documentElement.dataset.ts || '';
