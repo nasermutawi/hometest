@@ -6,3 +6,6 @@ data/
 google-sheets/.clasp-ids.json
 .clasp.json
 .clasprc.json
+
+# Shared skills keep their own data folders
+!.claude/skills/**/data/
