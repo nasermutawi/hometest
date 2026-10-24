@@ -20,20 +20,7 @@ const CATEGORY_KEYWORDS = {
   garden: ['garden', 'lawn', 'mow', 'hedge', 'weeds', 'plants'],
 };
 
-// Implied preparation for common task types: [keywords, [prep title, days before]...]
-const PREP_TEMPLATES = [
-  [['plumber', 'electrician', 'contractor', 'builder', 'roofer', 'handyman', 'technician', 'engineer', 'painter', 'decorator', 'carpenter'],
-    [['Confirm the appointment with the contractor', 1], ['Clear access to the work area', 0]]],
-  [['boiler', 'gas safety'], [['Clear access to the boiler', 0], ['Find the boiler manual / last service record', 1]]],
-  [['car service', 'mot', 'servicing the car', 'car serviced', 'car in for'], [['Find the service book and remove valuables from the car', 1], ['Arrange a lift back from the garage', 1]]],
-  [['grocer', 'supermarket', 'food shop', 'weekly shop'], [['Check the fridge and pantry', 0], ['Write the shopping list', 0]]],
-  [['dinner party', 'guests', 'hosting', 'birthday party', 'bbq'], [['Plan the menu and guest list', 3], ['Do the food shop', 1]]],
-  [['passport', 'visa', 'licence', 'license'], [['Gather documents and photos', 3]]],
-  [['delivery', 'being delivered'], [['Clear space for the delivery', 0]]],
-  [['flight', 'holiday', 'trip'], [['Pack bags', 1], ['Check in online', 1]]],
-  [['dentist', 'doctor', 'gp appointment', 'hospital'], [['Prepare questions / bring any paperwork', 1]]],
-];
-
+// Prep steps come only from what was said: no built-in steps are added for a kind of task.
 const EXPLICIT_PREP = /\b(?:before (?:that|then|this|they come|they arrive|it)|beforehand|first|in advance|ahead of time)\b/i;
 const PREP_LEAD = /\b(?:need to|have to|must|should|make sure (?:to|we|i)?|remember to|don't forget to|dont forget to)\s+/i;
 
@@ -197,14 +184,7 @@ export function parseWithRules({ text, now, members, speaker, history = [] }) {
   const recurrence = findRecurrence(full);
   const category = findCategory(text);
 
-  const lower = text.toLowerCase();
   const prep = explicitPrep(clauses);
-  for (const [keywords, steps] of PREP_TEMPLATES) {
-    if (keywords.some((k) => lower.includes(k))) {
-      for (const [title, days_before] of steps) prep.push({ title, days_before });
-      break;
-    }
-  }
 
   const questions = [];
   if (!due_date) questions.push('When does this need to happen?');

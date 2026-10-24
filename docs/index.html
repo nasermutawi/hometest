@@ -56,7 +56,7 @@
 html { touch-action: manipulation; -webkit-text-size-adjust: 100%; }
 html, body { overscroll-behavior: none; }
 /* Controls never select their own label on a long press. Titles and notes stay selectable. */
-button:not(.notes):not(.row-main), [role="button"], .chip, .bar, .seg, .grab { user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+button:not(.notes), [role="button"], .chip, .bar, .seg, .grab { user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
 html, body { margin: 0; background: var(--bg); padding-top: env(safe-area-inset-top); color: var(--text); font: 500 calc(16px * var(--ts))/1.45 var(--font); -webkit-tap-highlight-color: transparent; }
 [hidden] { display: none !important; }
 h1, h2, h3, p { margin: 0; }
@@ -77,9 +77,11 @@ svg { flex: 0 0 auto; }
 .title-l { font-family: var(--display); font-variation-settings: 'SOFT' 100; font-size: calc(24px * var(--ts)); line-height: 1.15; font-weight: 600; }
 .muted { color: var(--muted); }
 .small { font-size: calc(14px * var(--ts)); }
-.head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; padding: 28px 20px 0; }
+.head { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 20px 0; min-height: 56px; }
 .head > div { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
-.topnav { display: flex; justify-content: space-between; align-items: center; padding: 16px 12px 0; }
+.topnav { display: flex; justify-content: space-between; align-items: center; padding: 6px 12px 0; min-height: 50px; }
+/* Back and Close stay reachable on long pages. */
+.screen > .topnav { position: sticky; top: 0; z-index: 5; padding-bottom: 4px; background: color-mix(in srgb, var(--bg) 88%, transparent); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); }
 .textbtn { display: inline-flex; align-items: center; gap: 2px; padding: 10px 8px; font-size: calc(15px * var(--ts)); font-weight: 700; color: var(--accent); border-radius: 10px; }
 .round { width: 44px; height: 44px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; color: var(--text); }
 .round.outline { border: 1px solid var(--border); }
@@ -122,14 +124,22 @@ svg { flex: 0 0 auto; }
 .capture-copy { display: flex; flex-direction: column; align-items: center; gap: 6px; }
 .capture-copy strong { font-family: var(--display); font-variation-settings: 'SOFT' 100; font-size: calc(24px * var(--ts)); font-weight: 600; }
 .capture-copy span { font-size: calc(15px * var(--ts)); color: var(--muted); max-width: 260px; }
-.capture-foot { padding: 0 20px 32px; display: flex; flex-direction: column; gap: 10px; }
+.capture-foot { padding: 0 20px 16px; display: flex; flex-direction: column; gap: 10px; }
 .today-card { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 18px; background: var(--surface); text-align: left; width: 100%; }
 .today-card > span { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .today-card b { font-size: calc(15px * var(--ts)); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* Task list */
-.list-top { display: flex; flex-direction: column; gap: 16px; padding: 28px 20px 0; }
-.list { padding: 4px 14px 120px; }
+.list-top { display: flex; flex-direction: column; gap: 12px; padding: 8px 20px 0; }
+.bighead { display: flex; justify-content: space-between; align-items: center; gap: 12px; min-height: 52px; }
+.minihead { position: fixed; top: 0; left: 0; right: 0; z-index: 9; padding-top: env(safe-area-inset-top); height: calc(44px + env(safe-area-inset-top)); display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: calc(17px * var(--ts)); background: color-mix(in srgb, var(--bg) 82%, transparent); -webkit-backdrop-filter: blur(20px) saturate(160%); backdrop-filter: blur(20px) saturate(160%);
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--line) 70%, transparent); opacity: 0; pointer-events: none; transition: opacity 160ms ease; }
+.minihead.on { opacity: 1; }
+@media (prefers-reduced-transparency: reduce) { .minihead, .screen > .topnav { background: var(--bg); -webkit-backdrop-filter: none; backdrop-filter: none; } }
+.list { padding: 4px 14px 96px; }
+.screen.has-bar { padding-bottom: calc(60px + env(safe-area-inset-bottom)); }
+#v-tasks.has-bar { padding-bottom: 0; }
 .group { margin: 14px 0 0; background: var(--surface); border-radius: 22px; padding: 14px 16px 2px; overflow: hidden; }
 .group:first-child { margin-top: 4px; }
 .group > .eyebrow { display: inline-block; font-family: var(--display); font-variation-settings: 'SOFT' 100; font-style: italic; font-size: calc(22px * var(--ts)); font-weight: 500; letter-spacing: 0; text-transform: none; color: var(--text); padding-bottom: 8px; margin-bottom: 2px;
@@ -169,9 +179,12 @@ svg { flex: 0 0 auto; }
 /* A see-through bar: the list carries on underneath it. */
 .bar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 10; background: color-mix(in srgb, var(--bg) 78%, transparent); -webkit-backdrop-filter: blur(20px) saturate(160%); backdrop-filter: blur(20px) saturate(160%); box-shadow: 0 -1px 0 color-mix(in srgb, var(--line) 60%, transparent); }
 @media (prefers-reduced-transparency: reduce) { .bar { background: var(--bg); -webkit-backdrop-filter: none; backdrop-filter: none; box-shadow: 0 -1px 0 var(--line); } }
-.bar-inner { max-width: 480px; margin: 0 auto; padding: 14px 20px calc(20px + env(safe-area-inset-bottom)); display: flex; align-items: center; justify-content: space-between; }
-.bar .round { width: 52px; height: 52px; border: 1px solid var(--border); }
-.midmic { width: 68px; height: 68px; border-radius: 40%; background: var(--accent); color: var(--on-accent); display: flex; align-items: center; justify-content: center; }
+/* Slim bar: 56px plus the home-indicator area. The microphone is a 56px pebble that sits up out of it. */
+.bar { transition: transform 260ms var(--ease-out); }
+.bar.away { transform: translateY(calc(100% + 24px)); }
+.bar-inner { max-width: 480px; margin: 0 auto; height: calc(56px + env(safe-area-inset-bottom)); padding: 0 16px env(safe-area-inset-bottom); display: flex; align-items: center; justify-content: space-between; }
+.bar .round { width: 44px; height: 44px; border: 1px solid var(--border); }
+.midmic { width: 56px; height: 56px; border-radius: 40%; background: var(--accent); color: var(--on-accent); display: flex; align-items: center; justify-content: center; margin-top: -18px; box-shadow: 0 6px 16px rgb(142 59 82 / 0.28); }
 
 /* Detail */
 .detail { flex: 1; padding: 8px 24px 24px; display: flex; flex-direction: column; gap: 24px; }
@@ -213,6 +226,10 @@ textarea.field { resize: vertical; min-height: 88px; }
 .review { background: var(--bg); }
 .review-list { flex: 1; padding: 4px 16px 0; display: flex; flex-direction: column; gap: 10px; }
 .rcard { background: var(--surface); border-radius: 20px; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
+.rcard.waiting { gap: 12px; }
+.rcard-quote { font-family: var(--display); font-variation-settings: 'SOFT' 100; font-style: italic; font-size: calc(18px * var(--ts)); color: var(--muted); overflow-wrap: anywhere; text-align: start; }
+.rcard-quote::before { content: '\201C'; } .rcard-quote::after { content: '\201D'; }
+.rcard .row-meta { display: inline-flex; align-items: center; gap: 8px; }
 .rcard.needs { box-shadow: inset 0 0 0 2px var(--amber-line); }
 .rcard-title { font-family: var(--display); font-variation-settings: 'SOFT' 100; font-size: calc(19px * var(--ts)); font-weight: 600; text-align: start; overflow-wrap: anywhere; }
 .rcard.enter { animation: rise 250ms var(--ease-out) both; animation-delay: calc(var(--i, 0) * 40ms); }
@@ -338,12 +355,25 @@ legend { padding: 0; }
 .toast { translate: 0 0; opacity: 1; transition: translate 200ms var(--ease-out), opacity 200ms var(--ease-out); }
 @starting-style { .toast { translate: 0 8px; opacity: 0; } }
 .toast.out { translate: 0 8px; opacity: 0; transition-duration: 150ms; }
-.toast.lift { bottom: calc(110px + env(safe-area-inset-bottom)); }
+.toast.lift { bottom: calc(76px + env(safe-area-inset-bottom)); }
 .toast svg { color: var(--toast-link); }
 .toast .msg { flex: 1; margin-left: 6px; font-weight: 600; padding: 8px 0; }
 .toast button { color: var(--toast-link); font-weight: 700; padding: 10px; }
 
 /* Instant feel: pressed states, the done tick, swipes, progress */
+/* Swipe back from the left edge: the page follows the finger with the one before it underneath. */
+#v-detail, #v-review, dialog.full { touch-action: pan-y; }
+.edge-drag { position: fixed !important; left: 0; right: 0; z-index: 30; min-height: 100dvh; background: var(--bg); box-shadow: -10px 0 30px rgb(46 38 32 / 0.16); will-change: transform; }
+.edge-settle { transition: transform 240ms var(--ease-out) !important; }
+.edge-under { will-change: transform; }
+.edge-under::after { content: ''; position: fixed; inset: 0; background: rgb(46 38 32 / var(--edge-dim, 0.12)); pointer-events: none; z-index: 20; }
+/* Pull down at the top of Tasks to refresh. */
+.pull { position: fixed; left: 50%; top: calc(8px + env(safe-area-inset-top)); z-index: 12; width: 36px; height: 36px; margin-left: -18px; border-radius: 50%; background: var(--surface);
+  box-shadow: 0 4px 14px rgb(46 38 32 / 0.16); display: flex; align-items: center; justify-content: center; color: var(--accent); opacity: 0; transform: translateY(-48px); pointer-events: none; }
+.pull.ready svg { transform: rotate(180deg); }
+.pull svg { transition: transform 160ms var(--ease-out); }
+.pull.spin svg { animation: spin 0.8s linear infinite; }
+@media (prefers-reduced-motion: reduce) { .edge-settle { transition: none !important; } .pull.spin svg { animation: none; } }
 /* Hover only where there is a real pointer: on a phone a tapped button would keep its hover colour. */
 @media (hover: hover) and (pointer: fine) {
   .textbtn:hover { color: var(--accent-hover); }
@@ -452,7 +482,7 @@ legend { padding: 0; }
 </div>
 
 <!-- Opens here: quick capture -->
-<div id="v-capture" class="screen" hidden>
+<div id="v-capture" class="screen has-bar" hidden>
   <header class="head">
     <div><span class="eyebrow" id="cap-household">Our household</span><h1 class="title-l" id="cap-date"></h1></div>
     <button type="button" class="pillbtn" data-go="tasks"><svg width="18" height="18"><use href="#i-list"/></svg>Tasks</button>
@@ -463,20 +493,28 @@ legend { padding: 0; }
       <strong>Tap to speak</strong>
       <span>Say what needs doing, when, and who.</span>
     </div>
-    <button type="button" class="linkbtn quiet" id="cap-type">or type it</button>
   </main>
   <div class="capture-foot">
     <div id="cap-pending"></div>
     <button type="button" class="attention" id="cap-attention" hidden></button>
     <button type="button" class="today-card" id="cap-today" data-go="tasks"></button>
   </div>
+  <!-- The same bar as Tasks: + to type a task, Settings; the big microphone above is the main way in. -->
+  <div class="bar">
+    <div class="bar-inner">
+      <button type="button" class="round" data-add aria-label="Add a task by typing"><svg width="24" height="24"><use href="#i-plus"/></svg></button>
+      <button type="button" class="round" data-settings aria-label="Settings"><svg width="22" height="22"><use href="#i-sliders"/></svg></button>
+    </div>
+  </div>
 </div>
 
 <!-- Task list -->
-<div id="v-tasks" class="screen" hidden>
+<div id="v-tasks" class="screen has-bar" hidden>
+  <!-- A small title that appears at the top once the large one has scrolled away. -->
+  <div class="minihead" id="tasks-mini" aria-hidden="true"><span>Tasks</span></div>
   <div class="list-top">
-    <header style="display:flex;justify-content:space-between;align-items:flex-end;gap:12px">
-      <div style="display:flex;flex-direction:column;gap:4px"><span class="eyebrow" id="list-household">Our household</span><h1 class="title-xl">Tasks</h1></div>
+    <header class="bighead">
+      <h1 class="title-xl" id="tasks-title">Tasks</h1>
       <button type="button" class="round outline" data-go="capture" aria-label="Back to quick capture"><svg width="20" height="20"><use href="#i-x"/></svg></button>
     </header>
     <nav class="chips scroll" id="filters" aria-label="Whose tasks"></nav>
@@ -485,9 +523,9 @@ legend { padding: 0; }
   <main class="list" id="list" aria-live="polite"></main>
   <div class="bar">
     <div class="bar-inner">
-      <button type="button" class="round" id="add-btn" aria-label="Add a task by typing"><svg width="24" height="24"><use href="#i-plus"/></svg></button>
+      <button type="button" class="round" id="add-btn" data-add aria-label="Add a task by typing"><svg width="24" height="24"><use href="#i-plus"/></svg></button>
       <button type="button" class="midmic" id="list-mic" aria-label="Record a task"><svg width="28" height="28"><use href="#i-mic"/></svg></button>
-      <button type="button" class="round" id="settings-btn" aria-label="Settings"><svg width="22" height="22"><use href="#i-sliders"/></svg></button>
+      <button type="button" class="round" id="settings-btn" data-settings aria-label="Settings"><svg width="22" height="22"><use href="#i-sliders"/></svg></button>
     </div>
   </div>
 </div>
@@ -509,11 +547,11 @@ legend { padding: 0; }
     <button type="button" class="textbtn" id="review-discard" style="color:var(--danger)">Discard</button>
   </nav>
   <header class="head" style="padding-top:8px;padding-bottom:12px">
-    <div><h1 class="title-xl">Review</h1><p class="muted small">Already saved. Tap anything to change it.</p></div>
-    <span class="badge" style="margin-top:8px"><svg width="16" height="16"><use href="#i-tick"/></svg>Saved</span>
+    <div><h1 class="title-l">Review</h1><p class="muted small" id="review-sub">Already saved. Tap anything to change it.</p></div>
+    <span class="badge" id="review-badge" style="margin-top:6px"><svg width="16" height="16"><use href="#i-tick"/></svg>Saved</span>
   </header>
   <main class="review-list" id="review-list"></main>
-  <div class="form-foot"><button type="button" class="primary" data-go="capture">Done</button></div>
+  <div class="form-foot"><button type="button" class="primary" id="review-save">Save</button></div>
 </div>
 
 <!-- Recording (capture, voice edit, saying a time) -->
@@ -636,6 +674,13 @@ legend { padding: 0; }
       </div>
       <p class="muted small">For this phone only.</p>
     </section>
+    <section>
+      <h2 class="eyebrow" style="margin-bottom:4px">Sound and touch</h2>
+      <label class="toggle local" for="p-haptics">Light taps (haptics)<input type="checkbox" id="p-haptics"></label>
+      <label class="toggle local" for="p-sound">A sound when a task is done<input type="checkbox" id="p-sound"></label>
+      <p class="muted small" style="margin-top:10px">For this phone only. Taps work on Android and on iPhone with iOS 18 or later.</p>
+      <p class="muted small" style="margin-top:6px">If your iPhone asks for the microphone every time: Settings → Apps → Safari → Microphone → Allow (on iOS 17: Settings → Safari → Microphone).</p>
+    </section>
     <section class="stack" style="gap:6px">
       <h2 class="eyebrow">People</h2>
       <ul class="members" id="member-list"></ul>
@@ -666,6 +711,7 @@ legend { padding: 0; }
 </dialog>
 
 <div id="toast" class="toast" role="status" hidden></div>
+<div class="pull" id="pull" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M6 13l6 6 6-6"/></svg></div>
 
 <script>
 const $ = (s, r = document) => r.querySelector(s);
@@ -995,10 +1041,19 @@ function forgetCache() {
   try { Object.keys(localStorage).filter((k) => k.startsWith('household:state:')).forEach((k) => localStorage.removeItem(k)); } catch (err) { /* fine */ }
 }
 
-/** The app or a change is talking to the server: a thin bar at the top, never a blocking spinner. */
+/**
+ * Background refreshes and saves show nothing: the screen has already changed. Only a save that
+ * is still going after a few seconds shows the thin bar at the top, so a slow connection is visible.
+ */
 function setBusy() {
-  const busy = Boolean(sync.sending || sync.refreshing || sync.ops.some((o) => !o.holdUntil));
-  $('#syncbar').classList.toggle('on', busy);
+  const saving = Boolean((sync.sending && !sync.refreshing) || sync.ops.some((o) => !o.holdUntil));
+  if (!saving) {
+    clearTimeout(setBusy.slow);
+    setBusy.slow = null;
+    $('#syncbar').classList.remove('on');
+  } else if (!setBusy.slow) {
+    setBusy.slow = setTimeout(() => { $('#syncbar').classList.add('on'); }, 5000); // a save still going after 5 seconds
+  }
   if (perf.on) drawPerf();
 }
 
@@ -1103,11 +1158,29 @@ function show(view) {
 function go(view) {
   perfLocal(`Open ${view}`);
   closeSwipe(false);
+  // The list keeps its place: coming back to Tasks returns to where you were.
+  if (state.view === 'tasks' && view !== 'tasks') state.listScroll = window.scrollY;
+  const back = view === 'tasks' && ['detail', 'review'].includes(state.view);
   state.view = view;
   if (view !== 'detail') state.lastEdit = null;
+  $$('.bar').forEach((b) => b.classList.remove('away'));
   render();
-  window.scrollTo(0, 0);
+  window.scrollTo(0, back ? state.listScroll || 0 : 0);
+  onScroll();
 }
+
+/** On Tasks: the small title appears once the large one has gone, and the bar steps aside while you scroll down. */
+function onScroll() {
+  const y = Math.max(0, window.scrollY);
+  const onTasks = state.view === 'tasks';
+  $('#tasks-mini').classList.toggle('on', onTasks && y > 52);
+  const bar = $('#v-tasks .bar');
+  const last = onScroll.last || 0;
+  if (!onTasks || y < 80 || y < last - 6) bar.classList.remove('away');
+  else if (y > last + 6 && !REDUCED_MOTION) bar.classList.add('away');
+  if (Math.abs(y - last) > 6 || y < 80) onScroll.last = y;
+}
+window.addEventListener('scroll', onScroll, { passive: true });
 
 let toastTimer;
 function toast(msg, actions = [], ms = 3500, kind = 'ok') {
@@ -1117,7 +1190,7 @@ function toast(msg, actions = [], ms = 3500, kind = 'ok') {
   if (el.parentNode !== host) host.append(el);
   el.innerHTML = `${kind === 'alert' ? icon('alert', 20) : icon('tick', 20)}<span class="msg">${esc(msg)}</span>${actions.map((a, i) => `<button type="button" data-t="${i}">${esc(a.label)}</button>`).join('')}`;
   actions.forEach((a, i) => el.querySelector(`[data-t="${i}"]`).addEventListener('click', () => { hideToast(); a.fn(); }));
-  el.classList.toggle('lift', state.view === 'tasks');
+  el.classList.toggle('lift', state.view === 'tasks' || state.view === 'capture');
   el.classList.remove('out');
   el.hidden = false;
   clearTimeout(toastTimer);
@@ -1158,7 +1231,6 @@ function render() {
   const d = state.data;
   if (!d || !d.me) return;
   $('#cap-household').textContent = d.household.name;
-  $('#list-household').textContent = d.household.name;
   if (state.view === 'detail' && !taskById(state.detailId)) state.view = 'tasks';
   if (state.view === 'capture') renderCapture();
   if (state.view === 'tasks') renderTasks();
@@ -1166,7 +1238,8 @@ function render() {
   if (state.view === 'review') renderReview();
   show('v-' + state.view);
   if (state.view === 'tasks') markChipOverflow(); // needs the screen showing to measure
-  $('#toast').classList.toggle('lift', state.view === 'tasks');
+  $('#toast').classList.toggle('lift', state.view === 'tasks' || state.view === 'capture');
+  onScroll();
 }
 
 function attentionHtml(list) {
@@ -1330,13 +1403,68 @@ function doneChange(id, done, extra = {}) {
   });
 }
 
+// ---------------------------------------------------------------- Haptics and sound (set per phone in Settings)
+
+function localPref(key, fallback) { try { const v = localStorage.getItem(key); return v === null ? fallback : v; } catch (err) { return fallback; } }
+function setLocalPref(key, value) { try { localStorage.setItem(key, value); } catch (err) { /* this visit only */ } }
+const hapticsOn = () => localPref('melody-haptics', '1') === '1';
+const soundOn = () => localPref('melody-sound', '0') === '1';
+
+/**
+ * A light tap under the finger. Android has the vibration API. iPhone web apps don't, but iOS 18
+ * answers the flip of a switch-style checkbox with a system tap, so a hidden one is flipped
+ * (unofficial: a later iOS may stop it). Older iPhones simply feel nothing.
+ */
+function haptic() {
+  if (!hapticsOn()) return;
+  if (navigator.vibrate) { try { navigator.vibrate(10); } catch (err) { /* fine */ } return; }
+  let label = haptic.el;
+  if (!label) {
+    label = document.createElement('label');
+    label.dataset.haptic = '';
+    label.setAttribute('aria-hidden', 'true');
+    label.style.cssText = 'position:fixed;left:-20px;top:0;width:1px;height:1px;overflow:hidden;opacity:0;pointer-events:none';
+    label.innerHTML = '<input type="checkbox" switch tabindex="-1">';
+    haptic.el = label;
+  }
+  // Inside an open dialog, since everything else on the page is then out of reach.
+  const host = $$('dialog[open]').pop() || document.body;
+  if (label.parentNode !== host) host.append(label);
+  label.click();
+}
+
+/** A soft two-note chime for finishing a task. Off unless switched on; stays quiet with the phone on silent. */
+function chime() {
+  if (!soundOn()) return;
+  const AC = window.AudioContext || window.webkitAudioContext;
+  if (!AC) return;
+  try {
+    if (navigator.audioSession) navigator.audioSession.type = 'ambient'; // mixes with music, obeys the silent switch
+    const ctx = new AC();
+    const t = ctx.currentTime + 0.02;
+    [[784, 0], [1175, 0.09]].forEach(([freq, delay]) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.0001, t + delay);
+      gain.gain.exponentialRampToValueAtTime(0.16, t + delay + 0.012);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t + delay + 0.35);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(t + delay);
+      osc.stop(t + delay + 0.4);
+    });
+    setTimeout(() => ctx.close().catch(() => {}), 700); // let go of the phone's audio straight after
+  } catch (err) { /* no sound is fine */ }
+}
+
 /** The tick: fills at once, the row shows as done, then leaves the list. */
 function toggleDone(id, { linger = true } = {}) {
   const t = taskById(id);
   if (!t) return;
   const done = !t.done;
   const repeating = done && t.repeats !== 'Never' && t.dueDate;
-  if (done) state.pop.set(t.id, performance.now());
+  if (done) { state.pop.set(t.id, performance.now()); haptic(); chime(); }
   if (linger && state.view === 'tasks') lingerRow(t.id);
   doneChange(t.id, done, {
     done: (reply) => {
@@ -1398,6 +1526,7 @@ function createTask(data) {
 }
 
 function setStep(id, index, done) {
+  if (done) haptic();
   mutate({
     label: done ? 'Prep step done' : 'Prep step undone',
     key: `prep:${realId(id)}:${index}`,
@@ -1542,7 +1671,17 @@ function undoVoiceEdit() {
 
 function renderReview() {
   const tasks = state.reviewIds.map(taskById).filter(Boolean);
-  if (!tasks.length) { state.view = 'capture'; renderCapture(); show('v-capture'); return; }
+  // Waiting for the server (the reply can land a moment before its tasks are handed over).
+  const waiting = state.reviewWait ? { text: state.reviewText || '' } : null;
+  $('#review-sub').textContent = waiting ? 'Saving what you said…' : 'Already saved. Tap anything to change it.';
+  $('#review-badge').hidden = Boolean(waiting);
+  $('#review-save').textContent = waiting ? 'Save' : `Save${tasks.length > 1 ? ` ${tasks.length} tasks` : ''}`;
+  if (waiting && !tasks.length) {
+    $('#review-list').innerHTML = `<article class="rcard waiting" aria-live="polite"><q class="rcard-quote" dir="auto">${esc(waiting.text)}</q>
+      <span class="row-meta"><span class="spinner" aria-hidden="true"></span> Understanding…</span></article>`;
+    return;
+  }
+  if (!tasks.length) { const back = state.reviewFrom || 'capture'; state.view = back; if (back === 'tasks') renderTasks(); else renderCapture(); show('v-' + back); return; }
   // A new set of cards (not the same ones with their saved ids filled in) animates in, once.
   const ids = state.reviewIds.map(realId);
   if (!ids.some((id) => reviewSeen.ids.has(id))) reviewSeen = { at: Date.now(), ids: new Set() };
@@ -1570,6 +1709,7 @@ let reviewSeen = { at: 0, ids: new Set() };
 
 const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
 let recording = null; // the recording in progress: { finish(how) }
+let recognizer = null; // reused between recordings
 let recClock = null;
 
 /**
@@ -1577,7 +1717,7 @@ let recClock = null;
  * Every way a recording ends goes through finish(), which lets go of the microphone at once: a
  * recognizer left running is what makes the phone play its microphone sound when the app is put away.
  */
-function listen({ label = 'Listening', onText, onUnavailable }) {
+function listen({ label = 'Listening', onText, onUnavailable, retried = false }) {
   if (!SpeechRec) { onUnavailable('none'); return; }
   if (recording) recording.finish('cancel');
   const dlg = $('#d-record');
@@ -1599,7 +1739,8 @@ function listen({ label = 'Listening', onText, onUnavailable }) {
   }, 500);
   if (!dlg.open) dlg.showModal();
 
-  const r = new SpeechRec();
+  // One recognizer for the whole visit: some iPhones ask for the microphone again for every new one.
+  const r = recognizer || (recognizer = new SpeechRec());
   r.lang = navigator.language || 'en-GB';
   r.interimResults = true;
   r.continuous = false;
@@ -1640,6 +1781,7 @@ function listen({ label = 'Listening', onText, onUnavailable }) {
   r.onend = () => finish('ended');
   $('#rec-cancel').onclick = () => finish('cancel');
   $('#rec-stop').onclick = () => {
+    haptic();
     try { r.stop(); } catch (err) { finish('stopped'); return; }
     // Some phones never report the end: let go of the microphone anyway.
     clearTimeout(stopGuard);
@@ -1647,8 +1789,20 @@ function listen({ label = 'Listening', onText, onUnavailable }) {
   };
   dlg.oncancel = (e) => { e.preventDefault(); finish('cancel'); };
   try {
+    if (navigator.audioSession) { try { navigator.audioSession.type = 'auto'; } catch (err) { /* fine */ } }
     r.start();
+    haptic();
   } catch (err) {
+    // A recognizer that's still winding down can't start again yet: use a fresh one this time.
+    if (err && err.name === 'InvalidStateError' && !retried) {
+      recognizer = null;
+      finished = true;
+      clearInterval(recClock);
+      if (dlg.open) dlg.close();
+      recording = null;
+      listen({ label, onText, onUnavailable, retried: true });
+      return;
+    }
     failed = true;
     finish('cancel');
     onUnavailable('blocked');
@@ -1715,48 +1869,54 @@ function heardRow(t) {
  */
 function handleCapture(text) {
   const pid = ++sync.seq;
+  // Straight to Review: it shows what was said as "Understanding…" and fills in when the reply comes.
+  if (state.view !== 'review') state.reviewFrom = state.view === 'tasks' ? 'tasks' : 'capture';
+  state.reviewIds = [];
+  state.reviewWait = pid;
+  state.reviewText = text;
   mutate({
     label: 'Capture',
     apply: (d) => { d.pending = (d.pending || []).concat({ pid, text }); },
     send: () => run('capture', text, SLIM),
-    done: (res) => showCaptured(res),
-    fail: (err) => toast(`Couldn't save that: ${err instanceof ServerError ? err.message : 'no connection'}`, [
-      { label: 'Retry', fn: () => handleCapture(text) },
-      { label: 'Edit', fn: () => openTypeCapture('Nothing was saved. Check the words and tap Save.', text) },
-    ], 10000, 'alert'),
+    done: (res) => showCaptured(res, pid),
+    fail: (err) => {
+      if (state.reviewWait === pid) { state.reviewWait = null; if (state.view === 'review') go(state.reviewFrom || 'capture'); }
+      toast(`Couldn't save that: ${err instanceof ServerError ? err.message : 'no connection'}`, [
+        { label: 'Retry', fn: () => handleCapture(text) },
+        { label: 'Edit', fn: () => openTypeCapture('Nothing was saved. Check the words and tap Save.', text) },
+      ], 10000, 'alert');
+    },
   });
+  go('review');
 }
 
-function showCaptured(res) {
+/** The server's reply to a capture: fills the Review screen if it's still open, otherwise a toast. */
+function showCaptured(res, pid) {
   const ids = (res && res.captured) || [];
-  if (!ids.length) return;
+  const waiting = state.reviewWait === pid;
+  if (waiting) state.reviewWait = null;
+  if (state.reviewDiscard === pid) { state.reviewDiscard = null; if (ids.length) discard(ids, { quiet: true }); return; }
+  if (!ids.length) {
+    if (waiting && state.view === 'review') go(state.reviewFrom || 'capture');
+    toast((res && res.notice) || "Didn't find a task in that. Try again.");
+    return;
+  }
   ids.forEach((id) => state.fresh.add(id));
   setTimeout(() => { ids.forEach((id) => state.fresh.delete(id)); }, 1600);
+  if (waiting && state.view === 'review') {
+    state.reviewIds = ids;
+    quietDraw();
+    if (res.notice) toast(res.notice);
+    return;
+  }
   quietDraw();
-  const idle = !$('dialog[open]') && ['capture', 'tasks'].includes(state.view) && !document.hidden && !busyEditing();
-  if (!idle) { savedToast(ids); return; }
-  const dlg = $('#d-heard');
-  captured = ids;
-  const tasks = ids.map(taskById).filter(Boolean);
-  $('#heard-title').textContent = `Got it: ${tasks.length} task${tasks.length === 1 ? '' : 's'}`;
-  $('#heard-sub').textContent = res.notice || `Saving in ${AUTO_SAVE_SECONDS} seconds unless you tap Review.`;
-  $('#heard-list').innerHTML = tasks.map(heardRow).join('');
-  $('#heard-quote').hidden = true;
-  $('#heard-actions').hidden = false;
-  $('#heard-discard').hidden = false;
-  dlg.showModal();
-  const ring = $('#heard-save .ring');
-  ring.classList.remove('go');
-  void ring.getBoundingClientRect();
-  ring.classList.add('go');
-  clearTimeout(heardTimer);
-  heardTimer = setTimeout(finishCapture, AUTO_SAVE_SECONDS * 1000);
+  savedToast(ids);
 }
 
 function savedToast(ids) {
   const n = ids.length;
   toast(`Saved ${n} task${n === 1 ? '' : 's'}`, [
-    { label: 'Review', fn: () => { state.reviewIds = ids; go('review'); } },
+    { label: 'Review', fn: () => { if (state.view !== 'review') state.reviewFrom = state.view === 'tasks' ? 'tasks' : 'capture'; state.reviewIds = ids; go('review'); } },
     { label: 'Undo', fn: () => discard(ids) },
   ]);
 }
@@ -1773,14 +1933,14 @@ function finishCapture() {
   savedToast(ids);
 }
 
-function discard(ids) {
+function discard(ids, { quiet = false } = {}) {
   const wanted = new Set(ids.map(realId));
   mutate({
     label: 'Discard',
     apply: (d) => { d.tasks = d.tasks.filter((t) => !wanted.has(t.id)); },
     send: () => run('discardCapture', [...wanted], SLIM),
   });
-  toast('Not saved');
+  if (!quiet) toast('Not saved');
 }
 
 $('#heard-save').addEventListener('click', finishCapture);
@@ -1810,12 +1970,20 @@ function discardSoon(ids) {
   toast(`Discarded ${n} task${n === 1 ? '' : 's'}`, [{ label: 'Undo', fn: () => toast(cancel(op) ? 'Brought back' : 'Too late: already discarded') }], 6000);
 }
 
-$('#review-close').addEventListener('click', () => go('capture'));
+// Closing Review keeps the tasks (they're already saved); Save says so and offers Undo.
+function leaveReview() { go(state.reviewFrom || 'capture'); }
+$('#review-close').addEventListener('click', leaveReview);
+$('#review-save').addEventListener('click', () => {
+  const ids = state.reviewIds.slice();
+  leaveReview();
+  if (ids.length) savedToast(ids);
+});
 $('#review-discard').addEventListener('click', () => {
   const ids = state.reviewIds.slice();
   state.reviewIds = [];
-  go('capture');
-  discardSoon(ids);
+  if (state.reviewWait) { state.reviewDiscard = state.reviewWait; state.reviewWait = null; }
+  leaveReview();
+  if (ids.length) discardSoon(ids); else toast('Not saved');
 });
 $('#d-heard').addEventListener('cancel', (e) => { e.preventDefault(); if (captured.length) finishCapture(); });
 
@@ -2096,7 +2264,6 @@ document.addEventListener('click', (e) => {
 
 $('#cap-mic').addEventListener('click', startCapture);
 $('#list-mic').addEventListener('click', startCapture);
-$('#cap-type').addEventListener('click', () => openTypeCapture());
 $('#cap-attention').addEventListener('click', () => openAttention(needsDate()));
 $('#list-attention').addEventListener('click', () => openAttention(needsDate()));
 $('#filters').addEventListener('click', (e) => {
@@ -2107,7 +2274,7 @@ $('#filters').addEventListener('click', (e) => {
   state.filter = b.dataset.filter === state.filter && b.dataset.filter === 'nodate' ? 'all' : b.dataset.filter;
   renderTasks();
 });
-$('#add-btn').addEventListener('click', () => openForm(null));
+$$('[data-add]').forEach((b) => b.addEventListener('click', () => openForm(null)));
 $('#detail-back').addEventListener('click', () => go(state.cameFrom || 'tasks'));
 $('#detail-more').addEventListener('click', () => {
   const t = taskById(state.detailId);
@@ -2293,6 +2460,7 @@ document.addEventListener('pointerdown', (e) => {
   }
 }, true);
 document.addEventListener('click', (e) => {
+  if (e.target.closest && e.target.closest('[data-haptic]')) return; // the hidden haptic switch
   if (perf.on) {
     perf.tapAt = e.timeStamp || performance.now();
     const b = e.target.closest('button, a, label');
@@ -2305,8 +2473,45 @@ $('#list').addEventListener('pointerdown', (e) => {
   if (e.pointerType === 'mouse' && e.button !== 0) return;
   const wrap = e.target.closest('.swipe');
   if (!wrap || swipe.animating || swipe.suppressClick || e.target.closest('[data-swipe-del]')) return;
-  swipe.tracking = { wrap, id: Number(wrap.dataset.row), x0: e.clientX, y0: e.clientY, dx: 0, axis: null, pointerId: e.pointerId, width: wrap.offsetWidth, armed: false, samples: [] };
+  const s = { wrap, id: Number(wrap.dataset.row), x0: e.clientX, y0: e.clientY, dx: 0, axis: null, pointerId: e.pointerId, width: wrap.offsetWidth, armed: false, samples: [] };
+  // Hold still on a row for a moment: quick actions.
+  s.press = setTimeout(() => {
+    if (swipe.tracking !== s || s.axis) return;
+    swipe.tracking = null;
+    swipe.suppressClick = true; // the release isn't a tap
+    quickActions(s.id);
+  }, LONG_PRESS_MS);
+  swipe.tracking = s;
 });
+const LONG_PRESS_MS = 450;
+// Right-click on a computer, and long-press on phones that report it this way.
+$('#list').addEventListener('contextmenu', (e) => {
+  const wrap = e.target.closest('.swipe');
+  if (!wrap) return;
+  e.preventDefault();
+  if (swipe.tracking) { clearTimeout(swipe.tracking.press); swipe.tracking = null; }
+  quickActions(Number(wrap.dataset.row));
+});
+
+/** Long-press menu for a task: the things you'd otherwise open the task for. */
+function quickActions(id) {
+  const t = taskById(id);
+  if (!t || $('#d-choose').open) return;
+  haptic();
+  choose(t.title, [
+    { label: 'Open', value: 'open' },
+    { label: t.done ? 'Mark not done' : 'Mark done', value: 'done' },
+    { label: 'Change who', value: 'who' },
+    { label: t.dueDate ? 'Change date' : 'Add a date', value: 'when' },
+    { label: 'Delete', value: 'delete', danger: true },
+  ], (v) => {
+    if (v === 'open') openDetail(t.id);
+    else if (v === 'done') toggleDone(t.id);
+    else if (v === 'who') chooseOwner(t.id);
+    else if (v === 'when') openWhen(t.id);
+    else if (v === 'delete') deleteSoon(t.id);
+  });
+}
 
 window.addEventListener('pointermove', (e) => {
   const s = swipe.tracking;
@@ -2315,6 +2520,7 @@ window.addEventListener('pointermove', (e) => {
   const dy = e.clientY - s.y0;
   if (!s.axis) {
     if (Math.abs(dx) < SWIPE_LOCK && Math.abs(dy) < SWIPE_LOCK) return;
+    clearTimeout(s.press);
     s.axis = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y';
     if (s.axis === 'y') { swipe.tracking = null; return; } // scrolling the list: never a swipe
     try { rowOf(s.wrap).setPointerCapture(e.pointerId); } catch (err) { /* fine */ }
@@ -2328,7 +2534,7 @@ window.addEventListener('pointermove', (e) => {
   if (armed !== s.armed) {
     s.armed = armed;
     s.wrap.classList.toggle('armed', armed);
-    if (armed && navigator.vibrate) { try { navigator.vibrate(10); } catch (err) { /* fine */ } }
+    if (armed) haptic();
   }
 }, { passive: false });
 
@@ -2336,6 +2542,7 @@ function endSwipe(e, cancelled) {
   const s = swipe.tracking;
   if (!s || e.pointerId !== s.pointerId) return;
   swipe.tracking = null;
+  clearTimeout(s.press);
   if (s.axis !== 'x') return;
   swipe.suppressClick = !cancelled; // the click that ends a drag isn't a tap
   if (perf.on) { perf.tapAt = e.timeStamp || performance.now(); perf.tapLabel = 'swipe'; }
@@ -2376,9 +2583,156 @@ function swipeDelete(wrap) {
   swipeAway(wrap, -1, () => deleteSoon(id));
 }
 
+// ---------------------------------------------------------------- Swipe back from the left edge
+
+// On a task, on Review and in Settings, a drag from the left edge goes back, like any phone app.
+// The page follows the finger; past a third of the width or on a quick flick it goes, otherwise it springs back.
+const EDGE_ZONE = 24;
+const edge = { t: null };
+document.addEventListener('pointerdown', (e) => {
+  edge.t = null;
+  if (e.clientX > EDGE_ZONE || (e.pointerType === 'mouse' && e.button !== 0)) return;
+  const settings = $('#d-settings');
+  const open = $$('dialog[open]');
+  if (open.length && !(open.length === 1 && open[0] === settings)) return;
+  if (!open.length && !['detail', 'review'].includes(state.view)) return;
+  edge.t = { x0: e.clientX, y0: e.clientY, id: e.pointerId, axis: null, dx: 0, dlg: open[0] || null, samples: [] };
+}, true);
+
+window.addEventListener('pointermove', (e) => {
+  const s = edge.t;
+  if (!s || e.pointerId !== s.id) return;
+  const dx = e.clientX - s.x0;
+  const dy = e.clientY - s.y0;
+  if (!s.axis) {
+    if (Math.abs(dx) < 10 && Math.abs(dy) < 10) return;
+    if (dx <= 0 || Math.abs(dy) > Math.abs(dx)) { edge.t = null; return; }
+    s.axis = 'x';
+    edgeBegin(s);
+  }
+  if (e.cancelable) e.preventDefault();
+  s.dx = Math.max(0, dx);
+  s.samples.push([e.timeStamp || performance.now(), dx]);
+  if (s.samples.length > 5) s.samples.shift();
+  edgeShow(s, s.dx);
+}, { passive: false });
+window.addEventListener('pointerup', (e) => edgeEnd(e, false));
+window.addEventListener('pointercancel', (e) => edgeEnd(e, true));
+
+function edgeBegin(s) {
+  s.w = window.innerWidth;
+  if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+  if (s.dlg) { s.el = s.dlg; return; }
+  // Freeze this page where it is and draw the one it goes back to underneath.
+  s.from = state.view;
+  s.back = state.view === 'detail' ? (state.cameFrom || 'tasks') : (state.reviewFrom || 'capture');
+  s.y = window.scrollY;
+  s.el = $(`#v-${s.from}`);
+  s.el.classList.add('edge-drag');
+  s.el.style.top = `${-s.y}px`;
+  s.under = $(`#v-${s.back}`);
+  if (s.back === 'tasks') renderTasks(); else if (s.back === 'capture') renderCapture(); else if (s.back === 'review') renderReview();
+  s.under.hidden = false;
+  s.under.classList.add('edge-under');
+  window.scrollTo(0, s.back === 'tasks' ? state.listScroll || 0 : 0);
+}
+
+function edgeShow(s, x) {
+  const p = Math.min(1, x / s.w);
+  s.el.style.transform = `translateX(${x}px)`;
+  if (s.under) {
+    s.under.style.transform = `translateX(${(p - 1) * 25}%)`;
+    s.under.style.setProperty('--edge-dim', String(0.12 * (1 - p)));
+  }
+}
+
+function edgeEnd(e, cancelled) {
+  const s = edge.t;
+  if (!s || e.pointerId !== s.id) return;
+  edge.t = null;
+  if (s.axis !== 'x') return;
+  swipe.suppressClick = true; // the release isn't a tap
+  setTimeout(() => { swipe.suppressClick = false; }, 0);
+  const [t0, x0] = s.samples[0] || [0, 0];
+  const [t1, x1] = s.samples[s.samples.length - 1] || [0, 0];
+  const v = t1 > t0 ? (x1 - x0) / (t1 - t0) : 0;
+  const goBack = !cancelled && (s.dx > s.w / 3 || (v > 0.4 && s.dx > 30));
+  const settle = (fn) => {
+    if (REDUCED_MOTION) { fn(); return; }
+    [s.el, s.under].filter(Boolean).forEach((el) => el.classList.add('edge-settle'));
+    setTimeout(fn, 240);
+  };
+  edgeShow(s, goBack ? s.w : 0);
+  if (goBack) haptic();
+  settle(() => {
+    [s.el, s.under].filter(Boolean).forEach((el) => {
+      el.classList.remove('edge-settle', 'edge-drag', 'edge-under');
+      el.style.transform = '';
+      el.style.top = '';
+      el.style.removeProperty('--edge-dim');
+    });
+    if (s.dlg) { if (goBack) s.dlg.close(); return; }
+    if (goBack) {
+      closeSwipe(false);
+      state.view = s.back;
+      if (s.back !== 'detail') state.lastEdit = null;
+      render();
+      window.scrollTo(0, s.back === 'tasks' ? state.listScroll || 0 : 0);
+      onScroll();
+    } else {
+      s.under.hidden = true;
+      window.scrollTo(0, s.y);
+    }
+  });
+}
+
+// ---------------------------------------------------------------- Pull down to refresh (Tasks)
+
+// Touch events, so the phone's own scrolling never cancels them. Only from the very top of the list.
+const pull = { y0: null, d: 0 };
+const PULL_AT = 70;
+document.addEventListener('touchstart', (e) => {
+  pull.y0 = null;
+  if (state.view !== 'tasks' || window.scrollY > 0 || $('dialog[open]') || e.touches.length !== 1 || swipe.tracking && swipe.tracking.axis) return;
+  pull.y0 = e.touches[0].clientY;
+  pull.x0 = e.touches[0].clientX;
+  pull.d = 0;
+}, { passive: true });
+document.addEventListener('touchmove', (e) => {
+  if (pull.y0 === null) return;
+  const dy = e.touches[0].clientY - pull.y0;
+  const dx = Math.abs(e.touches[0].clientX - pull.x0);
+  if (window.scrollY > 0 || dy <= 0 || dx > dy || (swipe.tracking && swipe.tracking.axis === 'x')) { pullShow(0); if (dx > 10 && dx > dy) pull.y0 = null; return; }
+  pullShow(Math.min(110, dy * 0.5));
+}, { passive: true });
+document.addEventListener('touchend', () => {
+  if (pull.y0 === null) return;
+  pull.y0 = null;
+  if (pull.d < PULL_AT) { pullShow(0); return; }
+  const el = $('#pull');
+  el.classList.add('spin');
+  el.classList.remove('ready');
+  el.style.transform = 'translateY(24px)';
+  const started = Date.now();
+  Promise.resolve(refresh()).catch(() => {}).then(() => {
+    setTimeout(() => { el.classList.remove('spin'); pullShow(0); }, Math.max(0, 600 - (Date.now() - started)));
+  });
+});
+function pullShow(d) {
+  const el = $('#pull');
+  const was = pull.d >= PULL_AT;
+  pull.d = d;
+  el.style.opacity = String(Math.min(1, d / 40));
+  el.style.transform = `translateY(${d - 48}px)`;
+  el.classList.toggle('ready', d >= PULL_AT);
+  if (!was && d >= PULL_AT) haptic();
+}
+
 // ---------------------------------------------------------------- Settings
 
 function fillPrefs() {
+  $('#p-haptics').checked = hapticsOn();
+  $('#p-sound').checked = soundOn();
   const ts = document.documentElement.dataset.ts || '';
   $$('#text-size button').forEach((b) => b.setAttribute('aria-checked', String(b.dataset.ts === ts)));
   const p = state.data.me.prefs;
@@ -2388,7 +2742,8 @@ function fillPrefs() {
   $('#p-calendar').checked = p.calendarInvites;
 }
 
-$('#settings-btn').addEventListener('click', () => {
+$$('[data-settings]').forEach((b) => b.addEventListener('click', () => openSettings()));
+function openSettings() {
   const d = state.data;
   fillPrefs();
   renderPeople();
@@ -2401,15 +2756,18 @@ $('#settings-btn').addEventListener('click', () => {
     ? 'Understanding speech: Claude.' : "Understanding speech: simple rules (Claude isn't set up). Say one thing per sentence for best results.";
   $('#activity-list').hidden = true;
   $('#d-settings').showModal();
-});
+}
 
-$$('#d-settings .toggle input').forEach((box) => box.addEventListener('change', () => {
+$$('#d-settings .toggle:not(.local) input').forEach((box) => box.addEventListener('change', () => {
   savePrefs({
     emailReminders: $('#p-reminders').checked, emailUpdates: $('#p-updates').checked,
     morningSummary: $('#p-summary').checked, calendarInvites: $('#p-calendar').checked,
   });
   toast('Saved');
 }));
+
+$('#p-haptics').addEventListener('change', (e) => { setLocalPref('melody-haptics', e.target.checked ? '1' : '0'); if (e.target.checked) haptic(); });
+$('#p-sound').addEventListener('change', (e) => { setLocalPref('melody-sound', e.target.checked ? '1' : '0'); if (e.target.checked) chime(); });
 
 // Text size: kept on this phone, and applied before the page draws (see the top of the page).
 $('#text-size').addEventListener('click', (e) => {

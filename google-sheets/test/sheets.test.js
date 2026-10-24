@@ -111,10 +111,9 @@ test('plain-language entry becomes a readable row in the sheet', () => {
   assert.equal(row.Owner, 'Sara');
   assert.equal(row.Done, false);
   assert.equal(row.Reminders, '1 day, 1 hour');
-  assert.match(row['Prep steps'], /^☐ Empty the cupboard under the sink \(same day\)\n☐ Confirm the appointment with the contractor \(1 day before\)/);
+  assert.equal(row['Prep steps'], '☐ Empty the cupboard under the sink (same day)', 'only the step that was said; none added for "plumber"');
   const task = state.tasks[0];
   assert.equal(task.when, 'Thu 15 Oct, 10:00');
-  assert.equal(task.prep[1].when, 'Wed 14 Oct, 18:00');
   assert.equal(gas.rows('Activity')[1].What, 'added');
 });
 
@@ -370,8 +369,12 @@ test('rules: a goal and its errands become one task with prep steps, and titles 
   assert.equal(ragu.title, 'Cook a ragu');
   assert.deepEqual([ragu.dueDate, ragu.time, ragu.owner], ['2026-10-11', '19:00', 'Naser']);
   assert.deepEqual(ragu.prep.map((p) => [p.title, p.daysBefore]), [
-    ['Go to the grocery store', 0], ['Get the groceries', 0], ['Pick up the special sauce', 0],
-  ], 'the errands said, in order; "cook the meal" is the task itself, and nothing is invented');
+    ['Get the groceries at the grocery store', 0], ['Pick up the special sauce', 0],
+  ], 'the errands said, in order ("go to the store, get the groceries" is one step); "cook the meal" is the task itself, and nothing is invented');
+  assert.ok(!/fridge|pantry|shopping list/i.test(ragu.prep.map((p) => p.title).join()), 'no built-in steps for cooking or shopping');
+
+  const [meaning] = captured(gas.call(NASER, 'capture', 'I need to cook a ragu tonight, which means I need to get groceries and then pick up the special sauce from next door'));
+  assert.deepEqual(meaning.prep.map((p) => p.title), ['Get groceries', 'Pick up the special sauce'], '"which means" works like "so"');
   assert.match(ragu.notes, /special sauce: from the shop next to the grocery store/, 'details that were cut are kept in the note');
 
   const three = captured(gas.call(NASER, 'capture', THREE));
