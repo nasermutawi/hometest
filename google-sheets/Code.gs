@@ -980,7 +980,7 @@ function splitCapture_(text) {
 // "<goal>, so I need to <step>, <step> and then <step>". Only when the goal is itself something
 // to do ("I need to cook...", "let's paint..."), so "the car is making a noise, so I need to book
 // the garage" stays an ordinary task.
-const GOAL_SO = /^(.+?)[,;]?\s+so\s+(?:i|we|you)(?:'ll| will)?\s+(?:need|have|got|'ve got|must|should)\s+to\s+(.+)$/i;
+const GOAL_SO = /^(.+?)[,;]?\s+(?:so|which means|that means|meaning|for (?:that|which))\s+(?:that\s+)?(?:i|we|you)(?:'ll| will)?\s+(?:need|have|got|'ve got|must|should)\s+to\s+(.+)$/i;
 const GOAL_IS_A_TASK = /\b(?:need|needs|have|has|want|wants|going|got) to\b|^\s*(?:i'll|we'll|let's|i will|we will)\b/i;
 
 function goalWithSteps_(sentence) {
@@ -991,7 +991,15 @@ function goalWithSteps_(sentence) {
     .map((x) => x.trim().replace(/^(?:(?:i|we|you)(?:'ll| will)?\s+)?(?:(?:need|have|got) to\s+|to\s+)?/i, '').replace(/[.!?]+$/, ''))
     .filter((x) => x.replace(/[^a-z]/gi, '').length > 2)
     // "...and then cook the meal": the goal itself, not a step.
-    .filter((x) => firstWord_(x) !== goalVerb);
+    .filter((x) => firstWord_(x) !== goalVerb)
+    // "go to the grocery store, get the groceries": one step, "Get the groceries at the grocery store".
+    .reduce((out, x) => {
+      const prev = out[out.length - 1];
+      const place = prev && /^go (?:to|into) (.+)$/i.exec(prev);
+      if (place && !/\b(?:at|from|in) /i.test(x)) out[out.length - 1] = `${x} at ${place[1]}`;
+      else out.push(x);
+      return out;
+    }, []);
   if (!steps.length) return null;
   return { goal: m[1], steps, said: sentence };
 }

@@ -39,12 +39,12 @@ test('owners: named member, "I" means the speaker, otherwise ask', () => {
   assert.match(unknown.questions[0], /Who should own this/);
 });
 
-test('detects explicit and implied preparation', () => {
+test('prep steps come only from what was said', () => {
   const draft = parse('Electrician coming Friday at 8am, make sure we clear the hallway first');
   assert.equal(draft.category, 'contractor');
   const titles = draft.prep_steps.map((s) => s.title);
   assert.ok(titles.includes('Clear the hallway'), titles.join('|'));
-  assert.ok(titles.includes('Confirm the appointment with the contractor'));
+  assert.ok(!titles.includes('Confirm the appointment with the contractor'), 'no steps that were not said');
   assert.equal(draft.title, 'Electrician coming');
 });
 

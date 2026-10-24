@@ -55,3 +55,17 @@ Short and soft: 120 ms taps, 220 ms UI changes, gentle springs on sheets. Everyt
 - Toasts rise 8 px and fade in (200 ms) and leave the same way (150 ms).
 - Lists and navigation never animate: they are used too often.
 - Text size (Standard, Larger 1.12x, Largest 1.25x) is a per-phone setting. Pinch zoom stays off.
+
+## Screen space
+
+The top and bottom of every screen stay minimal so the content gets the room.
+
+- Headers: about 50–56px. Tasks uses a large title that turns into a 44px one-line title (blurred oat) once you scroll. Back and ✕ stay pinned on long pages.
+- Bottom bar: 56px plus the home-indicator area, 44px buttons, the microphone a 56px damson pebble sitting up out of the bar. On Tasks it steps aside while scrolling down.
+- No loading bars for background work; a thin bar only for a save still going after 5 seconds.
+
+## Gestures and feedback
+
+- Swipe rows (right: done, left: Delete), drag sheets down, swipe back from the left edge, long-press a task for quick actions, pull down on Tasks to refresh. Every gesture also has a visible button.
+- Light haptic taps on commits (done, a swipe passing its point, mic start/stop, long-press, back). On by default, per phone.
+- Completion chime: off by default, per phone.
