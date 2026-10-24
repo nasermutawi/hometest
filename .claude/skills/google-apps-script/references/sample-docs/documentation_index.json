@@ -1,0 +1,3727 @@
+{
+  "total_files": 76,
+  "categories": {
+    "other": [
+      ".gemini/GEMINI.md",
+      ".github/ISSUE_TEMPLATE.md",
+      ".github/pull_request_template.md",
+      "advanced/README.md",
+      "ai/autosummarize/README.md",
+      "ai/custom-func-ai-agent/README.md",
+      "ai/custom-func-ai-studio/README.md",
+      "ai/custom_func_vertex/README.md",
+      "ai/devdocs-link-preview/README.md",
+      "ai/drive-rename/README.md",
+      "ai/email-classifier/README.md",
+      "ai/gmail-sentiment-analysis/README.md",
+      "ai/standup-chat-app/README.md",
+      "chat/advanced-service/README.md",
+      "chat/quickstart/README.md",
+      "docs/README.md",
+      "docs/dialog2sidebar/README.md",
+      "docs/translate/README.md",
+      "forms/README.md",
+      "forms/notifications/README.md",
+      "gmail/README.md",
+      "gmail-sentiment-analysis/README.md",
+      "picker/README.md",
+      "sheets/README.md",
+      "sheets/dateAddAndSubtract/README.md",
+      "sheets/next18/README.md",
+      "slides/README.md",
+      "slides/SpeakerNotesScript/README.md",
+      "solutions/add-on/book-smartchip/README.md",
+      "solutions/add-on/share-macro/README.md",
+      "solutions/automations/agenda-maker/README.md",
+      "solutions/automations/aggregate-document-content/README.md",
+      "solutions/automations/bracket-maker/README.md",
+      "solutions/automations/calendar-timesheet/README.md",
+      "solutions/automations/content-signup/README.md",
+      "solutions/automations/course-feedback-response/README.md",
+      "solutions/automations/employee-certificate/README.md",
+      "solutions/automations/equipment-requests/README.md",
+      "solutions/automations/event-session-signup/README.md",
+      "solutions/automations/feedback-sentiment-analysis/README.md",
+      "solutions/automations/folder-creation/README.md",
+      "solutions/automations/generate-pdfs/README.md",
+      "solutions/automations/import-csv-sheets/README.md",
+      "solutions/automations/mail-merge/README.md",
+      "solutions/automations/news-sentiment/README.md",
+      "solutions/automations/offsite-activity-signup/README.md",
+      "solutions/automations/tax-loss-harvest-alerts/README.md",
+      "solutions/automations/timesheets/README.md",
+      "solutions/automations/upload-files/README.md",
+      "solutions/automations/vacation-calendar/README.md",
+      "solutions/automations/youtube-tracker/README.md",
+      "solutions/custom-functions/calculate-driving-distance/README.md",
+      "solutions/custom-functions/summarize-sheets-data/README.md",
+      "solutions/custom-functions/tier-pricing/README.md",
+      "solutions/editor-add-on/clean-sheet/README.md",
+      "solutions/ooo-assistant/README.md",
+      "solutions/webhook-chat-app/README.md",
+      "tasks/simpleTasks/README.md",
+      "wasm/README.md",
+      "wasm/hello-world/README.md",
+      "wasm/image-add-on/README.md",
+      "wasm/python/README.md"
+    ],
+    "contributing": [
+      "CONTRIBUTING.md"
+    ],
+    "overview": [
+      "GEMINI.md",
+      "README.md"
+    ],
+    "security": [
+      "SECURITY.md"
+    ],
+    "specifications": [
+      "docs/cursorInspector/README.md"
+    ],
+    "api": [
+      "forms-api/demos/AppsScriptFormsAPIWebApp/README.md",
+      "forms-api/snippets/README.md"
+    ],
+    "templates": [
+      "templates/README.md",
+      "templates/custom-functions/README.md",
+      "templates/docs-addon/README.md",
+      "templates/forms-addon/README.md",
+      "templates/sheets-addon/README.md",
+      "templates/sheets-import/README.md",
+      "templates/web-app/README.md"
+    ]
+  },
+  "files": [
+    {
+      "path": ".gemini/GEMINI.md",
+      "filename": "GEMINI.md",
+      "category": "other",
+      "size_bytes": 382,
+      "title": "Overview",
+      "structure": {
+        "title": "Overview",
+        "headers": [
+          {
+            "level": 1,
+            "text": "Overview",
+            "line": 1
+          },
+          {
+            "level": 2,
+            "text": "Style Guide",
+            "line": 5
+          },
+          {
+            "level": 2,
+            "text": "Tools",
+            "line": 9
+          }
+        ],
+        "code_blocks": [],
+        "tables": 0,
+        "images": 0,
+        "links": 0,
+        "word_count": 6,
+        "line_count": 13
+      },
+      "summary": "**Overview**\nSections: Style Guide, Tools\nThis codebase is part of the Google Workspace GitHub organization, https://github.com/googleworkspace.\n(6 words, 0 code blocks)",
+      "content": null,
+      "_enhanced": true,
+      "parsed_data": {
+        "tables": 0,
+        "cross_references": 0,
+        "code_blocks": 0,
+        "images": 0,
+        "quality_scores": {
+          "avg_code_quality": 0
+        }
+      }
+    },
+    {
+      "path": ".github/ISSUE_TEMPLATE.md",
+      "filename": "ISSUE_TEMPLATE.md",
+      "category": "other",
+      "size_bytes": 130,
+      "title": "Summary",
+      "structure": {
+        "title": "Summary",
+        "headers": [
+          {
+            "level": 1,
+            "text": "Summary",
+            "line": 1
+          },
+          {
+            "level": 2,
+            "text": "Expected Behavior",
+            "line": 5
+          },
+          {
+            "level": 2,
+            "text": "Actual Behavior",
+            "line": 10
+          },
+          {
+            "level": 2,
+            "text": "Steps to Reproduce the Problem",
+            "line": 13
+          }
+        ],
+        "code_blocks": [],
+        "tables": 0,
+        "images": 0,
+        "links": 0,
+        "word_count": 7,
+        "line_count": 18
+      },
+      "summary": "**Summary**\nSections: Expected Behavior, Actual Behavior, Steps to Reproduce the Problem\nTODO\n(7 words, 0 code blocks)",
+      "content": null,
+      "_enhanced": true,
+      "parsed_data": {
+        "tables": 0,
+        "cross_references": 0,
+        "code_blocks": 0,
+        "images": 0,
+        "quality_scores": {
+          "avg_code_quality": 0
+        }
+      }
+    },
+    {
+      "path": ".github/pull_request_template.md",
+      "filename": "pull_request_template.md",
+      "category": "other",
+      "size_bytes": 703,
+      "title": "Description",
+      "structure": {
+        "title": "Description",
+        "headers": [
+          {
+            "level": 1,
+            "text": "Description",
+            "line": 1
+          },
+          {
+            "level": 2,
+            "text": "Is it been tested?",
+            "line": 7
+          },
+          {
+            "level": 2,
+            "text": "Checklist",
+            "line": 10
+          }
+        ],
+        "code_blocks": [],
+        "tables": 0,
+        "images": 0,
+        "links": 0,
+        "word_count": 7,
+        "line_count": 19
+      },
+      "summary": "**Description**\nSections: Is it been tested?, Checklist\nPlease include a summary of the change and which issue is fixed. Please also include relevant motivation and context. List any dependencies that are required for this change.\n(7 words, 0 code blocks)",
+      "content": null,
+      "_enhanced": true,
+      "parsed_data": {
+        "tables": 0,
+        "cross_references": 0,
+        "code_blocks": 0,
+        "images": 0,
+        "quality_scores": {
+          "avg_code_quality": 0
+        }
+      }
+    },
+    {
+      "path": "CONTRIBUTING.md",
+      "filename": "CONTRIBUTING.md",
+      "category": "contributing",
+      "size_bytes": 1662,
+      "title": "How to become a contributor and submit your own code",
+      "structure": {
+        "title": "How to become a contributor and submit your own code",
+        "headers": [
+          {
+            "level": 1,
+            "text": "How to become a contributor and submit your own code",
+            "line": 1
+          },
+          {
+            "level": 2,
+            "text": "Contributor License Agreements",
+            "line": 3
+          },
+          {
+            "level": 2,
+            "text": "Contributing A Patch",
+            "line": 22
+          },
+          {
+            "level": 2,
+            "text": "Style",
+            "line": 33
+          }
+        ],
+        "code_blocks": [],
+        "tables": 0,
+        "images": 0,
+        "links": 3,
+        "word_count": 12,
+        "line_count": 37
+      },
+      "summary": "**How to become a contributor and submit your own code**\nSections: Contributor License Agreements, Contributing A Patch, Style\nWe'd love to accept your sample apps and patches! Before we can take them, we have to jump a couple of legal hurdles.\n(12 words, 0 code blocks)",
+      "content": null,
+      "_enhanced": true,
+      "parsed_data": {
+        "tables": 0,
+        "cross_references": 0,
+        "code_blocks": 0,
+        "images": 0,
+        "quality_scores": {
+          "avg_code_quality": 0
+        }
+      }
+    },
+    {
+      "path": "GEMINI.md",
+      "filename": "GEMINI.md",
+      "category": "overview",
+      "size_bytes": 11536,
+      "title": "Apps Script Sample Development Guide",
+      "structure": {
+        "title": "Apps Script Sample Development Guide",
+        "headers": [
+          {
+            "level": 1,
+            "text": "Apps Script Sample Development Guide",
+            "line": 1
+          },
+          {
+            "level": 2,
+            "text": "Important",
+            "line": 5
+          },
+          {
+            "level": 2,
+            "text": "Tools",
+            "line": 12
+          },
+          {
+            "level": 2,
+            "text": "Apps Script Code Best Practices",
+            "line": 21
+          },
+          {
+            "level": 3,
+            "text": "`let` and `const`",
+            "line": 25
+          },
+          {
+            "level": 3,
+            "text": "Arrow Functions",
+            "line": 41
+          },
+          {
+            "level": 3,
+            "text": "Destructuring",
+            "line": 49
+          },
+          {
+            "level": 3,
+            "text": "Template Literals",
+            "line": 60
+          },
+          {
+            "level": 3,
+            "text": "Default Parameters",
+            "line": 73
+          },
+          {
+            "level": 3,
+            "text": "Prefer `for...of` for Iteration",
+            "line": 84
+          },
+          {
+            "level": 2,
+            "text": "Apps Script V8 Runtime",
+            "line": 101
+          },
+          {
+            "level": 3,
+            "text": "Unavailable APIs",
+            "line": 108
+          },
+          {
+            "level": 3,
+            "text": "Asynchronous Limitations",
+            "line": 147
+          },
+          {
+            "level": 3,
+            "text": "Class Limitations",
+            "line": 168
+          },
+          {
+            "level": 3,
+            "text": "Module Limitations",
+            "line": 180
+          },
+          {
+            "level": 2,
+            "text": "Type Checking with JSDoc",
+            "line": 192
+          },
+          {
+            "level": 3,
+            "text": "Running Checks",
+            "line": 196
+          },
+          {
+            "level": 3,
+            "text": "Core Concepts",
+            "line": 211
+          },
+          {
+            "level": 4,
+            "text": "1. Basic Types",
+            "line": 213
+          },
+          {
+            "level": 4,
+            "text": "2. Apps Script Types",
+            "line": 228
+          },
+          {
+            "level": 4,
+            "text": "3. Optional Parameters",
+            "line": 243
+          },
+          {
+            "level": 3,
+            "text": "Advanced Patterns",
+            "line": 256
+          },
+          {
+            "level": 4,
+            "text": "1. Custom Objects (@typedef)",
+            "line": 258
+          },
+          {
+            "level": 4,
+            "text": "2. Type Casting",
+            "line": 278
+          },
+          {
+            "level": 4,
+            "text": "3. Arrays and Generics",
+            "line": 288
+          },
+          {
+            "level": 4,
+            "text": "4. Handling `null` and `undefined`",
+            "line": 301
+          },
+          {
+            "level": 3,
+            "text": "Common Issues & Fixes",
+            "line": 311
+          }
+        ],
+        "code_blocks": [
+          {
+            "language": "bash",
+            "code": "pnpm lint\npnpm format"
+          },
+          {
+            "language": "javascript",
+            "code": "const PI = 3.14;\nlet count = 0;\n\nif (true) {\n  let local = \"I exist only in this block\";\n}\n// local is not accessible here"
+          },
+          {
+            "language": "javascript",
+            "code": "const numbers = [1, 2, 3];\nconst squares = numbers.map(x => x * x); // [1, 4, 9]"
+          },
+          {
+            "language": "javascript",
+            "code": "const user = { name: \"Alice\", age: 30 };\nconst { name, age } = user;\n\nconst coords = [10, 20];\nconst [x, y] = coords;"
+          },
+          {
+            "language": "javascript",
+            "code": "const name = \"World\";\nconst greeting = `Hello, ${name}!`;\n\nconst multiLine = `\n  This is a\n  multi-line string.\n`;"
+          },
+          {
+            "language": "javascript",
+            "code": "function greet(name = \"Guest\") {\n  console.log(`Hello, ${name}!`);\n}\n\ngreet(); // \"Hello, Guest!\""
+          },
+          {
+            "language": "javascript",
+            "code": "const numbers = [1, 2, 3];\n\n// Using forEach (less performant for large arrays)\nnumbers.forEach(num => {\n  console.log(num);\n});\n\n// Using for...of (preferred)\nfor (const num of numbers) {\n  console.log(num);\n}"
+          },
+          {
+            "language": "text",
+            "code": "`TextDecoder`"
+          },
+          {
+            "language": "text",
+            "code": "`DOMException`, `atob`, `btoa`"
+          },
+          {
+            "language": "text",
+            "code": "(Node.js)"
+          },
+          {
+            "language": "text",
+            "code": "[`Utilities.sleep(milliseconds)`](https://developers.google.com/apps-script/reference/utilities/utilities#sleepmilliseconds)\nfor synchronous pauses. Asynchronous timers are not supported."
+          },
+          {
+            "language": "text",
+            "code": "params)`](https://developers.google.com/apps-script/reference/url-fetch/url-fetch-app) to make HTTP(S)\nrequests."
+          },
+          {
+            "language": "text",
+            "code": "[`Utilities.base64Decode()`](https://developers.google.com/apps-script/reference/utilities/utilities#base64decodeencoded)\nto decode Base64-encoded strings."
+          },
+          {
+            "language": "text",
+            "code": "[`Utilities.base64Encode()`](https://developers.google.com/apps-script/reference/utilities/utilities#base64encodedata)\nto encode strings in Base64."
+          },
+          {
+            "language": "text",
+            "code": "for cryptographic functions like\n[`computeDigest()`](https://developers.google.com/apps-script/reference/utilities/utilities#computedigestalgorithm,-value),\n[`computeHmacSha256Signature()`](https://developers.google.com/apps-script/reference/utilities/utilities#computehmacsha256signaturevalue,-key),\nand\n[`computeRsaSha256Signature()`](https://developers.google.com/apps-script/reference/utilities/utilities#computersasha256signaturevalue,-key)."
+          },
+          {
+            "language": "text",
+            "code": "`Promise.then()` callbacks and `await` resolutions occur) after the current\ncall stack clears."
+          },
+          {
+            "language": "text",
+            "code": "standard event loop for macrotasks. Functions like `setTimeout()` and\n`setInterval()` are not available."
+          },
+          {
+            "language": "text",
+            "code": "feature that operates in a non-blocking manner within the runtime, allowing\nfor specific asynchronous compilation patterns (WebAssembly.instantiate)."
+          },
+          {
+            "language": "text",
+            "code": "supported and cause parsing errors. Consider using closures or `WeakMap` for\ntrue encapsulation."
+          },
+          {
+            "language": "text",
+            "code": "(for example, `static count = 0;`) are not supported. Assign static\nproperties to the class after its definition (for example, `MyClass.count =\n0;`)."
+          },
+          {
+            "language": "text",
+            "code": "`export`). To use libraries, you must either use the [\nApps Script library mechanism](https://developers.google.com/apps-script/guides/libraries)\nor bundle your code and its dependencies into a single script file. ([Issue\nTracker](https://issuetracker.google.com/issues/134627726))"
+          },
+          {
+            "language": "text",
+            "code": "global scope. It's best to avoid top-level code with side effects and ensure\nfunctions and classes are defined before being used across files. Explicitly\norder your files in the editor if dependencies exist between them."
+          },
+          {
+            "language": "javascript",
+            "code": "/**\n * Adds two numbers.\n * @param {number} a The first number.\n * @param {number} b The second number.\n * @return {number} The sum.\n */\nfunction add(a, b) {\n  return a + b;\n}"
+          },
+          {
+            "language": "javascript",
+            "code": "/**\n * Gets the active sheet name.\n * @return {string} The name of the sheet.\n */\nfunction getSheetName() {\n  // Types like SpreadsheetApp, Sheet, Range are available globally\n  const sheet = SpreadsheetApp.getActiveSheet();\n  return sheet.getName();\n}"
+          },
+          {
+            "language": "javascript",
+            "code": "/**\n * @param {string} name The name.\n * @param {number=} age Optional age.\n */\nfunction greet(name, age) {\n  if (age) { ... }\n}"
+          },
+          {
+            "language": "javascript",
+            "code": "/**\n * @typedef {Object} UserConfig\n * @property {string} username The user's name.\n * @property {boolean} isAdmin Whether the user is an admin.\n * @property {number} [retryCount] Optional retry attempts.\n */\n\n/**\n * Processes a user configuration.\n * @param {UserConfig} config The configuration object.\n */\nfunction processUser(config) {\n  console.log(config.username);\n}"
+          },
+          {
+            "language": "javascript",
+            "code": "const data = JSON.parse(jsonString);\n\n/** @type {UserConfig} */\nconst config = data;"
+          },
+          {
+            "language": "javascript",
+            "code": "/**\n * @param {string[]} names An array of strings.\n * @return {Array<number>} An array of numbers.\n */\nfunction lengths(names) {\n  return names.map(n => n.length);\n}"
+          },
+          {
+            "language": "javascript",
+            "code": "/**\n * @param {string|null} id The ID, or null if not found.\n */\nfunction find(id) { ... }"
+          },
+          {
+            "language": "js",
+            "code": "   if (!AdminDirectory) {\n     console.log('AdminDirectory Advanced Service must be enabled.');\n     return;\n   }"
+          },
+          {
+            "language": "js",
+            "code": "   // Safe access\n   console.log(user.name?.fullName);"
+          },
+          {
+            "language": "js",
+            "code": "   // Avoid this\n   try {\n     AdminDirectory.Users.list();\n   } catch (err) {\n     console.log(err.message);\n   }\n\n   // Prefer this\n   AdminDirectory.Users.list();"
+          }
+        ],
+        "tables": 0,
+        "images": 0,
+        "links": 3,
+        "word_count": 108,
+        "line_count": 344
+      },
+      "summary": "**Apps Script Sample Development Guide**\nSections: Important, Tools, Apps Script Code Best Practices, `let` and `const`, Arrow Functions\nThis guide outlines best practices for developing Google Apps Script projects, focusing on type safety and modern JavaScript features.\n(108 words, 32 code blocks)",
+      "content": null,
+      "_enhanced": true,
+      "parsed_data": {
+        "tables": 0,
+        "cross_references": 0,
+        "code_blocks": 32,
+        "images": 0,
+        "quality_scores": {
+          "avg_code_quality": 8.421875
+        }
+      }
+    },
+    {
+      "path": "README.md",
+      "filename": "README.md",
+      "category": "overview",
+      "size_bytes": 4597,
+      "title": "Google Apps Script Samples",
+      "structure": {
+        "title": "Google Apps Script Samples",
+        "headers": [
+          {
+            "level": 1,
+            "text": "Google Apps Script Samples",
+            "line": 1
+          },
+          {
+            "level": 2,
+            "text": "Google APIs",
+            "line": 7
+          },
+          {
+            "level": 2,
+            "text": "Codelabs",
+            "line": 129
+          },
+          {
+            "level": 2,
+            "text": "Clone using the `clasp` command-line tool",
+            "line": 140
+          },
+          {
+            "level": 2,
+            "text": "Lint",
+            "line": 145
+          },
+          {
+            "level": 2,
+            "text": "Type Checking",
+            "line": 155
+          }
+        ],
+        "code_blocks": [
+          {
+            "language": "shell",
+            "code": "pnpm lint"
+          },
+          {
+            "language": "shell",
+            "code": "pnpm check"
+          }
+        ],
+        "tables": 0,
+        "images": 0,
+        "links": 2,
+        "word_count": 53,
+        "line_count": 164
+      },
+      "summary": "**Google Apps Script Samples**\nSections: Google APIs, Codelabs, Clone using the `clasp` command-line tool, Lint, Type Checking\nVarious sample code and projects for the Google Apps Script platform, a JavaScript platform in the cloud.\n(53 words, 2 code blocks)",
+      "content": null,
+      "_enhanced": true,
+      "parsed_data": {
+        "tables": 0,
+        "cross_references": 0,
+        "code_blocks": 2,
+        "images": 0,
+        "quality_scores": {
+          "avg_code_quality": 4.0
+        }
+      }
+    },
+    {
+      "path": "SECURITY.md",
+      "filename": "SECURITY.md",
+      "category": "security",
+      "size_bytes": 386,
+      "title": "Report a security issue",
+      "structure": {
+        "title": "Report a security issue",
+        "headers": [
+          {
+            "level": 1,
+            "text": "Report a security issue",
+            "line": 1
+          }
+        ],
+        "code_blocks": [],
+        "tables": 0,
+        "images": 0,
+        "links": 3,
+        "word_count": 2,
+        "line_count": 7
+      },
+      "summary": "**Report a security issue**\nTo report a security issue, please use [https://g.co/vulnz](https://g.co/vulnz). We use [https://g.co/vulnz](https://g.co/vulnz) for our intake, and do coordination and disclosure here on GitHub (incl...\n(2 words, 0 code blocks)",
+      "content": null,
+      "_enhanced": true,
+      "parsed_data": {
+        "tables": 0,
+        "cross_references": 0,
+        "code_blocks": 0,
+        "images": 0,
+        "quality_scores": {
+          "avg_code_quality": 0
+        }
+      }
+    },
+    {
+      "path": "advanced/README.md",
+      "filename": "README.md",
+      "category": "other",
+      "size_bytes": 377,
+      "title": "Advanced Services Samples",
+      "structure": {
+        "title": "Advanced Services Samples",
+        "headers": [
+          {
+            "level": 1,
+            "text": "Advanced Services Samples",
+            "line": 1
+          }
+        ],
+        "code_blocks": [],
+        "tables": 0,
+        "images": 0,
+        "links": 1,
+        "word_count": 4,
+        "line_count": 8
+      },
+      "summary": "**Advanced Services Samples**\nThis directory contains samples for using Apps Script Advanced Services.\n(4 words, 0 code blocks)",
+      "content": null,
+      "_enhanced": true,
+      "parsed_data": {
+        "tables": 0,
+        "cross_references": 0,
+        "code_blocks": 0,
+        "images": 0,
+        "quality_scores": {
+          "avg_code_quality": 0
+        }
+      }
+    },
+    {
+      "path": "ai/autosummarize/README.md",
+      "filename": "README.md",
+      "category": "other",
+      "size_bytes": 1613,
+      "title": "Editor Add-on: Sheets - AutoSummarize AI",
+      "structure": {
+        "title": "Editor Add-on: Sheets - AutoSummarize AI",
+        "headers": [
+          {
+            "level": 1,
+            "text": "Editor Add-on: Sheets - AutoSummarize AI",
+            "line": 1
+          },
+          {
+            "level": 2,
+            "text": "Project Description",
+            "line": 3
+          },
+          {
+            "level": 2,
+            "text": "Prerequisites",
+            "line": 8
+          },
+          {
+            "level": 2,
+            "text": "Set up your environment",
+            "line": 12
+          },
+          {
+            "level": 2,
+            "text": "Usage",
+            "line": 30
+          }
+        ],
+        "code_blocks": [],
+        "tables": 0,
+        "images": 0,
+        "links": 0,
+        "word_count": 9,
+        "line_count": 36
+      },
+      "summary": "**Editor Add-on: Sheets - AutoSummarize AI**\nSections: Project Description, Prerequisites, Set up your environment, Usage\nGoogle Workspace Editor Add-on for Google Sheets that uses AI to create AI summaries in bulk for a listing of Google Docs and Slides files.\n(9 words, 0 code blocks)",
+      "content": null,
+      "_enhanced": true,
+      "parsed_data": {
+        "tables": 0,
+        "cross_references": 0,
+        "code_blocks": 0,
+        "images": 0,
+        "quality_scores": {
+          "avg_code_quality": 0
+        }
+      }
+    },
+    {
+      "path": "ai/custom-func-ai-agent/README.md",
+      "filename": "README.md",
+      "category": "other",
+      "size_bytes": 2603,
+      "title": "Google Sheets Custom Function relying on ADK AI Agent and Gemini model",
+      "structure": {
+        "title": "Google Sheets Custom Function relying on ADK AI Agent and Gemini model",
+        "headers": [
+          {
+            "level": 1,
+            "text": "Google Sheets Custom Function relying on ADK AI Agent and Gemini model",
+            "line": 1
+          },
+          {
+            "level": 2,
+            "text": "Tutorial",
+            "line": 7
+          },
+          {
+            "level": 2,
+            "text": "Overview",
+            "line": 12
+          },
+          {
+            "level": 2,
+            "text": "Prerequisites",
+            "line": 22
+          },
+          {
+            "level": 2,
+            "text": "Set up your environment",
+            "line": 26
+          }
+        ],
+        "code_blocks": [],
+        "tables": 0,
+        "images": 1,
+        "links": 2,
+        "word_count": 13,
+        "line_count": 44
+      },
+      "summary": "**Google Sheets Custom Function relying on ADK AI Agent and Gemini model**\nSections: Tutorial, Overview, Prerequisites, Set up your environment\nA [Vertex AI](https://cloud.google.com/vertex-ai) agent-powered **fact checker** custom function for Google Sheets to be used as a bound Apps Script project.\n(13 words, 0 code blocks)",
+      "content": null,
+      "_enhanced": true,
+      "parsed_data": {
+        "tables": 0,
+        "cross_references": 0,
+        "code_blocks": 0,
+        "images": 1,
+        "quality_scores": {
+          "avg_code_quality": 0
+        }
+      }
+    },
+    {
+      "path": "ai/custom-func-ai-studio/README.md",
+      "filename": "README.md",
+      "category": "other",
+      "size_bytes": 1114,
+      "title": "Google Sheets Custom Function with AI Studio",
+      "structure": {
+        "title": "Google Sheets Custom Function with AI Studio",
+        "headers": [
+          {
+            "level": 1,
+            "text": "Google Sheets Custom Function with AI Studio",
+            "line": 1
+          },
+          {
+            "level": 2,
+            "text": "Project Description",
+            "line": 3
+          },
+          {
+            "level": 2,
+            "text": "Prerequisites",
+            "line": 7
+          },
+          {
+            "level": 2,
+            "text": "Set up your environment",
+            "line": 11
+          },
+          {
+            "level": 2,
+            "text": "Usage",
+            "line": 24
+          }
+        ],
+        "code_blocks": [
+          {
+            "language": "text",
+            "code": "=gemini(A1:A10,\"Extract colors from the product description\")"
+          }
+        ],
+        "tables": 0,
+        "images": 0,
+        "links": 0,
+        "word_count": 11,
+        "line_count": 32
+      },
+      "summary": "**Google Sheets Custom Function with AI Studio**\nSections: Project Description, Prerequisites, Set up your environment, Usage\nGoogle Sheets Custom Function to be used as a bound Apps Script project with a Google Sheets Spreadsheet\n(11 words, 1 code blocks)",
+      "content": null,
+      "_enhanced": true,
+      "parsed_data": {
+        "tables": 0,
+        "cross_references": 0,
+        "code_blocks": 1,
+        "images": 0,
+        "quality_scores": {
+          "avg_code_quality": 7.5
+        }
+      }
+    },
+    {
+      "path": "ai/custom_func_vertex/README.md",
+      "filename": "README.md",
+      "category": "other",
+      "size_bytes": 1385,
+      "title": "Google Sheets Custom Function with AI Studio",
+      "structure": {
+        "title": "Google Sheets Custom Function with AI Studio",
+        "headers": [
+          {
+            "level": 1,
+            "text": "Google Sheets Custom Function with AI Studio",
+            "line": 1
+          },
+          {
+            "level": 2,
+            "text": "Project Description",
+            "line": 3
+          },
+          {
+            "level": 2,
+            "text": "Prerequisites",
+            "line": 7
+          },
+          {
+            "level": 2,
+            "text": "Set up your environment",
+            "line": 11
+          },
+          {
+            "level": 2,
+            "text": "Usage",
+            "line": 25
+          }
+        ],
+        "code_blocks": [
+          {
+            "language": "text",
+            "code": "=gemini(A1:A10,\"Extract colors from the product description\")"
+          }
+        ],
+        "tables": 0,
+        "images": 0,
+        "links": 0,
+        "word_count": 11,
+        "line_count": 34
+      },
+      "summary": "**Google Sheets Custom Function with AI Studio**\nSections: Project Description, Prerequisites, Set up your environment, Usage\nGoogle Sheets Custom Function to be used as a bound Apps Script project with a Google Sheets Spreadsheet.\n(11 words, 1 code blocks)",
+      "content": null,
+      "_enhanced": true,
+      "parsed_data": {
+        "tables": 0,
+        "cross_references": 0,
+        "code_blocks": 1,
+        "images": 0,
+        "quality_scores": {
+          "avg_code_quality": 7.5
+        }
+      }
+    },
+    {
+      "path": "ai/devdocs-link-preview/README.md",
+      "filename": "README.md",
+      "category": "other",
+      "size_bytes": 1047,
+      "title": "Google Workspace Add-on - Developer Docs Link previews",
+      "structure": {
+        "title": "Google Workspace Add-on - Developer Docs Link previews",
+        "headers": [
+          {
+            "level": 1,
+            "text": "Google Workspace Add-on - Developer Docs Link previews",
+            "line": 1
+          },
+          {
+            "level": 2,
+            "text": "Project Description",
+            "line": 4
+          },
+          {
+            "level": 2,
+            "text": "Prerequisites",
+            "line": 8
+          },
+          {
+            "level": 2,
+            "text": "Set up your environment",
+            "line": 12
+          }
+        ],
+        "code_blocks": [],
+        "tables": 0,
+        "images": 0,
+        "links": 0,
+        "word_count": 7,
+        "line_count": 24
+      },
+      "summary": "**Google Workspace Add-on - Developer Docs Link previews**\nSections: Project Description, Prerequisites, Set up your environment\nA Google Workspace Add-on that creates custom link previews for pages on the Google developer documentation site. The link preview uses AI to generate page summaries.\n(7 words, 0 code blocks)",
+      "content": null,
+      "_enhanced": true,
+      "parsed_data": {
+        "tables": 0,
+        "cross_references": 0,
+        "code_blocks": 0,
+        "images": 0,
+        "quality_scores": {
+          "avg_code_quality": 0
+        }
+      }
+    },
+    {
+      "path": "ai/drive-rename/README.md",
+      "filename": "README.md",
+      "category": "other",
+      "size_bytes": 1399,
+      "title": "Google Workspace Add-on Drive - Name with Intelligence",
+      "structure": {
+        "title": "Google Workspace Add-on Drive - Name with Intelligence",
+        "headers": [
+          {
+            "level": 1,
+            "text": "Google Workspace Add-on Drive - Name with Intelligence",
+            "line": 1
+          },
+          {
+            "level": 2,
+            "text": "Project Description",
+            "line": 3
+          },
+          {
+            "level": 2,
+            "text": "Prerequisites",
+            "line": 7
+          },
+          {
+            "level": 2,
+            "text": "Set up your environment",
+            "line": 11
+          }
+        ],
+        "code_blocks": [],
+        "tables": 0,
+        "images": 0,
+        "links": 0,
+        "word_count": 7,
+        "line_count": 29
+      },
+      "summary": "**Google Workspace Add-on Drive - Name with Intelligence**\nSections: Project Description, Prerequisites, Set up your environment\nGoogle Workspace Add-on for Google Drive, which uses AI to recommend new names for the selected Doc in Google Drive by passing the body of the document within the AI prompt for context.\n(7 words, 0 code blocks)",
+      "content": null,
+      "_enhanced": true,
+      "parsed_data": {
+        "tables": 0,
+        "cross_references": 0,
+        "code_blocks": 0,
+        "images": 0,
+        "quality_scores": {
+          "avg_code_quality": 0
+        }
+      }
+    },
+    {
+      "path": "ai/email-classifier/README.md",
+      "filename": "README.md",
+      "category": "other",
+      "size_bytes": 5949,
+      "title": "Email Classifier",
+      "structure": {
+        "title": "Email Classifier",
+        "headers": [
+          {
+            "level": 1,
+            "text": "Email Classifier",
+            "line": 1
+          },
+          {
+            "level": 2,
+            "text": "Features",
+            "line": 8
+          },
+          {
+            "level": 2,
+            "text": "Setup",
+            "line": 23
+          },
+          {
+            "level": 3,
+            "text": "1. Enable Google APIs",
+            "line": 25
+          },
+          {
+            "level": 3,
+            "text": "2. Apps Script Project",
+            "line": 36
+          },
+          {
+            "level": 3,
+            "text": "3. Configure OAuth Consent Screen",
+            "line": 58
+          },
+          {
+            "level": 3,
+            "text": "4. Deploy the Add-on",
+            "line": 82
+          },
+          {
+            "level": 2,
+            "text": "How to Run",
+            "line": 89
+          },
+          {
+            "level": 2,
+            "text": "Code Overview",
+            "line": 104
+          },
+          {
+            "level": 2,
+            "text": "Important Notes",
+            "line": 127
+          },
+          {
+            "level": 2,
+            "text": "Disclaimer",
+            "line": 140
+          }
+        ],
+        "code_blocks": [
+          {
+            "language": "text",
+            "code": "categories:\n*   `needs-response`: Emails requiring a direct reply.\n*   `action-required`: Emails requiring a specific task or decision.\n*   `for-your-info`: Emails for information only, no action needed."
+          },
+          {
+            "language": "text",
+            "code": "as `needs-response`."
+          },
+          {
+            "language": "text",
+            "code": "Google Sheet."
+          },
+          {
+            "language": "text",
+            "code": "classification, label creation, and removal."
+          },
+          {
+            "language": "text",
+            "code": "*   Go to [script.google.com](https://script.google.com).\n*   Create a new project."
+          },
+          {
+            "language": "text",
+            "code": "*   Go to **Project Settings**.\n*   Check the **Show \"appsscript.json\" manifest file in editor** option."
+          },
+          {
+            "language": "text",
+            "code": "*   In your Apps Script project, go to **Project Settings**.\n*   Under **Google Cloud Platform (GCP) Project**, click **Change project**.\n*   Enter your Google Cloud Project number and click **Set project**."
+          },
+          {
+            "language": "text",
+            "code": "*   Copy the code from each `.gs` file in this directory into the\n    corresponding file in your Apps Script project."
+          },
+          {
+            "language": "text",
+            "code": "*   Replace the placeholder values in `Constants.gs`:\n    *   `PROJECT_ID`: Your Google Cloud Project ID.\n    *   `ME`: Your name."
+          },
+          {
+            "language": "text",
+            "code": "*   Ensure the `appsscript.json` file is configured correctly."
+          },
+          {
+            "language": "text",
+            "code": "*   Navigate to the [Google Auth Platform - Branding page](https://console.cloud.google.com/auth/branding)."
+          },
+          {
+            "language": "text",
+            "code": "*   **App name:** Enter a name for your add-on (e.g., \"Email Classifier\").\n*   **User support email:** Select your email address.\n*   **Developer contact information:** Enter your email address.\n* Click **Next**."
+          },
+          {
+            "language": "text",
+            "code": "*  Select **Internal**.\n* Click **Next**."
+          },
+          {
+            "language": "text",
+            "code": "*   Select your email address.\n* Click **Next**."
+          },
+          {
+            "language": "text",
+            "code": "*   Check **I agree to the [Google API Services: User Data Policy](https://developers.google.com/terms/api-services-user-data-policy)**.\n* Click **Continue**."
+          },
+          {
+            "language": "text",
+            "code": "* Click **Create**."
+          },
+          {
+            "language": "text",
+            "code": "*   Click \"Deploy\" > \"Test deployments\".\n*   Select \"Gmail add-on\".\n*   Click \"Install\" to install the add-on for your account."
+          },
+          {
+            "language": "text",
+            "code": "*   Open Gmail in your browser."
+          },
+          {
+            "language": "text",
+            "code": "*   The \"Email Classifier\" add-on should appear in the right sidebar."
+          },
+          {
+            "language": "text",
+            "code": "*   Click the \"Classify emails\" button.\n*   The add-on will process unread emails from the last 7 days."
+          },
+          {
+            "language": "text",
+            "code": "*   A link to the generated Google Sheet will be displayed.\n*   Open the sheet to view the classification results."
+          },
+          {
+            "language": "text",
+            "code": "*   Use the \"Create labels\" or \"Remove labels\" buttons to manage Gmail labels."
+          },
+          {
+            "language": "text",
+            "code": "language processing. Make sure you have the API enabled and have sufficient\nquota."
+          },
+          {
+            "language": "text",
+            "code": "scopes for Gmail, Sheets, and the Gemini API."
+          },
+          {
+            "language": "text",
+            "code": "to add more robust error handling for production use."
+          },
+          {
+            "language": "text",
+            "code": "large numbers of emails."
+          }
+        ],
+        "tables": 0,
+        "images": 0,
+        "links": 0,
+        "word_count": 70,
+        "line_count": 145
+      },
+      "summary": "**Email Classifier**\nSections: Features, Setup, 1. Enable Google APIs, 2. Apps Script Project, 3. Configure OAuth Consent Screen\nThis Apps Script project provides a Gmail add-on that classifies emails based on their content and subject, and performs actions such as adding labels, creating draft responses, and logging results in...\n(70 words, 26 code blocks)",
+      "content": null,
+      "_enhanced": true,
+      "parsed_data": {
+        "tables": 0,
+        "cross_references": 0,
+        "code_blocks": 26,
+        "images": 0,
+        "quality_scores": {
+          "avg_code_quality": 6.523076923076923
+        }
+      }
+    },
+    {
+      "path": "ai/gmail-sentiment-analysis/README.md",
+      "filename": "README.md",
+      "category": "other",
+      "size_bytes": 1566,
+      "title": "Gmail sentiment analysis with Vertex AI",
+      "structure": {
+        "title": "Gmail sentiment analysis with Vertex AI",
+        "headers": [
+          {
+            "level": 1,
+            "text": "Gmail sentiment analysis with Vertex AI",
+            "line": 1
+          },
+          {
+            "level": 2,
+            "text": "Project Description",
+            "line": 3
+          },
+          {
+            "level": 2,
+            "text": "Prerequisites",
+            "line": 7
+          },
+          {
+            "level": 2,
+            "text": "Set up your environment",
+            "line": 11
+          },
+          {
+            "level": 2,
+            "text": "Usage",
+            "line": 23
+          }
+        ],
+        "code_blocks": [],
+        "tables": 0,
+        "images": 0,
+        "links": 0,
+        "word_count": 9,
+        "line_count": 31
+      },
+      "summary": "**Gmail sentiment analysis with Vertex AI**\nSections: Project Description, Prerequisites, Set up your environment, Usage\nGoogle Workspace Add-on that extends Gmail and adds sentiment analysis capabilities.\n(9 words, 0 code blocks)",
+      "content": null,
+      "_enhanced": true,
+      "parsed_data": {
+        "tables": 0,
+        "cross_references": 0,
+        "code_blocks": 0,
+        "images": 0,
+        "quality_scores": {
+          "avg_code_quality": 0
+        }
+      }
+    },
+    {
+      "path": "ai/standup-chat-app/README.md",
+      "filename": "README.md",
+      "category": "other",
+      "size_bytes": 1877,
+      "title": "Chat API - Stand up with AI",
+      "structure": {
+        "title": "Chat API - Stand up with AI",
+        "headers": [
+          {
+            "level": 1,
+            "text": "Chat API - Stand up with AI",
+            "line": 1
+          },
+          {
+            "level": 2,
+            "text": "Project Description",
+            "line": 3
+          },
+          {
+            "level": 2,
+            "text": "Prerequisites",
+            "line": 7
+          },
+          {
+            "level": 2,
+            "text": "Set up your environment",
+            "line": 11
+          }
+        ],
+        "code_blocks": [],
+        "tables": 0,
+        "images": 0,
+        "links": 0,
+        "word_count": 7,
+        "line_count": 39
+      },
+      "summary": "**Chat API - Stand up with AI**\nSections: Project Description, Prerequisites, Set up your environment\nGoogle Chat application that creates AI summaries of a consolidation Chat threads and posts them back within the top-level Chat message. Use case is using AI to streamline Stand up content within Goog...\n(7 words, 0 code blocks)",
+      "content": null,
+      "_enhanced": true,
+      "parsed_data": {
+        "tables": 0,
+        "cross_references": 0,
+        "code_blocks": 0,
+        "images": 0,
+        "quality_scores": {
+          "avg_code_quality": 0
+        }
+      }
+    },
+    {
+      "path": "chat/advanced-service/README.md",
+      "filename": "README.md",
+      "category": "other",
+      "size_bytes": 1045,
+      "title": "Google Chat API - Advanced Service samples",
+      "structure": {
+        "title": "Google Chat API - Advanced Service samples",
+        "headers": [
+          {
+            "level": 1,
+            "text": "Google Chat API - Advanced Service samples",
+            "line": 1
+          },
+          {
+            "level": 2,
+            "text": "Set up",
+            "line": 3
+          },
+          {
+            "level": 2,
+            "text": "Run",
+            "line": 20
+          }
+        ],
+        "code_blocks": [
+          {
+            "language": "text",
+            "code": "  [Authenticate as a Google Chat app](https://developers.google.com/workspace/chat/authenticate-authorize-chat-app)."
+          },
+          {
+            "language": "text",
+            "code": "  the private key's JSON of the service account that you created in the previous step."
+          }
+        ],
+        "tables": 0,
+        "images": 0,
+        "links": 0,
+        "word_count": 12,
+        "line_count": 25
+      },
+      "summary": "**Google Chat API - Advanced Service samples**\nSections: Set up, Run\n1. Follow the Google Chat app quickstart for Apps Script https://developers.google.com/workspace/chat/quickstart/apps-script-app and open the resulting Apps Script project in a web browser.\n(12 words, 2 code blocks)",
+      "content": null,
+      "_enhanced": true,
+      "parsed_data": {
+        "tables": 0,
+        "cross_references": 0,
+        "code_blocks": 2,
+        "images": 0,
+        "quality_scores": {
+          "avg_code_quality": 7.35
+        }
+      }
+    },
+    {
+      "path": "chat/quickstart/README.md",
+      "filename": "README.md",
+      "category": "other",
+      "size_bytes": 421,
+      "title": "Google Chat Apps Script Quickstart",
+      "structure": {
+        "title": "Google Chat Apps Script Quickstart",
+        "headers": [
+          {
+            "level": 1,
+            "text": "Google Chat Apps Script Quickstart",
+            "line": 1
+          },
+          {
+            "level": 2,
+            "text": "Run",
+            "line": 8
+          }
+        ],
+        "code_blocks": [],
+        "tables": 0,
+        "images": 0,
+        "links": 0,
+        "word_count": 4,
+        "line_count": 12
+      },
+      "summary": "**Google Chat Apps Script Quickstart**\nSections: Run\nComplete the steps described in the [quickstart instructions]( https://developers.google.com/workspace/chat/api/guides/quickstart/apps-script), and in about five minutes you'll have a simple Apps Scri...\n(4 words, 0 code blocks)",
+      "content": null,
+      "_enhanced": true,
+      "parsed_data": {
+        "tables": 0,
+        "cross_references": 1,
+        "code_blocks": 0,
+        "images": 0,
+        "quality_scores": {
+          "avg_code_quality": 0
+        }
+      }
+    },
+    {
+      "path": "docs/README.md",
+      "filename": "README.md",
+      "category": "other",
+      "size_bytes": 360,
+      "title": "Google Docs Add-ons",
+      "structure": {
+        "title": "Google Docs Add-ons",
+        "headers": [
+          {
+            "level": 1,
+            "text": "Google Docs Add-ons",
+            "line": 1
+          },
+          {
+            "level": 2,
+            "text": "Cursor Inspector",
+            "line": 3
+          },
+          {
+            "level": 2,
+            "text": "Translate",
+            "line": 7
+          }
+        ],
+        "code_blocks": [],
+        "tables": 0,
+        "images": 0,
+        "links": 0,
+        "word_count": 5,
+        "line_count": 10
+      },
+      "summary": "**Google Docs Add-ons**\nSections: Cursor Inspector, Translate\nThis add-on allows you to inspect the current state of the cursor or selection within a document. The information is presented in a sidebar and updates automatically every few seconds.\n(5 words, 0 code blocks)",
+      "content": null,
+      "_enhanced": true,
+      "parsed_data": {
+        "tables": 0,
+        "cross_references": 0,
+        "code_blocks": 0,
+        "images": 0,
+        "quality_scores": {
+          "avg_code_quality": 0
+        }
+      }
+    },
+    {
+      "path": "docs/cursorInspector/README.md",
+      "filename": "README.md",
+      "category": "specifications",
+      "size_bytes": 790,
+      "title": "Cursor Inspector",
+      "structure": {
+        "title": "Cursor Inspector",
+        "headers": [
+          {
+            "level": 1,
+            "text": "Cursor Inspector",
+            "line": 1
+          },
+          {
+            "level": 2,
+            "text": "Try it out",
+            "line": 14
+          }
+        ],
+        "code_blocks": [],
+        "tables": 0,
+        "images": 1,
+        "links": 3,
+        "word_count": 5,
+        "line_count": 20
+      },
+      "summary": "**Cursor Inspector**\nSections: Try it out\nCursor Inspector is a sample script for Google Docs that allows you to inspect the current state of the cursor or selection within a document. The information is presented in a sidebar and updates aut...\n(5 words, 0 code blocks)",
+      "content": null,
+      "_enhanced": true,
+      "parsed_data": {
+        "tables": 0,
+        "cross_references": 1,
+        "code_blocks": 0,
+        "images": 1,
+        "quality_scores": {
+          "avg_code_quality": 0
+        }
+      }
+    },
+    {
+      "path": "docs/dialog2sidebar/README.md",
+      "filename": "README.md",
+      "category": "other",
+      "size_bytes": 1393,
+      "title": "Dialog to Sidebar Communication in Apps Script",
+      "structure": {
+        "title": "Dialog to Sidebar Communication in Apps Script",
+        "headers": [
+          {
+            "level": 1,
+            "text": "Dialog to Sidebar Communication in Apps Script",
+            "line": 1
+          }
+        ],
+        "code_blocks": [],
+        "tables": 0,
+        "images": 0,
+        "links": 3,
+        "word_count": 10,
+        "line_count": 26
+      },
+      "summary": "**Dialog to Sidebar Communication in Apps Script**\nThis script demonstrates a method of setting up a communication channel between a dialog and a sidebar in Apps Script. This helps solve the common problem of having your sidebar know when a dialog is ...\n(10 words, 0 code blocks)",
+      "content": null,
+      "_enhanced": true,
+      "parsed_data": {
+        "tables": 0,
+        "cross_references": 0,
+        "code_blocks": 0,
+        "images": 0,
+        "quality_scores": {
+          "avg_code_quality": 0
+        }
+      }
+    },
+    {
+      "path": "docs/translate/README.md",
+      "filename": "README.md",
+      "category": "other",
+      "size_bytes": 471,
+      "title": "Translate",
+      "structure": {
+        "title": "Translate",
+        "headers": [
+          {
+            "level": 1,
+            "text": "Translate",
+            "line": 1
+          }
+        ],
+        "code_blocks": [],
+        "tables": 0,
+        "images": 1,
+        "links": 2,
+        "word_count": 3,
+        "line_count": 10
+      },
+      "summary": "**Translate**\nTranslate is a sample script for Google Docs that allows you to translate selected text from a set of source languages to a set of destination languages. The resulting translation can then be inserted...\n(3 words, 0 code blocks)",
+      "content": null,
+      "_enhanced": true,
+      "parsed_data": {
+        "tables": 0,
+        "cross_references": 0,
+        "code_blocks": 0,
+        "images": 1,
+        "quality_scores": {
+          "avg_code_quality": 0
+        }
+      }
+    },
+    {
+      "path": "forms/README.md",
+      "filename": "README.md",
+      "category": "other",
+      "size_bytes": 420,
+      "title": "Google Forms Add-ons",
+      "structure": {
+        "title": "Google Forms Add-ons",
+        "headers": [
+          {
+            "level": 1,
+            "text": "Google Forms Add-ons",
+            "line": 1
+          },
+          {
+            "level": 2,
+            "text": "[Notification Add-on](https://developers.google.com/apps-script/quickstart/forms-add-on)",
+            "line": 3
+          }
+        ],
+        "code_blocks": [],
+        "tables": 0,
+        "images": 1,
+        "links": 1,
+        "word_count": 4,
+        "line_count": 11
+      },
+      "summary": "**Google Forms Add-ons**\nSections: [Notification Add-on](https://developers.google.com/apps-script/quickstart/forms-add-on)\nThis add-on allows Form creators to automatically send email notifications when a form is submitted. In addition, the add-on allows form creators to be notified when they have received responses.\n(4 words, 0 code blocks)",
+      "content": null,
+      "_enhanced": true,
+      "parsed_data": {
+        "tables": 0,
+        "cross_references": 0,
+        "code_blocks": 0,
+        "images": 1,
+        "quality_scores": {
+          "avg_code_quality": 0
+        }
+      }
+    },
+    {
+      "path": "forms/notifications/README.md",
+      "filename": "README.md",
+      "category": "other",
+      "size_bytes": 1698,
+      "title": "Form Notifications Add-on for Google Forms",
+      "structure": {
+        "title": "Form Notifications Add-on for Google Forms",
+        "headers": [
+          {
+            "level": 1,
+            "text": "Form Notifications Add-on for Google Forms",
+            "line": 1
+          },
+          {
+            "level": 2,
+            "text": "Introduction",
+            "line": 5
+          },
+          {
+            "level": 2,
+            "text": "Getting Started",
+            "line": 26
+          },
+          {
+            "level": 2,
+            "text": "Learn more",
+            "line": 34
+          },
+          {
+            "level": 2,
+            "text": "Support",
+            "line": 42
+          }
+        ],
+        "code_blocks": [],
+        "tables": 0,
+        "images": 0,
+        "links": 3,
+        "word_count": 15,
+        "line_count": 45
+      },
+      "summary": "**Form Notifications Add-on for Google Forms**\nSections: Introduction, Getting Started, Learn more, Support\nA sample Google Apps Script add-on for Google Forms.\n(15 words, 0 code blocks)",
+      "content": null,
+      "_enhanced": true,
+      "parsed_data": {
+        "tables": 0,
+        "cross_references": 0,
+        "code_blocks": 0,
+        "images": 0,
+        "quality_scores": {
+          "avg_code_quality": 0
+        }
+      }
+    },
+    {
+      "path": "forms-api/demos/AppsScriptFormsAPIWebApp/README.md",
+      "filename": "README.md",
+      "category": "api",
+      "size_bytes": 1162,
+      "title": "Google Forms API Apps Script web app",
+      "structure": {
+        "title": "Google Forms API Apps Script web app",
+        "headers": [
+          {
+            "level": 1,
+            "text": "Google Forms API Apps Script web app",
+            "line": 1
+          },
+          {
+            "level": 2,
+            "text": "General setup",
+            "line": 5
+          },
+          {
+            "level": 2,
+            "text": "Web app setup",
+            "line": 9
+          }
+        ],
+        "code_blocks": [
+          {
+            "language": "text",
+            "code": "* Check **Show \"appsscript.json\" manifest file in editor**.\n* Enter the project number of the Google Cloud project that has the\n   Forms API enabled and click **Change project**."
+          },
+          {
+            "language": "text",
+            "code": "* `formId`: Choose a `formId` from an existing form.\n* `topicName`: Optional, if using watches (pub/sub).\n\n  Note: Further project setup is required to use the watch features. To\n  set up pub/sub topics, see\n  [Google Cloud Pubsub](https://cloud.google.com/pubsub/docs/building-pubsub-messaging-system)\n  for additional details."
+          }
+        ],
+        "tables": 0,
+        "images": 0,
+        "links": 0,
+        "word_count": 13,
+        "line_count": 33
+      },
+      "summary": "**Google Forms API Apps Script web app**\nSections: General setup, Web app setup\nThis solution demonstrates how to interact with the new Google Forms API directly from Apps Script using REST calls, not the native Apps Script Forms Service.\n(13 words, 2 code blocks)",
+      "content": null,
+      "_enhanced": true,
+      "parsed_data": {
+        "tables": 0,
+        "cross_references": 0,
+        "code_blocks": 2,
+        "images": 0,
+        "quality_scores": {
+          "avg_code_quality": 8.75
+        }
+      }
+    },
+    {
+      "path": "forms-api/snippets/README.md",
+      "filename": "README.md",
+      "category": "api",
+      "size_bytes": 135,
+      "title": "Forms API",
+      "structure": {
+        "title": "Forms API",
+        "headers": [
+          {
+            "level": 1,
+            "text": "Forms API",
+            "line": 1
+          }
+        ],
+        "code_blocks": [],
+        "tables": 0,
+        "images": 0,
+        "links": 1,
+        "word_count": 2,
+        "line_count": 5
+      },
+      "summary": "**Forms API**\nTo run, you must set up your GCP project to use the Forms API. See: [Forms API](https://developers.google.com/forms/api/)\n(2 words, 0 code blocks)",
+      "content": null,
+      "_enhanced": true,
+      "parsed_data": {
+        "tables": 0,
+        "cross_references": 0,
+        "code_blocks": 0,
+        "images": 0,
+        "quality_scores": {
+          "avg_code_quality": 0
+        }
+      }
+    },
+    {
+      "path": "gmail/README.md",
+      "filename": "README.md",
+      "category": "other",
+      "size_bytes": 640,
+      "title": "Apps Scripts for Gmail",
+      "structure": {
+        "title": "Apps Scripts for Gmail",
+        "headers": [
+          {
+            "level": 1,
+            "text": "Apps Scripts for Gmail",
+            "line": 1
+          },
+          {
+            "level": 2,
+            "text": "[Mail Merge](https://developers.google.com/apps-script/articles/mail_merge)",
+            "line": 5
+          },
+          {
+            "level": 2,
+            "text": "[Sending Emails](https://developers.google.com/apps-script/articles/sending_emails)",
+            "line": 9
+          },
+          {
+            "level": 2,
+            "text": "[Inline Image](inlineimage/inlineimage.gs)",
+            "line": 13
+          }
+        ],
+        "code_blocks": [],
+        "tables": 0,
+        "images": 0,
+        "links": 0,
+        "word_count": 8,
+        "line_count": 16
+      },
+      "summary": "**Apps Scripts for Gmail**\nSections: [Mail Merge](https://developers.google.com/apps-script/articles/mail_merge), [Sending Emails](https://developers.google.com/apps-script/articles/sending_emails), [Inline Image](inlineimage/inlineimage.gs)\nSample Google Apps Script functions for Gmail.\n(8 words, 0 code blocks)",
+      "content": null,
+      "_enhanced": true,
+      "parsed_data": {
+        "tables": 0,
+        "cross_references": 0,
+        "code_blocks": 0,
+        "images": 0,
+        "quality_scores": {
+          "avg_code_quality": 0
+        }
+      }
+    },
+    {
+      "path": "gmail-sentiment-analysis/README.md",
+      "filename": "README.md",
+      "category": "other",
+      "size_bytes": 4125,
+      "title": "Gmail Sentiment Analysis with Gemini and Vertex AI",
+      "structure": {
+        "title": "Gmail Sentiment Analysis with Gemini and Vertex AI",
+        "headers": [
+          {
+            "level": 1,
+            "text": "Gmail Sentiment Analysis with Gemini and Vertex AI",
+            "line": 1
+          },
+          {
+            "level": 2,
+            "text": "What you'll learn",
+            "line": 12
+          },
+          {
+            "level": 2,
+            "text": "Setup and Requirements",
+            "line": 20
+          },
+          {
+            "level": 2,
+            "text": "Steps",
+            "line": 26
+          },
+          {
+            "level": 3,
+            "text": "Setup Google Cloud Platform",
+            "line": 28
+          },
+          {
+            "level": 3,
+            "text": "Setup an Apps Script Project",
+            "line": 34
+          },
+          {
+            "level": 3,
+            "text": "Populate the Apps Script project with code",
+            "line": 54
+          },
+          {
+            "level": 3,
+            "text": "Deploy the Add-on",
+            "line": 61
+          },
+          {
+            "level": 3,
+            "text": "Verify Installation",
+            "line": 67
+          },
+          {
+            "level": 3,
+            "text": "Run the Add-on",
+            "line": 76
+          },
+          {
+            "level": 2,
+            "text": "Congratulations!",
+            "line": 87
+          }
+        ],
+        "code_blocks": [],
+        "tables": 0,
+        "images": 0,
+        "links": 0,
+        "word_count": 25,
+        "line_count": 92
+      },
+      "summary": "**Gmail Sentiment Analysis with Gemini and Vertex AI**\nSections: What you'll learn, Setup and Requirements, Steps, Setup Google Cloud Platform, Setup an Apps Script Project\nThis project guides you through building a Google Workspace Add-on that leverages Gemini and Vertex AI for conducting sentiment analysis on emails in Gmail. The add-on automatically identifies emails ...\n(25 words, 0 code blocks)",
+      "content": null,
+      "_enhanced": true,
+      "parsed_data": {
+        "tables": 0,
+        "cross_references": 2,
+        "code_blocks": 0,
+        "images": 0,
+        "quality_scores": {
+          "avg_code_quality": 0
+        }
+      }
+    },
+    {
+      "path": "picker/README.md",
+      "filename": "README.md",
+      "category": "other",
+      "size_bytes": 547,
+      "title": "File Picker Sample",
+      "structure": {
+        "title": "File Picker Sample",
+        "headers": [
+          {
+            "level": 1,
+            "text": "File Picker Sample",
+            "line": 1
+          }
+        ],
+        "code_blocks": [],
+        "tables": 0,
+        "images": 0,
+        "links": 3,
+        "word_count": 3,
+        "line_count": 6
+      },
+      "summary": "**File Picker Sample**\nThis sample shows how to create a \"file-open\" dialog in Google Sheets thatallows the user to select a file from their Drive. It does so by loading [Google Picker](https://developers.google.com/picker/...\n(3 words, 0 code blocks)",
+      "content": null,
+      "_enhanced": true,
+      "parsed_data": {
+        "tables": 0,
+        "cross_references": 0,
+        "code_blocks": 0,
+        "images": 0,
+        "quality_scores": {
+          "avg_code_quality": 0
+        }
+      }
+    },
+    {
+      "path": "sheets/README.md",
+      "filename": "README.md",
+      "category": "other",
+      "size_bytes": 1481,
+      "title": "Quickstart: Apps Scripts for Google Sheets",
+      "structure": {
+        "title": "Quickstart: Apps Scripts for Google Sheets",
+        "headers": [
+          {
+            "level": 1,
+            "text": "Quickstart: Apps Scripts for Google Sheets",
+            "line": 1
+          },
+          {
+            "level": 2,
+            "text": "Date Add and Subtract",
+            "line": 5
+          },
+          {
+            "level": 2,
+            "text": "[Managing Responses for Google Forms](https://developers.google.com/apps-script/quickstart/forms)",
+            "line": 9
+          },
+          {
+            "level": 2,
+            "text": "[Menus and Custom Functions](https://developers.google.com/apps-script/quickstart/custom-functions)",
+            "line": 15
+          },
+          {
+            "level": 2,
+            "text": "[Bracket Maker](https://developers.google.com/apps-script/articles/bracket_maker)",
+            "line": 21
+          },
+          {
+            "level": 2,
+            "text": "[Removing Duplicates](https://developers.google.com/apps-script/articles/removing_duplicates)",
+            "line": 25
+          }
+        ],
+        "code_blocks": [],
+        "tables": 0,
+        "images": 2,
+        "links": 2,
+        "word_count": 14,
+        "line_count": 28
+      },
+      "summary": "**Quickstart: Apps Scripts for Google Sheets**\nSections: Date Add and Subtract, [Managing Responses for Google Forms](https://developers.google.com/apps-script/quickstart/forms), [Menus and Custom Functions](https://developers.google.com/apps-script/quickstart/custom-functions), [Bracket Maker](https://developers.google.com/apps-script/articles/bracket_maker), [Removing Duplicates](https://developers.google.com/apps-script/articles/removing_duplicates)\nSample Google Apps Script add-ons and menus...",
+      "content": null,
+      "_enhanced": true,
+      "parsed_data": {
+        "tables": 0,
+        "cross_references": 0,
+        "code_blocks": 0,
+        "images": 2,
+        "quality_scores": {
+          "avg_code_quality": 0
+        }
+      }
+    },
+    {
+      "path": "sheets/dateAddAndSubtract/README.md",
+      "filename": "README.md",
+      "category": "other",
+      "size_bytes": 650,
+      "title": "Date Add and Subtract",
+      "structure": {
+        "title": "Date Add and Subtract",
+        "headers": [
+          {
+            "level": 1,
+            "text": "Date Add and Subtract",
+            "line": 1
+          },
+          {
+            "level": 2,
+            "text": "Try it out",
+            "line": 11
+          }
+        ],
+        "code_blocks": [],
+        "tables": 0,
+        "images": 1,
+        "links": 3,
+        "word_count": 5,
+        "line_count": 16
+      },
+      "summary": "**Date Add and Subtract**\nSections: Try it out\nDate Add and Subtract is a sample [add-on for Google Sheets](https://developers.google.com/apps-script/add-ons) that provides custom functions for date manipulation. The script uses the [Moment.js](ht...\n(5 words, 0 code blocks)",
+      "content": null,
+      "_enhanced": true,
+      "parsed_data": {
+        "tables": 0,
+        "cross_references": 1,
+        "code_blocks": 0,
+        "images": 1,
+        "quality_scores": {
+          "avg_code_quality": 0
+        }
+      }
+    },
+    {
+      "path": "sheets/next18/README.md",
+      "filename": "README.md",
+      "category": "other",
+      "size_bytes": 1649,
+      "title": "Invoicing Demo for Google Sheets",
+      "structure": {
+        "title": "Invoicing Demo for Google Sheets",
+        "headers": [
+          {
+            "level": 1,
+            "text": "Invoicing Demo for Google Sheets",
+            "line": 1
+          },
+          {
+            "level": 2,
+            "text": "Getting started",
+            "line": 17
+          }
+        ],
+        "code_blocks": [
+          {
+            "language": "text",
+            "code": "where `{SCRIPT ID}` is taken from the URL outputted by `clasp create`."
+          },
+          {
+            "language": "text",
+            "code": "Login to Salesforce to sign in to Salesforce."
+          }
+        ],
+        "tables": 0,
+        "images": 1,
+        "links": 1,
+        "word_count": 14,
+        "line_count": 32
+      },
+      "summary": "**Invoicing Demo for Google Sheets**\nSections: Getting started\nThis sample was created for a talk for Google Cloud NEXT'18 entitled \"Building on the Docs Editors: APIs and Apps Script\". It is an implementation of a Google Sheets add-on that:\n(14 words, 2 code blocks)",
+      "content": null,
+      "_enhanced": true,
+      "parsed_data": {
+        "tables": 0,
+        "cross_references": 1,
+        "code_blocks": 2,
+        "images": 1,
+        "quality_scores": {
+          "avg_code_quality": 6.85
+        }
+      }
+    },
+    {
+      "path": "slides/README.md",
+      "filename": "README.md",
+      "category": "other",
+      "size_bytes": 916,
+      "title": "Quickstarts: Add-ons for Google Slides",
+      "structure": {
+        "title": "Quickstarts: Add-ons for Google Slides",
+        "headers": [
+          {
+            "level": 1,
+            "text": "Quickstarts: Add-ons for Google Slides",
+            "line": 1
+          },
+          {
+            "level": 2,
+            "text": "[Translate](https://developers.google.com/apps-script/guides/slides/samples/translate)",
+            "line": 5
+          },
+          {
+            "level": 2,
+            "text": "[Progress Bars](https://developers.google.com/apps-script/guides/slides/samples/progress-bar)",
+            "line": 11
+          },
+          {
+            "level": 2,
+            "text": "Speaker Notes Script",
+            "line": 17
+          }
+        ],
+        "code_blocks": [],
+        "tables": 0,
+        "images": 3,
+        "links": 3,
+        "word_count": 11,
+        "line_count": 23
+      },
+      "summary": "**Quickstarts: Add-ons for Google Slides**\nSections: [Translate](https://developers.google.com/apps-script/guides/slides/samples/translate), [Progress Bars](https://developers.google.com/apps-script/guides/slides/samples/progress-bar), Speaker Notes Script\nSample Google Apps Script add-ons for Google Slides.\n(11 words, 0 code blocks)",
+      "content": null,
+      "_enhanced": true,
+      "parsed_data": {
+        "tables": 0,
+        "cross_references": 0,
+        "code_blocks": 0,
+        "images": 3,
+        "quality_scores": {
+          "avg_code_quality": 0
+        }
+      }
+    },
+    {
+      "path": "slides/SpeakerNotesScript/README.md",
+      "filename": "README.md",
+      "category": "other",
+      "size_bytes": 1460,
+      "title": "Speaker Notes Script",
+      "structure": {
+        "title": "Speaker Notes Script",
+        "headers": [
+          {
+            "level": 1,
+            "text": "Speaker Notes Script",
+            "line": 1
+          },
+          {
+            "level": 2,
+            "text": "Set Up",
+            "line": 8
+          },
+          {
+            "level": 2,
+            "text": "Try It Out",
+            "line": 17
+          }
+        ],
+        "code_blocks": [
+          {
+            "language": "text",
+            "code": "* To create and write a document: `https://www.googleapis.com/auth/documents`\n* To read the current presentation: `https://www.googleapis.com/auth/presentations.currentonly`"
+          }
+        ],
+        "tables": 0,
+        "images": 1,
+        "links": 1,
+        "word_count": 12,
+        "line_count": 26
+      },
+      "summary": "**Speaker Notes Script**\nSections: Set Up, Try It Out\nThis add-on will extract all your Speaker Notes and creates a Google Doc with your 'formatted' script. To run this add-on, first go to your Google slides with Speaker Notes.\n(12 words, 1 code blocks)",
+      "content": null,
+      "_enhanced": true,
+      "parsed_data": {
+        "tables": 0,
+        "cross_references": 0,
+        "code_blocks": 1,
+        "images": 1,
+        "quality_scores": {
+          "avg_code_quality": 6.5
+        }
+      }
+    },
+    {
+      "path": "solutions/add-on/book-smartchip/README.md",
+      "filename": "README.md",
+      "category": "other",
+      "size_bytes": 164,
+      "title": "Preview links from Google Books with smart chips",
+      "structure": {
+        "title": "Preview links from Google Books with smart chips",
+        "headers": [
+          {
+            "level": 1,
+            "text": "Preview links from Google Books with smart chips",
+            "line": 1
+          }
+        ],
+        "code_blocks": [],
+        "tables": 0,
+        "images": 0,
+        "links": 0,
+        "word_count": 2,
+        "line_count": 6
+      },
+      "summary": "**Preview links from Google Books with smart chips**\nSee https://developers.google.com/workspace/add-ons/samples/preview-links-google-books for additional details.\n(2 words, 0 code blocks)",
+      "content": null,
+      "_enhanced": true,
+      "parsed_data": {
+        "tables": 0,
+        "cross_references": 0,
+        "code_blocks": 0,
+        "images": 0,
+        "quality_scores": {
+          "avg_code_quality": 0
+        }
+      }
+    },
+    {
+      "path": "solutions/add-on/share-macro/README.md",
+      "filename": "README.md",
+      "category": "other",
+      "size_bytes": 153,
+      "title": "Copy macros to other spreadsheets",
+      "structure": {
+        "title": "Copy macros to other spreadsheets",
+        "headers": [
+          {
+            "level": 1,
+            "text": "Copy macros to other spreadsheets",
+            "line": 1
+          }
+        ],
+        "code_blocks": [],
+        "tables": 0,
+        "images": 0,
+        "links": 1,
+        "word_count": 2,
+        "line_count": 5
+      },
+      "summary": "**Copy macros to other spreadsheets**\nSee [developers.google.com](https://developers.google.com/apps-script/add-ons/share-macro) for additional details.\n(2 words, 0 code blocks)",
+      "content": null,
+      "_enhanced": true,
+      "parsed_data": {
+        "tables": 0,
+        "cross_references": 0,
+        "code_blocks": 0,
+        "images": 0,
+        "quality_scores": {
+          "avg_code_quality": 0
+        }
+      }
+    },
+    {
+      "path": "solutions/automations/agenda-maker/README.md",
+      "filename": "README.md",
+      "category": "other",
+      "size_bytes": 159,
+      "title": "Make an agenda for meetings",
+      "structure": {
+        "title": "Make an agenda for meetings",
+        "headers": [
+          {
+            "level": 1,
+            "text": "Make an agenda for meetings",
+            "line": 1
+          }
+        ],
+        "code_blocks": [],
+        "tables": 0,
+        "images": 0,
+        "links": 1,
+        "word_count": 2,
+        "line_count": 4
+      },
+      "summary": "**Make an agenda for meetings**\nSee [developers.google.com](https://developers.google.com/apps-script/samples/automations/agenda-maker) for additional details.\n(2 words, 0 code blocks)",
+      "content": null,
+      "_enhanced": true,
+      "parsed_data": {
+        "tables": 0,
+        "cross_references": 0,
+        "code_blocks": 0,
+        "images": 0,
+        "quality_scores": {
+          "avg_code_quality": 0
+        }
+      }
+    },
+    {
+      "path": "solutions/automations/aggregate-document-content/README.md",
+      "filename": "README.md",
+      "category": "other",
+      "size_bytes": 187,
+      "title": "Aggregate content from multiple documents",
+      "structure": {
+        "title": "Aggregate content from multiple documents",
+        "headers": [
+          {
+            "level": 1,
+            "text": "Aggregate content from multiple documents",
+            "line": 1
+          }
+        ],
+        "code_blocks": [],
+        "tables": 0,
+        "images": 0,
+        "links": 1,
+        "word_count": 2,
+        "line_count": 4
+      },
+      "summary": "**Aggregate content from multiple documents**\nSee [developers.google.com](https://developers.google.com/apps-script/samples/automations/aggregate-document-content) for additional details.\n(2 words, 0 code blocks)",
+      "content": null,
+      "_enhanced": true,
+      "parsed_data": {
+        "tables": 0,
+        "cross_references": 0,
+        "code_blocks": 0,
+        "images": 0,
+        "quality_scores": {
+          "avg_code_quality": 0
+        }
+      }
+    },
+    {
+      "path": "solutions/automations/bracket-maker/README.md",
+      "filename": "README.md",
+      "category": "other",
+      "size_bytes": 160,
+      "title": "Create a tournament bracket",
+      "structure": {
+        "title": "Create a tournament bracket",
+        "headers": [
+          {
+            "level": 1,
+            "text": "Create a tournament bracket",
+            "line": 1
+          }
+        ],
+        "code_blocks": [],
+        "tables": 0,
+        "images": 0,
+        "links": 1,
+        "word_count": 2,
+        "line_count": 4
+      },
+      "summary": "**Create a tournament bracket**\nSee [developers.google.com](https://developers.google.com/apps-script/samples/automations/bracket-maker) for additional details.\n(2 words, 0 code blocks)",
+      "content": null,
+      "_enhanced": true,
+      "parsed_data": {
+        "tables": 0,
+        "cross_references": 0,
+        "code_blocks": 0,
+        "images": 0,
+        "quality_scores": {
+          "avg_code_quality": 0
+        }
+      }
+    },
+    {
+      "path": "solutions/automations/calendar-timesheet/README.md",
+      "filename": "README.md",
+      "category": "other",
+      "size_bytes": 187,
+      "title": "Record time and activities in Calendar and Sheets",
+      "structure": {
+        "title": "Record time and activities in Calendar and Sheets",
+        "headers": [
+          {
+            "level": 1,
+            "text": "Record time and activities in Calendar and Sheets",
+            "line": 1
+          }
+        ],
+        "code_blocks": [],
+        "tables": 0,
+        "images": 0,
+        "links": 1,
+        "word_count": 2,
+        "line_count": 4
+      },
+      "summary": "**Record time and activities in Calendar and Sheets**\nSee [developers.google.com](https://developers.google.com/apps-script/samples/automations/calendar-timesheet) for additional details.\n(2 words, 0 code blocks)",
+      "content": null,
+      "_enhanced": true,
+      "parsed_data": {
+        "tables": 0,
+        "cross_references": 0,
+        "code_blocks": 0,
+        "images": 0,
+        "quality_scores": {
+          "avg_code_quality": 0
+        }
+      }
+    },
+    {
+      "path": "solutions/automations/content-signup/README.md",
+      "filename": "README.md",
+      "category": "other",
+      "size_bytes": 154,
+      "title": "Send curated content",
+      "structure": {
+        "title": "Send curated content",
+        "headers": [
+          {
+            "level": 1,
+            "text": "Send curated content",
+            "line": 1
+          }
+        ],
+        "code_blocks": [],
+        "tables": 0,
+        "images": 0,
+        "links": 1,
+        "word_count": 2,
+        "line_count": 4
+      },
+      "summary": "**Send curated content**\nSee [developers.google.com](https://developers.google.com/apps-script/samples/automations/content-signup) for additional details.\n(2 words, 0 code blocks)",
+      "content": null,
+      "_enhanced": true,
+      "parsed_data": {
+        "tables": 0,
+        "cross_references": 0,
+        "code_blocks": 0,
+        "images": 0,
+        "quality_scores": {
+          "avg_code_quality": 0
+        }
+      }
+    },
+    {
+      "path": "solutions/automations/course-feedback-response/README.md",
+      "filename": "README.md",
+      "category": "other",
+      "size_bytes": 163,
+      "title": "Respond to feedback",
+      "structure": {
+        "title": "Respond to feedback",
+        "headers": [
+          {
+            "level": 1,
+            "text": "Respond to feedback",
+            "line": 1
+          }
+        ],
+        "code_blocks": [],
+        "tables": 0,
+        "images": 0,
+        "links": 1,
+        "word_count": 2,
+        "line_count": 4
+      },
+      "summary": "**Respond to feedback**\nSee [developers.google.com](https://developers.google.com/apps-script/samples/automations/course-feedback-response) for additional details.\n(2 words, 0 code blocks)",
+      "content": null,
+      "_enhanced": true,
+      "parsed_data": {
+        "tables": 0,
+        "cross_references": 0,
+        "code_blocks": 0,
+        "images": 0,
+        "quality_scores": {
+          "avg_code_quality": 0
+        }
+      }
+    },
+    {
+      "path": "solutions/automations/employee-certificate/README.md",
+      "filename": "README.md",
+      "category": "other",
+      "size_bytes": 196,
+      "title": "Send personalized appreciation certificates to employees",
+      "structure": {
+        "title": "Send personalized appreciation certificates to employees",
+        "headers": [
+          {
+            "level": 1,
+            "text": "Send personalized appreciation certificates to employees",
+            "line": 1
+          }
+        ],
+        "code_blocks": [],
+        "tables": 0,
+        "images": 0,
+        "links": 1,
+        "word_count": 2,
+        "line_count": 4
+      },
+      "summary": "**Send personalized appreciation certificates to employees**\nSee [developers.google.com](https://developers.google.com/apps-script/samples/automations/employee-certificate) for additional details.\n(2 words, 0 code blocks)",
+      "content": null,
+      "_enhanced": true,
+      "parsed_data": {
+        "tables": 0,
+        "cross_references": 0,
+        "code_blocks": 0,
+        "images": 0,
+        "quality_scores": {
+          "avg_code_quality": 0
+        }
+      }
+    },
+    {
+      "path": "solutions/automations/equipment-requests/README.md",
+      "filename": "README.md",
+      "category": "other",
+      "size_bytes": 176,
+      "title": "Manage new employee equipment requests",
+      "structure": {
+        "title": "Manage new employee equipment requests",
+        "headers": [
+          {
+            "level": 1,
+            "text": "Manage new employee equipment requests",
+            "line": 1
+          }
+        ],
+        "code_blocks": [],
+        "tables": 0,
+        "images": 0,
+        "links": 1,
+        "word_count": 2,
+        "line_count": 4
+      },
+      "summary": "**Manage new employee equipment requests**\nSee [developers.google.com](https://developers.google.com/apps-script/samples/automations/equipment-requests) for additional details.\n(2 words, 0 code blocks)",
+      "content": null,
+      "_enhanced": true,
+      "parsed_data": {
+        "tables": 0,
+        "cross_references": 0,
+        "code_blocks": 0,
+        "images": 0,
+        "quality_scores": {
+          "avg_code_quality": 0
+        }
+      }
+    },
+    {
+      "path": "solutions/automations/event-session-signup/README.md",
+      "filename": "README.md",
+      "category": "other",
+      "size_bytes": 185,
+      "title": "Create a sign-up for sessions at a conference",
+      "structure": {
+        "title": "Create a sign-up for sessions at a conference",
+        "headers": [
+          {
+            "level": 1,
+            "text": "Create a sign-up for sessions at a conference",
+            "line": 1
+          }
+        ],
+        "code_blocks": [],
+        "tables": 0,
+        "images": 0,
+        "links": 1,
+        "word_count": 2,
+        "line_count": 4
+      },
+      "summary": "**Create a sign-up for sessions at a conference**\nSee [developers.google.com](https://developers.google.com/apps-script/samples/automations/event-session-signup) for additional details.\n(2 words, 0 code blocks)",
+      "content": null,
+      "_enhanced": true,
+      "parsed_data": {
+        "tables": 0,
+        "cross_references": 0,
+        "code_blocks": 0,
+        "images": 0,
+        "quality_scores": {
+          "avg_code_quality": 0
+        }
+      }
+    },
+    {
+      "path": "solutions/automations/feedback-sentiment-analysis/README.md",
+      "filename": "README.md",
+      "category": "other",
+      "size_bytes": 186,
+      "title": "Analyze sentiment of open-ended feedback",
+      "structure": {
+        "title": "Analyze sentiment of open-ended feedback",
+        "headers": [
+          {
+            "level": 1,
+            "text": "Analyze sentiment of open-ended feedback",
+            "line": 1
+          }
+        ],
+        "code_blocks": [],
+        "tables": 0,
+        "images": 0,
+        "links": 1,
+        "word_count": 2,
+        "line_count": 3
+      },
+      "summary": "**Analyze sentiment of open-ended feedback**\nSee [developers.google.com](https://developers.google.com/apps-script/samples/automations/feedback-sentiment-analysis) for additional details.\n(2 words, 0 code blocks)",
+      "content": null,
+      "_enhanced": true,
+      "parsed_data": {
+        "tables": 0,
+        "cross_references": 0,
+        "code_blocks": 0,
+        "images": 0,
+        "quality_scores": {
+          "avg_code_quality": 0
+        }
+      }
+    },
+    {
+      "path": "solutions/automations/folder-creation/README.md",
+      "filename": "README.md",
+      "category": "other",
+      "size_bytes": 622,
+      "title": "Folder creation",
+      "structure": {
+        "title": "Folder creation",
+        "headers": [
+          {
+            "level": 1,
+            "text": "Folder creation",
+            "line": 1
+          }
+        ],
+        "code_blocks": [],
+        "tables": 0,
+        "images": 0,
+        "links": 1,
+        "word_count": 5,
+        "line_count": 12
+      },
+      "summary": "**Folder creation**\nThis code sample is part of a video tutorial on how to combine AppSheet and Apps Script.\n(5 words, 0 code blocks)",
+      "content": null,
+      "_enhanced": true,
+      "parsed_data": {
+        "tables": 0,
+        "cross_references": 0,
+        "code_blocks": 0,
+        "images": 0,
+        "quality_scores": {
+          "avg_code_quality": 0
+        }
+      }
+    },
+    {
+      "path": "solutions/automations/generate-pdfs/README.md",
+      "filename": "README.md",
+      "category": "other",
+      "size_bytes": 174,
+      "title": "Generate and send PDFs from Google Sheets",
+      "structure": {
+        "title": "Generate and send PDFs from Google Sheets",
+        "headers": [
+          {
+            "level": 1,
+            "text": "Generate and send PDFs from Google Sheets",
+            "line": 1
+          }
+        ],
+        "code_blocks": [],
+        "tables": 0,
+        "images": 0,
+        "links": 1,
+        "word_count": 2,
+        "line_count": 4
+      },
+      "summary": "**Generate and send PDFs from Google Sheets**\nSee [developers.google.com](https://developers.google.com/apps-script/samples/automations/generate-pdfs) for additional details.\n(2 words, 0 code blocks)",
+      "content": null,
+      "_enhanced": true,
+      "parsed_data": {
+        "tables": 0,
+        "cross_references": 0,
+        "code_blocks": 0,
+        "images": 0,
+        "quality_scores": {
+          "avg_code_quality": 0
+        }
+      }
+    },
+    {
+      "path": "solutions/automations/import-csv-sheets/README.md",
+      "filename": "README.md",
+      "category": "other",
+      "size_bytes": 169,
+      "title": "Import CSV data to a spreadsheet",
+      "structure": {
+        "title": "Import CSV data to a spreadsheet",
+        "headers": [
+          {
+            "level": 1,
+            "text": "Import CSV data to a spreadsheet",
+            "line": 1
+          }
+        ],
+        "code_blocks": [],
+        "tables": 0,
+        "images": 0,
+        "links": 1,
+        "word_count": 2,
+        "line_count": 4
+      },
+      "summary": "**Import CSV data to a spreadsheet**\nSee [developers.google.com](https://developers.google.com/apps-script/samples/automations/import-csv-sheets) for additional details.\n(2 words, 0 code blocks)",
+      "content": null,
+      "_enhanced": true,
+      "parsed_data": {
+        "tables": 0,
+        "cross_references": 0,
+        "code_blocks": 0,
+        "images": 0,
+        "quality_scores": {
+          "avg_code_quality": 0
+        }
+      }
+    },
+    {
+      "path": "solutions/automations/mail-merge/README.md",
+      "filename": "README.md",
+      "category": "other",
+      "size_bytes": 176,
+      "title": "Create a mail merge with Gmail & Google Sheets",
+      "structure": {
+        "title": "Create a mail merge with Gmail & Google Sheets",
+        "headers": [
+          {
+            "level": 1,
+            "text": "Create a mail merge with Gmail & Google Sheets",
+            "line": 1
+          }
+        ],
+        "code_blocks": [],
+        "tables": 0,
+        "images": 0,
+        "links": 1,
+        "word_count": 2,
+        "line_count": 4
+      },
+      "summary": "**Create a mail merge with Gmail & Google Sheets**\nSee [developers.google.com](https://developers.google.com/apps-script/samples/automations/mail-merge) for additional details.\n(2 words, 0 code blocks)",
+      "content": null,
+      "_enhanced": true,
+      "parsed_data": {
+        "tables": 0,
+        "cross_references": 0,
+        "code_blocks": 0,
+        "images": 0,
+        "quality_scores": {
+          "avg_code_quality": 0
+        }
+      }
+    },
+    {
+      "path": "solutions/automations/news-sentiment/README.md",
+      "filename": "README.md",
+      "category": "other",
+      "size_bytes": 183,
+      "title": "Connect to an external API: Analyze news headlines",
+      "structure": {
+        "title": "Connect to an external API: Analyze news headlines",
+        "headers": [
+          {
+            "level": 1,
+            "text": "Connect to an external API: Analyze news headlines",
+            "line": 1
+          }
+        ],
+        "code_blocks": [],
+        "tables": 0,
+        "images": 0,
+        "links": 1,
+        "word_count": 2,
+        "line_count": 3
+      },
+      "summary": "**Connect to an external API: Analyze news headlines**\nSee [developers.google.com](https://developers.google.com/apps-script/samples/automations/news-sentiment) for additional details.\n(2 words, 0 code blocks)",
+      "content": null,
+      "_enhanced": true,
+      "parsed_data": {
+        "tables": 0,
+        "cross_references": 0,
+        "code_blocks": 0,
+        "images": 0,
+        "quality_scores": {
+          "avg_code_quality": 0
+        }
+      }
+    },
+    {
+      "path": "solutions/automations/offsite-activity-signup/README.md",
+      "filename": "README.md",
+      "category": "other",
+      "size_bytes": 174,
+      "title": "Create a sign-up for an offsite",
+      "structure": {
+        "title": "Create a sign-up for an offsite",
+        "headers": [
+          {
+            "level": 1,
+            "text": "Create a sign-up for an offsite",
+            "line": 1
+          }
+        ],
+        "code_blocks": [],
+        "tables": 0,
+        "images": 0,
+        "links": 1,
+        "word_count": 2,
+        "line_count": 4
+      },
+      "summary": "**Create a sign-up for an offsite**\nSee [developers.google.com](https://developers.google.com/apps-script/samples/automations/offsite-activity-signup) for additional details.\n(2 words, 0 code blocks)",
+      "content": null,
+      "_enhanced": true,
+      "parsed_data": {
+        "tables": 0,
+        "cross_references": 0,
+        "code_blocks": 0,
+        "images": 0,
+        "quality_scores": {
+          "avg_code_quality": 0
+        }
+      }
+    },
+    {
+      "path": "solutions/automations/tax-loss-harvest-alerts/README.md",
+      "filename": "README.md",
+      "category": "other",
+      "size_bytes": 169,
+      "title": "Get stock price drop alerts",
+      "structure": {
+        "title": "Get stock price drop alerts",
+        "headers": [
+          {
+            "level": 1,
+            "text": "Get stock price drop alerts",
+            "line": 1
+          }
+        ],
+        "code_blocks": [],
+        "tables": 0,
+        "images": 0,
+        "links": 1,
+        "word_count": 2,
+        "line_count": 3
+      },
+      "summary": "**Get stock price drop alerts**\nSee [developers.google.com](https://developers.google.com/apps-script/samples/automations/tax-loss-harvest-alerts) for additional details.\n(2 words, 0 code blocks)",
+      "content": null,
+      "_enhanced": true,
+      "parsed_data": {
+        "tables": 0,
+        "cross_references": 0,
+        "code_blocks": 0,
+        "images": 0,
+        "quality_scores": {
+          "avg_code_quality": 0
+        }
+      }
+    },
+    {
+      "path": "solutions/automations/timesheets/README.md",
+      "filename": "README.md",
+      "category": "other",
+      "size_bytes": 174,
+      "title": "Collect and review timesheets from employees",
+      "structure": {
+        "title": "Collect and review timesheets from employees",
+        "headers": [
+          {
+            "level": 1,
+            "text": "Collect and review timesheets from employees",
+            "line": 1
+          }
+        ],
+        "code_blocks": [],
+        "tables": 0,
+        "images": 0,
+        "links": 1,
+        "word_count": 2,
+        "line_count": 4
+      },
+      "summary": "**Collect and review timesheets from employees**\nSee [developers.google.com](https://developers.google.com/apps-script/samples/automations/timesheets) for additional details.\n(2 words, 0 code blocks)",
+      "content": null,
+      "_enhanced": true,
+      "parsed_data": {
+        "tables": 0,
+        "cross_references": 0,
+        "code_blocks": 0,
+        "images": 0,
+        "quality_scores": {
+          "avg_code_quality": 0
+        }
+      }
+    },
+    {
+      "path": "solutions/automations/upload-files/README.md",
+      "filename": "README.md",
+      "category": "other",
+      "size_bytes": 178,
+      "title": "Upload files to Google Drive from Google Forms",
+      "structure": {
+        "title": "Upload files to Google Drive from Google Forms",
+        "headers": [
+          {
+            "level": 1,
+            "text": "Upload files to Google Drive from Google Forms",
+            "line": 1
+          }
+        ],
+        "code_blocks": [],
+        "tables": 0,
+        "images": 0,
+        "links": 1,
+        "word_count": 2,
+        "line_count": 4
+      },
+      "summary": "**Upload files to Google Drive from Google Forms**\nSee [developers.google.com](https://developers.google.com/apps-script/samples/automations/upload-files) for additional details.\n(2 words, 0 code blocks)",
+      "content": null,
+      "_enhanced": true,
+      "parsed_data": {
+        "tables": 0,
+        "cross_references": 0,
+        "code_blocks": 0,
+        "images": 0,
+        "quality_scores": {
+          "avg_code_quality": 0
+        }
+      }
+    },
+    {
+      "path": "solutions/automations/vacation-calendar/README.md",
+      "filename": "README.md",
+      "category": "other",
+      "size_bytes": 169,
+      "title": "Populate a team vacation calendar",
+      "structure": {
+        "title": "Populate a team vacation calendar",
+        "headers": [
+          {
+            "level": 1,
+            "text": "Populate a team vacation calendar",
+            "line": 1
+          }
+        ],
+        "code_blocks": [],
+        "tables": 0,
+        "images": 0,
+        "links": 1,
+        "word_count": 2,
+        "line_count": 3
+      },
+      "summary": "**Populate a team vacation calendar**\nSee [developers.google.com](https://developers.google.com/apps-script/samples/automations/vacation-calendar) for additional details.\n(2 words, 0 code blocks)",
+      "content": null,
+      "_enhanced": true,
+      "parsed_data": {
+        "tables": 0,
+        "cross_references": 0,
+        "code_blocks": 0,
+        "images": 0,
+        "quality_scores": {
+          "avg_code_quality": 0
+        }
+      }
+    },
+    {
+      "path": "solutions/automations/youtube-tracker/README.md",
+      "filename": "README.md",
+      "category": "other",
+      "size_bytes": 172,
+      "title": "Track YouTube video views and comments",
+      "structure": {
+        "title": "Track YouTube video views and comments",
+        "headers": [
+          {
+            "level": 1,
+            "text": "Track YouTube video views and comments",
+            "line": 1
+          }
+        ],
+        "code_blocks": [],
+        "tables": 0,
+        "images": 0,
+        "links": 1,
+        "word_count": 2,
+        "line_count": 3
+      },
+      "summary": "**Track YouTube video views and comments**\nSee [developers.google.com](https://developers.google.com/apps-script/samples/automations/youtube-tracker) for additional details.\n(2 words, 0 code blocks)",
+      "content": null,
+      "_enhanced": true,
+      "parsed_data": {
+        "tables": 0,
+        "cross_references": 0,
+        "code_blocks": 0,
+        "images": 0,
+        "quality_scores": {
+          "avg_code_quality": 0
+        }
+      }
+    },
+    {
+      "path": "solutions/custom-functions/calculate-driving-distance/README.md",
+      "filename": "README.md",
+      "category": "other",
+      "size_bytes": 204,
+      "title": "Calculate driving distance & convert meters to miles",
+      "structure": {
+        "title": "Calculate driving distance & convert meters to miles",
+        "headers": [
+          {
+            "level": 1,
+            "text": "Calculate driving distance & convert meters to miles",
+            "line": 1
+          }
+        ],
+        "code_blocks": [],
+        "tables": 0,
+        "images": 0,
+        "links": 1,
+        "word_count": 2,
+        "line_count": 5
+      },
+      "summary": "**Calculate driving distance & convert meters to miles**\nSee [developers.google.com](https://developers.google.com/apps-script/samples/custom-functions/calculate-driving-distance) for additional details.\n(2 words, 0 code blocks)",
+      "content": null,
+      "_enhanced": true,
+      "parsed_data": {
+        "tables": 0,
+        "cross_references": 0,
+        "code_blocks": 0,
+        "images": 0,
+        "quality_scores": {
+          "avg_code_quality": 0
+        }
+      }
+    },
+    {
+      "path": "solutions/custom-functions/summarize-sheets-data/README.md",
+      "filename": "README.md",
+      "category": "other",
+      "size_bytes": 182,
+      "title": "Summarize data from multiple sheets",
+      "structure": {
+        "title": "Summarize data from multiple sheets",
+        "headers": [
+          {
+            "level": 1,
+            "text": "Summarize data from multiple sheets",
+            "line": 1
+          }
+        ],
+        "code_blocks": [],
+        "tables": 0,
+        "images": 0,
+        "links": 1,
+        "word_count": 2,
+        "line_count": 5
+      },
+      "summary": "**Summarize data from multiple sheets**\nSee [developers.google.com](https://developers.google.com/apps-script/samples/custom-functions/summarize-sheets-data) for additional details.\n(2 words, 0 code blocks)",
+      "content": null,
+      "_enhanced": true,
+      "parsed_data": {
+        "tables": 0,
+        "cross_references": 0,
+        "code_blocks": 0,
+        "images": 0,
+        "quality_scores": {
+          "avg_code_quality": 0
+        }
+      }
+    },
+    {
+      "path": "solutions/custom-functions/tier-pricing/README.md",
+      "filename": "README.md",
+      "category": "other",
+      "size_bytes": 173,
+      "title": "Calculate a tiered pricing discount",
+      "structure": {
+        "title": "Calculate a tiered pricing discount",
+        "headers": [
+          {
+            "level": 1,
+            "text": "Calculate a tiered pricing discount",
+            "line": 1
+          }
+        ],
+        "code_blocks": [],
+        "tables": 0,
+        "images": 0,
+        "links": 1,
+        "word_count": 2,
+        "line_count": 5
+      },
+      "summary": "**Calculate a tiered pricing discount**\nSee [developers.google.com](https://developers.google.com/apps-script/samples/custom-functions/tier-pricing) for additional details.\n(2 words, 0 code blocks)",
+      "content": null,
+      "_enhanced": true,
+      "parsed_data": {
+        "tables": 0,
+        "cross_references": 0,
+        "code_blocks": 0,
+        "images": 0,
+        "quality_scores": {
+          "avg_code_quality": 0
+        }
+      }
+    },
+    {
+      "path": "solutions/editor-add-on/clean-sheet/README.md",
+      "filename": "README.md",
+      "category": "other",
+      "size_bytes": 150,
+      "title": "Clean up data in a spreadsheet",
+      "structure": {
+        "title": "Clean up data in a spreadsheet",
+        "headers": [
+          {
+            "level": 1,
+            "text": "Clean up data in a spreadsheet",
+            "line": 1
+          }
+        ],
+        "code_blocks": [],
+        "tables": 0,
+        "images": 0,
+        "links": 1,
+        "word_count": 2,
+        "line_count": 5
+      },
+      "summary": "**Clean up data in a spreadsheet**\nSee [developers.google.com](https://developers.google.com/apps-script/add-ons/clean-sheet) for additional details.\n(2 words, 0 code blocks)",
+      "content": null,
+      "_enhanced": true,
+      "parsed_data": {
+        "tables": 0,
+        "cross_references": 0,
+        "code_blocks": 0,
+        "images": 0,
+        "quality_scores": {
+          "avg_code_quality": 0
+        }
+      }
+    },
+    {
+      "path": "solutions/ooo-assistant/README.md",
+      "filename": "README.md",
+      "category": "other",
+      "size_bytes": 330,
+      "title": "Build a Google Workspace add-on extending all UIs",
+      "structure": {
+        "title": "Build a Google Workspace add-on extending all UIs",
+        "headers": [
+          {
+            "level": 1,
+            "text": "Build a Google Workspace add-on extending all UIs",
+            "line": 1
+          }
+        ],
+        "code_blocks": [],
+        "tables": 0,
+        "images": 0,
+        "links": 1,
+        "word_count": 4,
+        "line_count": 8
+      },
+      "summary": "**Build a Google Workspace add-on extending all UIs**\nThe add-on extends the following Google Workspace UIs: Chat, Calendar, Gmail, Drive, Docs, Sheets, and Slides.\n(4 words, 0 code blocks)",
+      "content": null,
+      "_enhanced": true,
+      "parsed_data": {
+        "tables": 0,
+        "cross_references": 0,
+        "code_blocks": 0,
+        "images": 0,
+        "quality_scores": {
+          "avg_code_quality": 0
+        }
+      }
+    },
+    {
+      "path": "solutions/webhook-chat-app/README.md",
+      "filename": "README.md",
+      "category": "other",
+      "size_bytes": 183,
+      "title": "Google Chat App Webhook",
+      "structure": {
+        "title": "Google Chat App Webhook",
+        "headers": [
+          {
+            "level": 1,
+            "text": "Google Chat App Webhook",
+            "line": 1
+          }
+        ],
+        "code_blocks": [],
+        "tables": 0,
+        "images": 0,
+        "links": 1,
+        "word_count": 2,
+        "line_count": 5
+      },
+      "summary": "**Google Chat App Webhook**\nPlease see related guide on how to [send messages to Google Chat with incoming webhooks](https://developers.google.com/workspace/chat/quickstart/webhooks).\n(2 words, 0 code blocks)",
+      "content": null,
+      "_enhanced": true,
+      "parsed_data": {
+        "tables": 0,
+        "cross_references": 0,
+        "code_blocks": 0,
+        "images": 0,
+        "quality_scores": {
+          "avg_code_quality": 0
+        }
+      }
+    },
+    {
+      "path": "tasks/simpleTasks/README.md",
+      "filename": "README.md",
+      "category": "other",
+      "size_bytes": 2013,
+      "title": "Simple Tasks",
+      "structure": {
+        "title": "Simple Tasks",
+        "headers": [
+          {
+            "level": 1,
+            "text": "Simple Tasks",
+            "line": 1
+          },
+          {
+            "level": 2,
+            "text": "Try it out",
+            "line": 12
+          },
+          {
+            "level": 2,
+            "text": "Setup",
+            "line": 20
+          }
+        ],
+        "code_blocks": [],
+        "tables": 0,
+        "images": 1,
+        "links": 7,
+        "word_count": 12,
+        "line_count": 41
+      },
+      "summary": "**Simple Tasks**\nSections: Try it out, Setup\nSimple Tasks is a sample web app built using Apps Script that provides limited read and write access to your data in [Google Tasks](https://mail.google.com/tasks/canvas). It was created using the [HTM...\n(12 words, 0 code blocks)",
+      "content": null,
+      "_enhanced": true,
+      "parsed_data": {
+        "tables": 0,
+        "cross_references": 1,
+        "code_blocks": 0,
+        "images": 1,
+        "quality_scores": {
+          "avg_code_quality": 0
+        }
+      }
+    },
+    {
+      "path": "templates/README.md",
+      "filename": "README.md",
+      "category": "templates",
+      "size_bytes": 1503,
+      "title": "Templates for Google Apps Script",
+      "structure": {
+        "title": "Templates for Google Apps Script",
+        "headers": [
+          {
+            "level": 1,
+            "text": "Templates for Google Apps Script",
+            "line": 1
+          },
+          {
+            "level": 2,
+            "text": "Introduction",
+            "line": 6
+          },
+          {
+            "level": 2,
+            "text": "Getting Started",
+            "line": 29
+          }
+        ],
+        "code_blocks": [],
+        "tables": 0,
+        "images": 0,
+        "links": 0,
+        "word_count": 11,
+        "line_count": 41
+      },
+      "summary": "**Templates for Google Apps Script**\nSections: Introduction, Getting Started\nTemplates that provide an initial, working framework for Apps Script projects.\n(11 words, 0 code blocks)",
+      "content": null,
+      "_enhanced": true,
+      "parsed_data": {
+        "tables": 0,
+        "cross_references": 0,
+        "code_blocks": 0,
+        "images": 0,
+        "quality_scores": {
+          "avg_code_quality": 0
+        }
+      }
+    },
+    {
+      "path": "templates/custom-functions/README.md",
+      "filename": "README.md",
+      "category": "templates",
+      "size_bytes": 918,
+      "title": "Template: Custom Functions for Sheets",
+      "structure": {
+        "title": "Template: Custom Functions for Sheets",
+        "headers": [
+          {
+            "level": 1,
+            "text": "Template: Custom Functions for Sheets",
+            "line": 1
+          }
+        ],
+        "code_blocks": [],
+        "tables": 0,
+        "images": 0,
+        "links": 2,
+        "word_count": 8,
+        "line_count": 24
+      },
+      "summary": "**Template: Custom Functions for Sheets**\nTemplate: Custom Functions for Sheets =====================================\n(8 words, 0 code blocks)",
+      "content": null,
+      "_enhanced": true,
+      "parsed_data": {
+        "tables": 0,
+        "cross_references": 0,
+        "code_blocks": 0,
+        "images": 0,
+        "quality_scores": {
+          "avg_code_quality": 0
+        }
+      }
+    },
+    {
+      "path": "templates/docs-addon/README.md",
+      "filename": "README.md",
+      "category": "templates",
+      "size_bytes": 1064,
+      "title": "Template: Google Docs Add-on",
+      "structure": {
+        "title": "Template: Google Docs Add-on",
+        "headers": [
+          {
+            "level": 1,
+            "text": "Template: Google Docs Add-on",
+            "line": 1
+          }
+        ],
+        "code_blocks": [],
+        "tables": 0,
+        "images": 0,
+        "links": 3,
+        "word_count": 5,
+        "line_count": 24
+      },
+      "summary": "**Template: Google Docs Add-on**\nTemplate: Google Docs Add-on ============================\n(5 words, 0 code blocks)",
+      "content": null,
+      "_enhanced": true,
+      "parsed_data": {
+        "tables": 0,
+        "cross_references": 0,
+        "code_blocks": 0,
+        "images": 0,
+        "quality_scores": {
+          "avg_code_quality": 0
+        }
+      }
+    },
+    {
+      "path": "templates/forms-addon/README.md",
+      "filename": "README.md",
+      "category": "templates",
+      "size_bytes": 848,
+      "title": "Template: Google Forms Add-on",
+      "structure": {
+        "title": "Template: Google Forms Add-on",
+        "headers": [
+          {
+            "level": 1,
+            "text": "Template: Google Forms Add-on",
+            "line": 1
+          }
+        ],
+        "code_blocks": [],
+        "tables": 0,
+        "images": 0,
+        "links": 2,
+        "word_count": 4,
+        "line_count": 20
+      },
+      "summary": "**Template: Google Forms Add-on**\nTemplate: Google Forms Add-on =============================\n(4 words, 0 code blocks)",
+      "content": null,
+      "_enhanced": true,
+      "parsed_data": {
+        "tables": 0,
+        "cross_references": 0,
+        "code_blocks": 0,
+        "images": 0,
+        "quality_scores": {
+          "avg_code_quality": 0
+        }
+      }
+    },
+    {
+      "path": "templates/sheets-addon/README.md",
+      "filename": "README.md",
+      "category": "templates",
+      "size_bytes": 1238,
+      "title": "Template: Google Sheets Add-on",
+      "structure": {
+        "title": "Template: Google Sheets Add-on",
+        "headers": [
+          {
+            "level": 1,
+            "text": "Template: Google Sheets Add-on",
+            "line": 1
+          }
+        ],
+        "code_blocks": [],
+        "tables": 0,
+        "images": 0,
+        "links": 4,
+        "word_count": 6,
+        "line_count": 28
+      },
+      "summary": "**Template: Google Sheets Add-on**\nTemplate: Google Sheets Add-on ==============================\n(6 words, 0 code blocks)",
+      "content": null,
+      "_enhanced": true,
+      "parsed_data": {
+        "tables": 0,
+        "cross_references": 0,
+        "code_blocks": 0,
+        "images": 0,
+        "quality_scores": {
+          "avg_code_quality": 0
+        }
+      }
+    },
+    {
+      "path": "templates/sheets-import/README.md",
+      "filename": "README.md",
+      "category": "templates",
+      "size_bytes": 5188,
+      "title": "Template: Importing Data to Sheets",
+      "structure": {
+        "title": "Template: Importing Data to Sheets",
+        "headers": [
+          {
+            "level": 1,
+            "text": "Template: Importing Data to Sheets",
+            "line": 1
+          },
+          {
+            "level": 2,
+            "text": "Project manifest",
+            "line": 20
+          },
+          {
+            "level": 2,
+            "text": "Setup: Libraries",
+            "line": 55
+          },
+          {
+            "level": 2,
+            "text": "Setup: API configuration",
+            "line": 77
+          },
+          {
+            "level": 2,
+            "text": "Additional information",
+            "line": 92
+          }
+        ],
+        "code_blocks": [],
+        "tables": 0,
+        "images": 0,
+        "links": 5,
+        "word_count": 35,
+        "line_count": 104
+      },
+      "summary": "**Template: Importing Data to Sheets**\nSections: Project manifest, Setup: Libraries, Setup: API configuration, Additional information\nThis template provides a framework for creating a Sheets [add-on](https://developers.google.com/apps-script/add-ons/) that imports data from a third-party source (such as an API).\n(35 words, 0 code blocks)",
+      "content": null,
+      "_enhanced": true,
+      "parsed_data": {
+        "tables": 0,
+        "cross_references": 0,
+        "code_blocks": 0,
+        "images": 0,
+        "quality_scores": {
+          "avg_code_quality": 0
+        }
+      }
+    },
+    {
+      "path": "templates/web-app/README.md",
+      "filename": "README.md",
+      "category": "templates",
+      "size_bytes": 533,
+      "title": "Template: Script as Web App",
+      "structure": {
+        "title": "Template: Script as Web App",
+        "headers": [
+          {
+            "level": 1,
+            "text": "Template: Script as Web App",
+            "line": 1
+          }
+        ],
+        "code_blocks": [],
+        "tables": 0,
+        "images": 0,
+        "links": 1,
+        "word_count": 4,
+        "line_count": 13
+      },
+      "summary": "**Template: Script as Web App**\nTemplate: Script as Web App ===========================\n(4 words, 0 code blocks)",
+      "content": null,
+      "_enhanced": true,
+      "parsed_data": {
+        "tables": 0,
+        "cross_references": 0,
+        "code_blocks": 0,
+        "images": 0,
+        "quality_scores": {
+          "avg_code_quality": 0
+        }
+      }
+    },
+    {
+      "path": "wasm/README.md",
+      "filename": "README.md",
+      "category": "other",
+      "size_bytes": 720,
+      "title": "Unleashing the power of Rust, Python, and WebAssembly in Apps Script",
+      "structure": {
+        "title": "Unleashing the power of Rust, Python, and WebAssembly in Apps Script",
+        "headers": [
+          {
+            "level": 1,
+            "text": "Unleashing the power of Rust, Python, and WebAssembly in Apps Script",
+            "line": 1
+          },
+          {
+            "level": 2,
+            "text": "Development",
+            "line": 5
+          },
+          {
+            "level": 3,
+            "text": "Prerequisites",
+            "line": 9
+          }
+        ],
+        "code_blocks": [],
+        "tables": 0,
+        "images": 0,
+        "links": 0,
+        "word_count": 6,
+        "line_count": 15
+      },
+      "summary": "**Unleashing the power of Rust, Python, and WebAssembly in Apps Script**\nSections: Development, Prerequisites\nThis folder is the companion to the talk \"Unleashing the power of Rust, Python, and WebAssembly in Apps Script\" at Google Cloud Next '24.\n(6 words, 0 code blocks)",
+      "content": null,
+      "_enhanced": true,
+      "parsed_data": {
+        "tables": 0,
+        "cross_references": 0,
+        "code_blocks": 0,
+        "images": 0,
+        "quality_scores": {
+          "avg_code_quality": 0
+        }
+      }
+    },
+    {
+      "path": "wasm/hello-world/README.md",
+      "filename": "README.md",
+      "category": "other",
+      "size_bytes": 761,
+      "title": "Unleashing the power of Rust, Python, and WebAssembly in Apps Script",
+      "structure": {
+        "title": "Unleashing the power of Rust, Python, and WebAssembly in Apps Script",
+        "headers": [
+          {
+            "level": 1,
+            "text": "Unleashing the power of Rust, Python, and WebAssembly in Apps Script",
+            "line": 1
+          },
+          {
+            "level": 2,
+            "text": "Development",
+            "line": 5
+          },
+          {
+            "level": 3,
+            "text": "Prerequisites",
+            "line": 9
+          },
+          {
+            "level": 3,
+            "text": "Build",
+            "line": 15
+          }
+        ],
+        "code_blocks": [],
+        "tables": 0,
+        "images": 0,
+        "links": 0,
+        "word_count": 8,
+        "line_count": 19
+      },
+      "summary": "**Unleashing the power of Rust, Python, and WebAssembly in Apps Script**\nSections: Development, Prerequisites, Build\nThis folder is the companion to the talk \"Unleashing the power of Rust, Python, and WebAssembly in Apps Script\" at Google Cloud Next '24.\n(8 words, 0 code blocks)",
+      "content": null,
+      "_enhanced": true,
+      "parsed_data": {
+        "tables": 0,
+        "cross_references": 0,
+        "code_blocks": 0,
+        "images": 0,
+        "quality_scores": {
+          "avg_code_quality": 0
+        }
+      }
+    },
+    {
+      "path": "wasm/image-add-on/README.md",
+      "filename": "README.md",
+      "category": "other",
+      "size_bytes": 761,
+      "title": "Unleashing the power of Rust, Python, and WebAssembly in Apps Script",
+      "structure": {
+        "title": "Unleashing the power of Rust, Python, and WebAssembly in Apps Script",
+        "headers": [
+          {
+            "level": 1,
+            "text": "Unleashing the power of Rust, Python, and WebAssembly in Apps Script",
+            "line": 1
+          },
+          {
+            "level": 2,
+            "text": "Development",
+            "line": 5
+          },
+          {
+            "level": 3,
+            "text": "Prerequisites",
+            "line": 9
+          },
+          {
+            "level": 3,
+            "text": "Build",
+            "line": 15
+          }
+        ],
+        "code_blocks": [],
+        "tables": 0,
+        "images": 0,
+        "links": 0,
+        "word_count": 8,
+        "line_count": 19
+      },
+      "summary": "**Unleashing the power of Rust, Python, and WebAssembly in Apps Script**\nSections: Development, Prerequisites, Build\nThis folder is the companion to the talk \"Unleashing the power of Rust, Python, and WebAssembly in Apps Script\" at Google Cloud Next '24.\n(8 words, 0 code blocks)",
+      "content": null,
+      "_enhanced": true,
+      "parsed_data": {
+        "tables": 0,
+        "cross_references": 0,
+        "code_blocks": 0,
+        "images": 0,
+        "quality_scores": {
+          "avg_code_quality": 0
+        }
+      }
+    },
+    {
+      "path": "wasm/python/README.md",
+      "filename": "README.md",
+      "category": "other",
+      "size_bytes": 761,
+      "title": "Unleashing the power of Rust, Python, and WebAssembly in Apps Script",
+      "structure": {
+        "title": "Unleashing the power of Rust, Python, and WebAssembly in Apps Script",
+        "headers": [
+          {
+            "level": 1,
+            "text": "Unleashing the power of Rust, Python, and WebAssembly in Apps Script",
+            "line": 1
+          },
+          {
+            "level": 2,
+            "text": "Development",
+            "line": 5
+          },
+          {
+            "level": 3,
+            "text": "Prerequisites",
+            "line": 9
+          },
+          {
+            "level": 3,
+            "text": "Build",
+            "line": 15
+          }
+        ],
+        "code_blocks": [],
+        "tables": 0,
+        "images": 0,
+        "links": 0,
+        "word_count": 8,
+        "line_count": 19
+      },
+      "summary": "**Unleashing the power of Rust, Python, and WebAssembly in Apps Script**\nSections: Development, Prerequisites, Build\nThis folder is the companion to the talk \"Unleashing the power of Rust, Python, and WebAssembly in Apps Script\" at Google Cloud Next '24.\n(8 words, 0 code blocks)",
+      "content": null,
+      "_enhanced": true,
+      "parsed_data": {
+        "tables": 0,
+        "cross_references": 0,
+        "code_blocks": 0,
+        "images": 0,
+        "quality_scores": {
+          "avg_code_quality": 0
+        }
+      }
+    }
+  ]
+}
