@@ -510,14 +510,13 @@ legend { padding: 0; }
 <div id="v-review" class="screen review" hidden>
   <nav class="topnav">
     <button type="button" class="round outline" id="review-close" aria-label="Close review"><svg width="20" height="20"><use href="#i-x"/></svg></button>
-    <button type="button" class="textbtn" id="review-discard" style="color:var(--danger)">Discard</button>
   </nav>
   <header class="head" style="padding-top:8px;padding-bottom:12px">
     <div><h1 class="title-l">Review</h1><p class="muted small" id="review-sub">Already saved. Tap anything to change it.</p></div>
     <span class="badge" id="review-badge" style="margin-top:6px"><svg width="16" height="16"><use href="#i-tick"/></svg>Saved</span>
   </header>
   <main class="review-list" id="review-list"></main>
-  <div class="form-foot"><button type="button" class="primary" id="review-save">Save</button></div>
+  <div class="form-foot"><div class="two savebar"><button type="button" class="secondary" id="review-discard">Discard</button><button type="button" class="primary" id="review-save">Save</button></div></div>
 </div>
 
 <!-- Recording (capture, voice edit, saying a time) -->
