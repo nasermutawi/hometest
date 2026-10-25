@@ -570,7 +570,7 @@ legend { padding: 0; }
     <span class="grab" aria-hidden="true"></span>
     <h2 class="title-l" id="mic-title" tabindex="-1" autofocus></h2>
     <p class="muted" id="mic-help"></p>
-    <div class="two"><button type="button" class="secondary" id="mic-type">Type it instead</button><button type="button" class="primary" id="mic-again" style="height:52px;border-radius:14px">Try again</button></div>
+    <div class="two"><button type="button" class="secondary" id="mic-type">Add it manually</button><button type="button" class="primary" id="mic-again" style="height:52px;border-radius:14px">Try again</button></div>
   </div>
 </dialog>
 
@@ -1731,9 +1731,9 @@ let recClock = null;
  * Every way a recording ends goes through finish(), which lets go of the microphone at once: a
  * recognizer left running is what makes the phone play its microphone sound when the app is put away.
  */
-function listen({ label = 'Listening', onText, onUnavailable, retried = false }) {
-  const again = () => listen({ label, onText, onUnavailable });
-  if (!SpeechRec) { logMic('none'); micProblem('none', { again, instead: () => onUnavailable('none') }); return; }
+function listen({ label = 'Listening', onText, onUnavailable, manual, retried = false }) {
+  const again = () => listen({ label, onText, onUnavailable, manual });
+  if (!SpeechRec) { logMic('none'); micProblem('none', { again, manual, instead: () => onUnavailable('none') }); return; }
   if (recording) recording.finish('cancel');
   const dlg = $('#d-record');
   const out = $('#rec-text');
@@ -1778,12 +1778,12 @@ function listen({ label = 'Listening', onText, onUnavailable, retried = false })
     if (retryNext) {
       // One quiet second try, with a fresh recognizer, before showing a problem.
       recognizer = null;
-      setTimeout(() => listen({ label, onText, onUnavailable, retried: true }), 300);
+      setTimeout(() => listen({ label, onText, onUnavailable, manual, retried: true }), 300);
       return;
     }
     if (how === 'cancel' || failed) return;
     if (said) onText(said);
-    else if (how !== 'hidden') toast("Didn't hear anything. Tap the microphone and speak.");
+    else if (how !== 'hidden') toast("Didn't hear anything", [{ label: manual || 'Add it manually', fn: () => onUnavailable('no-speech') }]);
   };
   recording = { r, finish };
 
@@ -1802,7 +1802,7 @@ function listen({ label = 'Listening', onText, onUnavailable, retried = false })
     const heard = `${finalText} ${interim}`.trim();
     if (heard) { failed = false; return; } // keep what was said before it went wrong
     if (!retried && MIC_RETRY.includes(ev.error)) { retryNext = true; return; }
-    micProblem(ev.error, { again, instead: () => onUnavailable(ev.error) });
+    micProblem(ev.error, { again, manual, instead: () => onUnavailable(ev.error) });
   };
   r.onend = () => finish('ended');
   $('#rec-cancel').onclick = () => finish('cancel');
@@ -1827,12 +1827,12 @@ function listen({ label = 'Listening', onText, onUnavailable, retried = false })
       clearInterval(recClock);
       if (dlg.open) dlg.close();
       recording = null;
-      listen({ label, onText, onUnavailable, retried: true });
+      listen({ label, onText, onUnavailable, manual, retried: true });
       return;
     }
     failed = true;
     finish('cancel');
-    micProblem('start', { again, instead: () => onUnavailable('start') });
+    micProblem('start', { again, manual, instead: () => onUnavailable('start') });
   }
 }
 
@@ -1847,17 +1847,18 @@ const MIC_PROBLEMS = {
   'service-not-allowed': ['Speech recognition is switched off', 'On iPhone: Settings → General → Keyboard → turn on Enable Dictation. If it still fails, check Settings → Screen Time → Content & Privacy → Siri & Dictation.'],
   'audio-capture': ['Another app has the microphone', 'Finish the call, voice note or recording in the other app, then try again.'],
   network: ['Couldn\'t reach the speech service', 'Your phone turns speech into text online. Check Wi‑Fi or mobile data, then try again.'],
-  'language-not-supported': ['Your phone\'s language isn\'t supported here', 'Try again after setting the phone\'s language to English, or type the task instead.'],
-  none: ['This browser can\'t listen', 'Open Melody from its icon on the home screen, or in Safari or Chrome. You can still add the task by typing.'],
-  start: ['The microphone didn\'t start', 'Close Melody fully (swipe it away), open it again and try once more. If it keeps happening, type the task for now.'],
+  'language-not-supported': ['Your phone\'s language isn\'t supported here', 'Try again after setting the phone\'s language to English, or add the task manually.'],
+  none: ['This browser can\'t listen', 'Open Melody from its icon on the home screen, or in Safari or Chrome. You can still add the task manually.'],
+  start: ['The microphone didn\'t start', 'Close Melody fully (swipe it away), open it again and try once more. If it keeps happening, add the task manually for now.'],
 };
 
-/** Shows the problem with Try again and Type it instead, so nothing that was meant to be said gets lost. */
-function micProblem(code, { again, instead }) {
-  const [title, help] = MIC_PROBLEMS[code] || ['The microphone stopped unexpectedly', `Try again. If it keeps happening, type the task for now. (Code: ${code})`];
+/** Shows the problem with Try again and a manual way (the + sheet, or the edit sheet), so nothing that was meant to be said gets lost. */
+function micProblem(code, { again, instead, manual = 'Add it manually' }) {
+  const [title, help] = MIC_PROBLEMS[code] || ['The microphone stopped unexpectedly', `Try again. If it keeps happening, add it manually for now. (Code: ${code})`];
   $('#mic-title').textContent = title;
   $('#mic-help').textContent = help;
   $('#mic-again').hidden = code === 'none';
+  $('#mic-type').textContent = manual;
   $('#mic-again').onclick = () => { $('#d-mic').close(); again(); };
   $('#mic-type').onclick = () => { $('#d-mic').close(); instead(); };
   const open = $$('dialog[open]').filter((d) => d.id !== 'd-record');
@@ -1906,11 +1907,6 @@ function typeInstead({ title, hint, placeholder, value = '', onText }) {
   $('#d-type').showModal();
   setTimeout(() => $('#type-text').focus(), 50);
 }
-
-const MIC_HELP = {
-  none: "This browser can't listen here. Type instead, or tap the microphone on your keyboard.",
-  blocked: "The microphone is blocked for this page. Type instead, or tap the microphone on your keyboard. (Or allow the microphone for this site in your browser settings.)",
-};
 
 function startCapture() {
   listen({
@@ -2228,9 +2224,8 @@ function sayChange(id, label = 'What should change?', example = 'e.g. make it Tu
   listen({
     label,
     onText: (said) => voiceEdit(id, said),
-    onUnavailable: (why) => typeInstead({
-      title: label, hint: MIC_HELP[why] || 'Type the change instead.', placeholder: example, onText: (said) => voiceEdit(id, said),
-    }),
+    manual: 'Edit it manually',
+    onUnavailable: () => { const t = viewTask(id); if (t) openForm(t); }, // the task's edit sheet
   });
 }
 
