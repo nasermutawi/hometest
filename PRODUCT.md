@@ -27,7 +27,7 @@ A to-do list for two, spoken rather than typed. Ownership (mine, yours, ours, an
 
 ## Capabilities and Constraints
 
-- Capture by voice (the microphone) or by typing (the + button); Review after each recording; a task page with when, who, repeats, prep steps and a note, whose changes wait for Save changes (leaving with unsaved changes asks first); filters by person and Done; swipe rows to complete or delete; long-press quick actions; swipe back; pull to refresh.
+- The app opens on Tasks (there is no separate home screen). Capture by voice (the microphone) or by typing (the + button); Review after each recording; a task page with when, who, repeats, prep steps and a note, whose changes wait for Save changes (leaving with unsaved changes asks first); filters by person and Done; swipe rows to complete or delete; long-press quick actions; swipe back; pull to refresh.
 - Owners: each person, Shared (both), or Unassigned (anyone).
 - Per-phone settings: text size (Standard, Larger, Largest), haptics, completion sound.
 - The page never zooms or scrolls sideways; text size is how text gets bigger.
