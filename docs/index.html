@@ -189,6 +189,10 @@ svg { flex: 0 0 auto; }
 .fact dd { margin: 0; display: flex; align-items: center; gap: 8px; min-width: 0; }
 .fact.changed { background: var(--accent-soft); margin: 0 -12px; padding: 14px 12px; border-radius: 10px; border-color: transparent; }
 .updated { font-size: calc(12px * var(--ts)); font-weight: 700; color: var(--accent); }
+.unsaved { font-size: calc(12px * var(--ts)); font-weight: 700; color: var(--accent); letter-spacing: 0; text-transform: none; }
+h2 .unsaved { margin-left: 8px; }
+.savebar { align-items: center; }
+.savebar .primary, .savebar .secondary { height: 54px; }
 .section-h { margin: 0 0 4px; }
 .step { display: flex; align-items: center; gap: 12px; padding: 10px 0; width: 100%; text-align: left; }
 .step .box { width: 22px; height: 22px; border-radius: 40%; border: 2px solid var(--faint); flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center; color: transparent; }
@@ -745,7 +749,7 @@ async function run(fn, ...args) {
 }
 
 const state = {
-  data: null, view: 'tasks', filter: 'all', detailId: null, reviewIds: [], lastEdit: null, deepLinked: false,
+  data: null, view: 'tasks', filter: 'all', detailId: null, reviewIds: [], lastEdit: null, draft: null, deepLinked: false,
   linger: new Set(), fresh: new Set(), pop: new Map(), renderLater: false,
 };
 
@@ -1129,6 +1133,8 @@ function show(view) {
 }
 
 function go(view) {
+  if (state.view === 'detail' && view !== 'detail' && draftDirty()) { askLeave(() => go(view)); return; }
+  if (view !== 'detail') state.draft = null;
   perfLocal(`Open ${view}`);
   closeSwipe(false);
   // The list keeps its place: coming back to Tasks returns to where you were.
@@ -1453,6 +1459,57 @@ function saveFields(id, patch, message) {
   if (message) toast(message);
 }
 
+// The task page keeps its changes here until Save. Ticking the task or a prep step, and voice
+// edits, still happen at once: they are actions, not edits.
+const draftFor = (id) => (state.draft && state.draft.id === realId(id) ? state.draft : null);
+const draftDirty = () => Boolean(state.draft && Object.keys(state.draft.patch).length);
+
+/** The task as the task page shows it: what is saved, with any unsaved changes on top. */
+function viewTask(id) {
+  const t = taskById(id);
+  const d = t && draftFor(t.id);
+  return d ? { ...t, ...d.patch } : t;
+}
+
+/** On the open task page a change waits for Save; anywhere else (list sheets, quick actions) it saves at once. */
+function editField(id, patch, message) {
+  const t = taskById(id);
+  if (!t || state.view !== 'detail' || realId(id) !== realId(state.detailId)) { saveFields(id, patch, message); return; }
+  if (!draftFor(t.id)) state.draft = { id: t.id, patch: {} };
+  Object.assign(state.draft.patch, patch);
+  // A field changed back to what is saved is no longer a change.
+  Object.keys(state.draft.patch).forEach((k) => { if (JSON.stringify(state.draft.patch[k]) === JSON.stringify(t[k])) delete state.draft.patch[k]; });
+  renderDetail();
+}
+
+function saveDraft() {
+  if (!draftDirty()) { state.draft = null; return; }
+  const { id, patch } = state.draft;
+  state.draft = null;
+  haptic();
+  saveFields(id, patch, 'Saved');
+  if (state.view === 'detail') renderDetail();
+}
+
+function discardDraft() {
+  state.draft = null;
+  if (state.view === 'detail') renderDetail();
+  toast('Changes discarded');
+}
+
+/** Leaving the task page with unsaved changes: Save, Don't save, or stay. Closing the sheet means stay. */
+function askLeave(then) {
+  choose('Save your changes?', [
+    { label: 'Save', value: 'save' },
+    { label: 'Don’t save', value: 'discard', danger: true },
+    { label: 'Keep editing', value: 'stay' },
+  ], (v) => {
+    if (v === 'stay') return;
+    if (v === 'save') saveDraft(); else state.draft = null;
+    then();
+  });
+}
+
 function createTask(data) {
   const tempId = -(++sync.seq);
   mutate({
@@ -1525,8 +1582,14 @@ function stepWhen(s) {
   return s.daysBefore === 0 ? 'Same day' : s.daysBefore === 1 ? 'Day before' : `${s.daysBefore} days before`;
 }
 
+const unsavedTag = (keys) => {
+  const d = state.draft && draftFor(state.detailId);
+  return d && keys.some((k) => k in d.patch) ? '<span class="unsaved">Not saved</span>' : '';
+};
+
 function renderDetail() {
-  const t = taskById(state.detailId);
+  const t = viewTask(state.detailId);
+  if (!t) return;
   const done = t.prep.filter((s) => s.done).length;
   const e = state.lastEdit;
   const newPrep = e && !e.pending && e.id === t.id && e.changed.includes('prep') ? e.before.prep.length : Infinity;
@@ -1536,22 +1599,22 @@ function renderDetail() {
       <h1 dir="auto"${t.title.length > 40 ? ' class="long"' : ''}>${esc(t.title)}</h1>
     </div>
     <dl class="facts">
-      <div class="fact${changedClass(['date', 'time'])}"><dt>When</dt><dd>${updatedTag(['date', 'time'])}${whenChip(t)}</dd></div>
-      <div class="fact${changedClass(['owner'])}"><dt>Who${t.owner ? '' : '<small>Nobody yet</small>'}</dt><dd>${updatedTag(['owner'])}
+      <div class="fact${changedClass(['date', 'time'])}"><dt>When${unsavedTag(['dueDate', 'time'])}</dt><dd>${updatedTag(['date', 'time'])}${whenChip(t)}</dd></div>
+      <div class="fact${changedClass(['owner'])}"><dt>Who${unsavedTag(['owner']) || (t.owner ? '' : '<small>Nobody yet</small>')}</dt><dd>${updatedTag(['owner'])}
         <div class="seg sm" role="radiogroup" aria-label="Who">${whoChoices().map((n) => `<button type="button" role="radio" aria-checked="${t.owner === n}" data-who="${esc(n)}">${esc(n)}</button>`).join('')}</div></dd></div>
-      <div class="fact${changedClass(['repeats'])}"><dt>Repeats</dt><dd>${updatedTag(['repeats'])}<button type="button" class="chip sm" id="detail-repeat">${esc(t.repeats)}</button></dd></div>
+      <div class="fact${changedClass(['repeats'])}"><dt>Repeats${unsavedTag(['repeats'])}</dt><dd>${updatedTag(['repeats'])}<button type="button" class="chip sm" id="detail-repeat">${esc(t.repeats)}</button></dd></div>
     </dl>
     <section class="stack" style="gap:4px">
-      <h2 class="eyebrow section-h">Prep${t.prep.length ? ` · ${done} of ${t.prep.length}` : ''}</h2>
+      <h2 class="eyebrow section-h">Prep${t.prep.length ? ` · ${done} of ${t.prep.length}` : ''}${unsavedTag(['prep'])}</h2>
       ${t.prep.map((s, i) => `<button type="button" class="step ${s.done ? 'on' : ''}${i >= newPrep ? ' changed' : ''}" data-step="${i}" aria-pressed="${s.done}">
         <span class="box">${icon('tick', 13)}</span><span class="step-title" dir="auto">${esc(s.title)}</span><span class="step-when">${esc(t.dueDate && s.daysBefore ? stepWhen(s) : '')}</span></button>`).join('')}
       <div class="inline-add" id="step-add" hidden><input class="field" id="step-text" placeholder="e.g. Find the insurance card" maxlength="200"><button type="button" class="chip on" id="step-save">Add</button></div>
       <button type="button" class="addline" id="step-open">+ Add a step</button>
     </section>
     <section class="stack" style="gap:6px">
-      <h2 class="eyebrow">Notes${changedClass(['notes']) ? ' · <span class="updated">Updated</span>' : ''}</h2>
+      <h2 class="eyebrow">Notes${changedClass(['notes']) ? ' · <span class="updated">Updated</span>' : ''}${unsavedTag(['notes'])}</h2>
       ${t.notes ? `<button type="button" class="notes" id="notes-open" dir="auto">${esc(t.notes)}</button>` : '<button type="button" class="addline" id="notes-open" style="color:var(--muted);font-weight:600">Add a note</button>'}
-      <div class="stack" id="notes-edit" hidden><textarea class="field" id="notes-text" rows="4"></textarea><button type="button" class="chip on" id="notes-save" style="align-self:flex-start">Save note</button></div>
+      <div class="stack" id="notes-edit" hidden><textarea class="field" id="notes-text" rows="4"></textarea><button type="button" class="chip on" id="notes-save" style="align-self:flex-start">Done</button></div>
     </section>`;
   renderDetailFoot();
 }
@@ -1563,6 +1626,13 @@ function renderDetailFoot() {
         <q>${esc(e.said)}</q>
         <div class="actions"><span class="result"><span class="spinner light" aria-hidden="true"></span>Understanding…</span></div>
       </section>`;
+    return;
+  }
+  if (draftDirty()) {
+    $('#detail-foot').innerHTML = `<div class="two savebar">
+        <button type="button" class="secondary" id="draft-discard">Discard</button>
+        <button type="button" class="primary" id="draft-save">Save changes</button>
+      </div>`;
     return;
   }
   $('#detail-foot').innerHTML = e
@@ -2080,7 +2150,7 @@ function nativePicker(input, onPick, { waitOnIos = false } = {}) {
 }
 
 function openWhen(id, mode) {
-  const t = taskById(id);
+  const t = viewTask(id);
   whenState.id = t.id;
   whenState.date = t.dueDate;
   whenState.time = t.time;
@@ -2106,12 +2176,12 @@ function drawWhen() {
 
 function setTime(time) {
   $('#d-when').close();
-  saveFields(whenState.id, { time }, time ? `Set for ${time}` : 'Any time it is');
+  editField(whenState.id, { time }, time ? `Set for ${time}` : 'Any time it is');
 }
 
 $('#when-save').addEventListener('click', () => {
   $('#d-when').close();
-  saveFields(whenState.id, { dueDate: whenState.date, time: whenState.date ? whenState.time : '' }, 'Saved');
+  editField(whenState.id, { dueDate: whenState.date, time: whenState.date ? whenState.time : '' }, 'Saved');
 });
 $('#q-times').addEventListener('click', (e) => { const b = e.target.closest('[data-q]'); if (b) setTime(b.dataset.q); });
 nativePicker($('#q-other-input'), (v) => { if ($('#d-when').open) setTime(v); }, { waitOnIos: true });
@@ -2139,16 +2209,16 @@ function choose(title, options, onPick) {
 }
 
 function chooseOwner(id) {
-  const t = taskById(id);
+  const t = viewTask(id);
   choose('Who', whoChoices().concat('').map((n) => ({ label: ownerText(n), value: n, on: t.owner === n })),
-    (owner) => saveFields(t.id, { owner }, owner ? (owner === SHARED ? 'Shared' : `${owner} has it`) : 'Unassigned'));
+    (owner) => editField(t.id, { owner }, owner ? (owner === SHARED ? 'Shared' : `${owner} has it`) : 'Unassigned'));
 }
 
 function chooseRepeat(id) {
-  const t = taskById(id);
+  const t = viewTask(id);
   choose('Repeats', state.data.repeats.map((r) => ({ label: r, value: r, on: t.repeats === r })), (repeats) => {
     if (repeats !== 'Never' && !t.dueDate) { toast('Add a date first, so it knows when to start'); return; }
-    saveFields(t.id, { repeats }, repeats === 'Never' ? 'Not repeating' : `Repeats ${repeats.toLowerCase()}`);
+    editField(t.id, { repeats }, repeats === 'Never' ? 'Not repeating' : `Repeats ${repeats.toLowerCase()}`);
   });
 }
 
@@ -2243,6 +2313,7 @@ $('#task-form').addEventListener('submit', (e) => {
     prep: $$('#f-prep .prep-row').map((r) => ({ title: r.querySelector('input').value.trim(), daysBefore: Number(r.querySelector('select').value), done: r.dataset.done === '1' })).filter((s) => s.title),
   };
   $('#d-form').close();
+  if (t && draftFor(t.id)) state.draft = null; // the form started from the unsaved changes and saves them all
   if (t) saveFields(t.id, data, 'Saved');
   else { createTask(data); toast('Task added'); }
 });
@@ -2283,10 +2354,11 @@ $('#detail-back').addEventListener('click', () => go(state.cameFrom || 'tasks'))
 $('#detail-more').addEventListener('click', () => {
   const t = taskById(state.detailId);
   choose(t.title, [{ label: 'Edit by typing', value: 'edit' }, { label: 'Delete task', value: 'delete', danger: true }], (v) => {
-    if (v === 'edit') openForm(t);
+    if (v === 'edit') openForm(viewTask(t.id));
     if (v === 'delete') {
       choose('Delete this task?', [{ label: 'Delete', value: 'yes', danger: true }, { label: 'Keep it', value: 'no' }], (ok) => {
         if (ok !== 'yes') return;
+        state.draft = null;
         go(state.cameFrom === 'review' ? 'review' : 'tasks');
         deleteSoon(t.id);
       });
@@ -2295,17 +2367,21 @@ $('#detail-more').addEventListener('click', () => {
 });
 
 $('#v-detail').addEventListener('click', (e) => {
-  const t = taskById(state.detailId);
+  const t = viewTask(state.detailId);
   if (!t) return;
   const who = e.target.closest('[data-who]');
   if (who) {
     const owner = t.owner === who.dataset.who ? '' : who.dataset.who;
-    saveFields(t.id, { owner }, owner ? (owner === SHARED ? 'Shared' : `${owner} has it`) : 'Nobody has it yet');
+    editField(t.id, { owner });
     return;
   }
   const step = e.target.closest('[data-step]');
   if (step) {
-    setStep(t.id, Number(step.dataset.step), step.getAttribute('aria-pressed') !== 'true');
+    const i = Number(step.dataset.step);
+    const d = draftFor(t.id);
+    // Steps added but not yet saved are ticked in the unsaved changes; saved steps tick at once.
+    if (d && d.patch.prep) { editField(t.id, { prep: t.prep.map((s, j) => (j === i ? { ...s, done: !s.done } : s)) }); return; }
+    setStep(t.id, i, step.getAttribute('aria-pressed') !== 'true');
     return;
   }
   const id = e.target.closest('button') && e.target.closest('button').id;
@@ -2313,10 +2389,12 @@ $('#v-detail').addEventListener('click', (e) => {
   if (id === 'step-open') { $('#step-add').hidden = false; e.target.closest('button').hidden = true; $('#step-text').focus(); }
   if (id === 'step-save') {
     const title = $('#step-text').value.trim();
-    if (title) { $('#step-text').blur(); saveFields(t.id, { prep: t.prep.concat({ title, daysBefore: 0, done: false }) }, 'Step added'); }
+    if (title) { $('#step-text').blur(); editField(t.id, { prep: t.prep.concat({ title, daysBefore: 0, done: false }) }); }
   }
   if (id === 'notes-open') { $('#notes-edit').hidden = false; $('#notes-open').hidden = true; $('#notes-text').value = t.notes; $('#notes-text').focus(); }
-  if (id === 'notes-save') { const notes = $('#notes-text').value; $('#notes-text').blur(); saveFields(t.id, { notes }, 'Note saved'); }
+  if (id === 'notes-save') { const notes = $('#notes-text').value; $('#notes-text').blur(); editField(t.id, { notes }); }
+  if (id === 'draft-save') saveDraft();
+  if (id === 'draft-discard') discardDraft();
   if (id === 'say-change') sayChange(t.id);
   if (id === 'edit-undo') undoVoiceEdit();
   if (id === 'edit-again') { state.lastEdit = null; renderDetailFoot(); sayChange(t.id); }
@@ -2660,7 +2738,10 @@ function edgeEnd(e, cancelled) {
   const [t0, x0] = s.samples[0] || [0, 0];
   const [t1, x1] = s.samples[s.samples.length - 1] || [0, 0];
   const v = t1 > t0 ? (x1 - x0) / (t1 - t0) : 0;
-  const goBack = !cancelled && (s.dx > s.w / 3 || (v > 0.4 && s.dx > 30));
+  const wantsBack = !cancelled && (s.dx > s.w / 3 || (v > 0.4 && s.dx > 30));
+  // Unsaved changes on the task page: spring back and ask, rather than leaving with them.
+  const askFirst = wantsBack && !s.dlg && s.from === 'detail' && draftDirty();
+  const goBack = wantsBack && !askFirst;
   const settle = (fn) => {
     if (REDUCED_MOTION) { fn(); return; }
     [s.el, s.under].filter(Boolean).forEach((el) => el.classList.add('edge-settle'));
@@ -2686,6 +2767,7 @@ function edgeEnd(e, cancelled) {
     } else {
       s.under.hidden = true;
       window.scrollTo(0, s.y);
+      if (askFirst) askLeave(() => go(s.back));
     }
   });
 }
