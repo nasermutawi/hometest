@@ -69,4 +69,5 @@ The top and bottom of every screen stay minimal so the content gets the room.
 - Swipe rows (right: done, left: Delete), drag sheets down, swipe back from the left edge, long-press a task for quick actions, pull down on Tasks to refresh. Every gesture also has a visible button.
 - Light haptic taps on commits (done, a swipe passing its point, mic start/stop, long-press, back). On by default, per phone.
 - Completion chime: off by default, per phone.
+- Bottom bars with two actions: the quiet one (Discard) on the left as a light secondary button, the main one (Save) on the right in the accent, both in thumb reach. Nothing destructive sits at the top; Discard is undoable from its toast, so it needs no extra question.
 - Saving: the task page collects changes until **Save changes** (with **Discard** beside it); changed parts say "Not saved", and leaving asks first. Ticks and voice edits act at once. Sheets that create or review tasks have their own Save.
