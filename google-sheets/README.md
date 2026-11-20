@@ -63,6 +63,20 @@ Once per computer:
 
 Then: `npm run gas:deploy -- "what changed" --dry-run` to see what would change, and without `--dry-run` to do it.
 
+### Deploying from a cloud session
+
+Cloud sessions (Claude Code on the web, the new-style Project's threads) have no `.clasp-ids.json` or `~/.clasprc.json`. Give them the same values as environment variables in the cloud environment (claude.ai/code → environment settings → **Environment variables**):
+
+```text
+CLASP_SCRIPT_ID=<Script ID>
+CLASP_DEPLOYMENT_ID=<Deployment ID, starts AKfy>
+CLASPRC_JSON='<the whole contents of ~/.clasprc.json, on one line>'
+```
+
+`deploy.mjs` writes `CLASPRC_JSON` to `~/.clasprc.json` (owner-only) when that file doesn't exist, and uses the two IDs instead of `.clasp-ids.json`. Google's servers (`*.googleapis.com`) are in the default **Trusted** network list, so no extra domains are needed.
+
+Anyone and any session using that environment can read these values, and `CLASPRC_JSON` is a Google sign-in that can change your Apps Script projects. Keep the environment to yourself. To revoke it, remove the variable and remove "clasp" from your Google account's third-party access (myaccount.google.com → Security → Your connections to third-party apps & services).
+
 ### Turning on Claude (optional)
 
 1. Create a developer key at platform.claude.com (API keys), and add a small credit with auto-reload **off**. This is billed separately from a Claude Pro subscription.

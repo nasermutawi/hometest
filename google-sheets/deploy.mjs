@@ -13,7 +13,7 @@
 // the repo doesn't know about, because a push would delete them.
 import { execFileSync } from 'node:child_process';
 import { copyFileSync, existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { homedir, tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -37,10 +37,23 @@ function clasp(cmdArgs, cwd) {
   execFileSync(bin, [...pre, ...cmdArgs], { cwd, stdio: 'inherit' });
 }
 
-if (!existsSync(idsPath)) {
-  fail('google-sheets/.clasp-ids.json is missing. Copy clasp-ids.example.json to .clasp-ids.json and fill in the Script ID and the web app\'s Deployment ID (google-sheets/README.md, "Deploying with clasp").');
+// In a cloud session there are no files on disk: the IDs and the clasp login can come from
+// environment variables instead (CLASP_SCRIPT_ID, CLASP_DEPLOYMENT_ID, CLASPRC_JSON). See
+// "Deploying from a cloud session" in google-sheets/README.md.
+const claspLogin = join(homedir(), '.clasprc.json');
+if (process.env.CLASPRC_JSON && !existsSync(claspLogin)) {
+  try { JSON.parse(process.env.CLASPRC_JSON); } catch { fail('CLASPRC_JSON is not valid JSON. Paste the whole contents of ~/.clasprc.json from your computer.'); }
+  writeFileSync(claspLogin, process.env.CLASPRC_JSON, { mode: 0o600 });
 }
-const { scriptId, deploymentId } = JSON.parse(readFileSync(idsPath, 'utf8'));
+let ids;
+if (process.env.CLASP_SCRIPT_ID || process.env.CLASP_DEPLOYMENT_ID) {
+  ids = { scriptId: process.env.CLASP_SCRIPT_ID, deploymentId: process.env.CLASP_DEPLOYMENT_ID };
+} else if (existsSync(idsPath)) {
+  ids = JSON.parse(readFileSync(idsPath, 'utf8'));
+} else {
+  fail('google-sheets/.clasp-ids.json is missing. Copy clasp-ids.example.json to .clasp-ids.json and fill in the Script ID and the web app\'s Deployment ID (google-sheets/README.md, "Deploying with clasp"), or set CLASP_SCRIPT_ID and CLASP_DEPLOYMENT_ID.');
+}
+const { scriptId, deploymentId } = ids;
 if (!/^[\w-]{20,}$/.test(scriptId || '')) fail('scriptId in .clasp-ids.json looks wrong. Copy it from Apps Script → Project Settings → IDs.');
 if (!/^AKfy[\w-]{20,}$/.test(deploymentId || '')) fail('deploymentId in .clasp-ids.json looks wrong. It starts with "AKfy": Apps Script → Deploy → Manage deployments → the web app → Deployment ID.');
 
