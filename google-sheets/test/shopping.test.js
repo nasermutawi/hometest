@@ -169,6 +169,44 @@ test('Get prices parks one waiting request for Claude, and never orders anything
   assert.equal(gas.outbox.length, 0);
 });
 
+test("whose Claude hunts for prices: the admin's by default, only the admin changes it, and it never swaps on its own", () => {
+  const { gas, api } = household();
+  // Nothing set yet: the admin (Naser, who deployed the app) runs the baskets while he tests.
+  let shop = api('sandi', 'getShopping');
+  assert.equal(shop.runner, 'Naser');
+  assert.deepEqual(shop.runnerChoices, ['Naser', 'Sandi']);
+  assert.equal(shop.canSetRunner, false, 'Sandi sees it but cannot change it');
+  assert.equal(shop.admin, 'Naser');
+  assert.equal(api('nas', 'getShopping').canSetRunner, true);
+  assert.throws(() => api('sandi', 'setRunner', 'Sandi', SLIM), /Only Naser can change/);
+  assert.equal(gas.gsheet('Settings'), null, 'a refused change writes nothing');
+
+  // Naser switches it to Sandi: the Settings tab gets the key in A1 and her name in B1.
+  shop = api('nas', 'setRunner', 'sandi', SLIM).shopping;
+  assert.equal(shop.runner, 'Sandi');
+  assert.deepEqual(gas.gsheet('Settings').data, [['baskets.runner', 'Sandi']]);
+  // Sandi now sees her own Claude is on duty, still read-only.
+  assert.equal(api('sandi', 'getShopping').runner, 'Sandi');
+  // And back: the same row is updated, not a second one added.
+  api('nas', 'setRunner', 'Naser', SLIM);
+  assert.deepEqual(gas.gsheet('Settings').data, [['baskets.runner', 'Naser']]);
+  assert.throws(() => api('nas', 'setRunner', 'Bob', SLIM), /Bob isn't in the household/);
+});
+
+test('the runner row typed by hand still works: other rows, short names and unknown names', () => {
+  const { gas, api } = household();
+  const sh = gas.groceries.insertSheet('Settings');
+  sh.appendRow(['Setting', 'Value']);
+  sh.appendRow(['baskets.after', '18:00']);
+  sh.appendRow(['baskets.runner', 'Nas']);
+  assert.equal(api('sandi', 'getShopping').runner, 'Naser', '"Nas" is Naser');
+  sh.getRange(3, 2).setValue('Somebody');
+  assert.equal(api('sandi', 'getShopping').runner, 'Somebody', 'an unknown name is shown as typed, never swapped for someone else');
+  api('nas', 'setRunner', 'Sandi', SLIM);
+  assert.deepEqual(gas.gsheet('Settings').data[2], ['baskets.runner', 'Sandi']);
+  assert.equal(gas.gsheet('Settings').data.length, 3);
+});
+
 function setSettingIn(sh, key, value) {
   sh.appendRow([key, value]);
 }
