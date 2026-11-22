@@ -85,6 +85,16 @@ Anyone and any session using that environment can read these values, and `CLASPR
 
 Claude's instructions are in `capturePrompt_`, `editPrompt_` and `chatPrompt_` in `Code.gs`. Its answers are checked before anything changes (unknown people become Unassigned, unknown tasks and actions are dropped), and a failed request falls back to the simple rules. The model is set in `CLAUDE_MODEL`.
 
+### Shopping (Home – Groceries)
+
+Shopping keeps its data in a second Google Sheet, **Home – Groceries**, so each Melody Duet has its own sheet.
+
+1. Copy the Home – Groceries Sheet's link and paste it into the **Groceries sheet** row of this sheet's Settings tab (run `setup` once if the row isn't there yet).
+2. The first time the app (or `setup` after this update) runs, Google asks to allow access to your spreadsheets: the script now opens Home – Groceries as well as this sheet. It opens no others.
+3. Open the Shopping tab in the app. It adds two tabs to Home – Groceries (`Items`, the catalogue, and `Requests`, for "Get prices") and a few columns to `Shopping list` (`Size`, `Brand`, `Item ID`). Existing rows stay as they are.
+
+The app reads `Item insights` (written by Claude) to show usual stores, prices and "Usually by now", and `baskets.runner` in a `Settings` tab of Home – Groceries to say whose Claude will compare the prices. It never places an order.
+
 ## Checking speed
 
 Add `?perf=1` to the app's link (before the `#`), e.g. `https://nasermutawi.github.io/hometest/?perf=1#s=…`. A small bar at the top then shows each action: how long until the screen changed and how long the server took. Tap **+** for the full list and **Copy** to paste it into a message. `?perf=0` turns it off again. In the local preview the panel also has **Slow server** and **Failing server** switches, for trying out what happens on a bad connection.
