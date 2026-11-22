@@ -12,6 +12,18 @@ const owner = 'naser@example.com';
 const gas = createGas({ owner, start: new Date().toISOString(), ...(process.env.CODE_GS ? { codePath: process.env.CODE_GS } : {}) });
 gas.as(owner);
 gas.context.setup();
+// Shopping: link the stand-in Home – Groceries sheet, with a little of what Claude learns from orders.
+// SHOP=off leaves it unlinked, to see the "needs its Sheet" message.
+if (process.env.SHOP !== 'off') {
+  const settings = gas.rows('Settings');
+  gas.sheet('Settings').getRange(settings.findIndex((r) => r.Setting === 'Groceries sheet') + 2, 2).setValue(gas.GROCERIES_ID);
+  const day = (n) => new Date(Date.now() - n * 86400000).toISOString().slice(0, 10);
+  [['Blueberries', '', 'Kibsons', 'Deliveroo Hop', '28', '1.5 kg', '24.50', 'Deliveroo Hop', '12', day(3), '7'],
+    ['Laban', '', 'Kibsons', '', '4.75', '1 L', '4.25', 'Deliveroo Hop', '9', day(9), '8'],
+    ['Egg whites', 'Dairy and eggs', 'Kibsons', '', '14', '500 ml', '', '', '4', day(12), '10'],
+    ['Oat bowls', 'Pantry', 'Deliveroo Hop', 'Spinneys', '18', '', '', '', '5', day(15), '14']]
+    .forEach((r) => gas.gsheet('Item insights').appendRow(r));
+}
 const page = () => readFileSync(new URL('../../docs/index.html', import.meta.url), 'utf8'); // re-read, so edits show on reload
 
 // Stands in for the network: each window acts as the person named in ?as=.
@@ -38,7 +50,7 @@ http.createServer((req, res) => {
     return;
   }
   if (req.url.startsWith('/sheet')) {
-    res.writeHead(200, { 'Content-Type': 'application/json' }).end(JSON.stringify({ Tasks: gas.rows('Tasks'), Activity: gas.rows('Activity') }, null, 1));
+    res.writeHead(200, { 'Content-Type': 'application/json' }).end(JSON.stringify({ Tasks: gas.rows('Tasks'), Activity: gas.rows('Activity'), Items: gas.grows('Items'), 'Shopping list': gas.grows('Shopping list'), Requests: gas.grows('Requests') }, null, 1));
     return;
   }
   res.writeHead(200, { 'Content-Type': 'text/html' }).end(page().replace('<head>', `<head>${shim}`));

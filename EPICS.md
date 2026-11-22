@@ -35,15 +35,15 @@ Everything that exists today. Open items for each feature are in `BACKLOG.md`.
 
 ## Epic 2: Shopping
 
-A shared shopping list for Nas and Sandi, in its own tab, filled by voice or typing like tasks. Start small, then grow.
+A Melody Duet for building our online orders: a cart backed by a catalogue of the things we buy. Everything lives in the **Home – Groceries** Sheet (its link goes in the Settings tab's `Groceries sheet` row). Claude learns prices, usual stores and how often we buy things from Order history; the app never places an order.
 
-### Phase 1: start small (Next, in this order)
+### Phase 1: start small
 
-| # | Feature | What it does | Done when |
-|---|---|---|---|
-| S1 | **Shopping tab with one shared list** | A Tasks / Shopping switch in the bottom bar. One list both people see. Add an item (name, optional quantity and note), tick it bought, swipe to delete with Undo, a "Bought" section that can be cleared. Shows who added each item with the owner colours. New `Shopping` tab in the sheet; refreshes like tasks. | Both phones see the same list; ticking is instant and survives a refresh; works with old and new `Code.gs` during the deploy gap |
-| S2 | **Add items by voice and typing** | The same mic and + as tasks. On the Shopping tab, what you say becomes items ("milk, eggs and two loaves of bread" → 3 items with quantities). On Tasks, a recording that's clearly shopping ("we need milk and eggs") offers to put it on the list; a mixed recording splits into tasks and items on Review. Simple rules and Claude both handle it. | "Milk, eggs and two loaves of bread" gives 3 items; "Cook the ragu tonight, and we need milk" gives 1 task and 1 item on Review; nothing said is lost |
-| S3 | **Stores** | Keep a short list of stores (Carrefour, Spinneys, pharmacy…). Tag an item with the stores that have it (one or more). Filter the list by store ("I'm at Spinneys" shows only what you can get there). Voice: "eggs from Spinneys". New `Stores` tab in the sheet. | Filtering by a store shows only its items plus untagged ones |
+| # | Feature | Status | What it does | Done when |
+|---|---|---|---|---|
+| S1 | **Cart and item catalogue** | Built | A To-dos / Shopping switch (Melody Duets). The Shopping tab is a cart: one find-or-add field with the mic inside, a "Usually by now" prompt, lines grouped by aisle with − / + and who added them, and a bar with "N in the cart · About AED X last time · Get prices". Typing searches our things (In cart or Add), things Claude saw in past orders, and offers to add the text as something new; Enter puts it in the cart in one step. Tapping an item opens its page: what it is, size, brand (empty means any), heart, and what Claude has learned (shown, never typed). "Get prices" parks a request in the Requests tab for a Claude to pick up. New tabs `Items` and `Requests`; the existing `Shopping list` tab is the cart. No ticks (still an open question). | Both phones see the same cart; changes are instant and survive a refresh; works with old and new `Code.gs` during the deploy gap |
+| S2 | **Add items by voice and typing** | Next | Today the mic fills the search field. Next: what you say becomes items ("milk, eggs and two loaves of bread" → 3 items with quantities). On To-dos, a recording that's clearly shopping offers to put it in the cart; a mixed recording splits into tasks and items on Review. | "Milk, eggs and two loaves of bread" gives 3 cart lines; "Cook the ragu tonight, and we need milk" gives 1 task and 1 item on Review; nothing said is lost |
+| S3 | ~~Stores~~ | Replaced | No store field: which store has what, and at what price, is learned by Claude from Order history and Item insights (decided 22 Nov 2026). | |
 
 ### Phase 2 (Later)
 
@@ -52,12 +52,11 @@ A shared shopping list for Nas and Sandi, in its own tab, filled by voice or typ
 | S4 | **Lists by store** | A view grouped by store, each like its own list, with an item shown under every store that has it |
 | S5 | **Linked to tasks** | A task's prep step ("Get groceries at the supermarket") holds shopping items. Ticking them all off ticks the step; "Cook the ragu" puts its ingredients on the list |
 | S6 | **Repeat staples** | Mark regulars (milk, eggs). Once bought, they come back after a while, or with one tap from "Add again" |
+| S7 | **Baskets in the app** | When Claude has finished a price run, show its basket options (store, total after fees and credit, what's missing, the specific reason it wins) in the Shopping tab, instead of "Open the Sheet" |
 
 ### Ideas (to discuss)
 
-- Item preferences: brand, size, "the one Sandi likes"; remembered next time.
 - "I'm going shopping": tell the other person, so they can add things in time.
-- Item history and suggestions as you type.
-- Aisle or category order within a store.
+- Ticks on the cart (open question: what they'd mean when we order online).
 - Prices and a link to the household ledger.
 - Reminder when near a store (**Native only**: web apps can't watch your location in the background).

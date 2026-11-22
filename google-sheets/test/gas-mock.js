@@ -109,15 +109,27 @@ export function createGas({ timeZone = 'Europe/London', owner = 'naser@example.c
     });
   }
 
-  const sheets = [makeSheet('Sheet1')];
-  const spreadsheet = chainable({
-    getSheetByName: (n) => sheets.find((s) => s.name === n) || null,
-    insertSheet(n) { const s = makeSheet(n); sheets.push(s); return s; },
-    getSheets: () => sheets,
-    deleteSheet(s) { sheets.splice(sheets.indexOf(s), 1); },
-    getUrl: () => 'https://docs.google.com/spreadsheets/d/test',
-    getSpreadsheetTimeZone: () => timeZone,
-  });
+  function makeSpreadsheet(id, name, first = ['Sheet1']) {
+    const sheets = first.map(makeSheet);
+    return chainable({
+      getSheetByName: (n) => sheets.find((s) => s.name === n) || null,
+      insertSheet(n) { const s = makeSheet(n); sheets.push(s); return s; },
+      getSheets: () => sheets,
+      deleteSheet(s) { sheets.splice(sheets.indexOf(s), 1); },
+      getId: () => id,
+      getName: () => name,
+      getUrl: () => `https://docs.google.com/spreadsheets/d/${id}`,
+      getSpreadsheetTimeZone: () => timeZone,
+    });
+  }
+  const spreadsheet = makeSpreadsheet('test', 'Melody To-dos');
+  // Home – Groceries, the Shopping sheet, with the tabs it has today (Claude fills Item insights).
+  const GROCERIES_ID = '1GroceriesTestSheetId_abcdefgh';
+  const groceries = makeSpreadsheet(GROCERIES_ID, 'Home – Groceries', ['Read me', 'Order history', 'Item insights', 'Shopping list', 'Store rules', 'Favourites']);
+  groceries.getSheetByName('Item insights').appendRow(['Item', 'Category', 'Usual store', '2nd store', 'Typical price (AED)', 'Typical pack size',
+    'Cheapest seen (AED)', 'Cheapest at', 'Times ordered', 'Last ordered', 'Avg days between orders', 'Notes']);
+  groceries.getSheetByName('Shopping list').appendRow(['Item', 'Qty', 'Added by', 'Added on', '1st choice store', '2nd choice store', 'Notes', 'Status']);
+  const opened = [];
 
   const builder = () => chainable({ build: () => ({}) });
 
@@ -178,6 +190,12 @@ export function createGas({ timeZone = 'Europe/London', owner = 'naser@example.c
       getActiveSpreadsheet() {
         if (deniedUsers.has(activeUser)) throw new Error('You do not have permission to access the requested document.');
         return spreadsheet;
+      },
+      openById(id) {
+        stats.reads++;
+        opened.push(id);
+        if (id === GROCERIES_ID) return groceries;
+        throw new Error('Exception: You do not have permission to access the requested document.');
       },
       newDataValidation: builder,
       newConditionalFormatRule: builder,
@@ -253,7 +271,18 @@ export function createGas({ timeZone = 'Europe/London', owner = 'naser@example.c
     triggers,
     events,
     spreadsheet,
+    groceries,
+    GROCERIES_ID,
+    opened,
     sheet: (name) => spreadsheet.getSheetByName(name),
+    gsheet: (name) => groceries.getSheetByName(name),
+    // Rows of a Groceries tab, like rows() for the To-do sheet.
+    grows(name) {
+      const sh = groceries.getSheetByName(name);
+      if (!sh) return null;
+      const [headers, ...rest] = sh.data;
+      return rest.filter((r) => r && r.some((v) => v !== '' && v != null)).map((r) => Object.fromEntries(headers.map((h, i) => [h, r[i] ?? ''])));
+    },
     as(email) { activeUser = email; return gas; },
     deny(email) { deniedUsers.add(email); },
     advance(ms) { clock.now += ms; },

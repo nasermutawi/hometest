@@ -35,7 +35,7 @@ test('setup builds the tabs, adds the owner as a member and installs the timers'
   gas.context.setup();
   assert.equal(gas.rows('Members').length, 1);
   assert.equal(gas.triggers.length, 2);
-  assert.equal(gas.rows('Settings').length, 8);
+  assert.equal(gas.rows('Settings').length, 9);
 });
 
 test('personal links: the owner gets one, adds a partner, and each key acts as its own person', () => {
@@ -557,11 +557,14 @@ test('the .gs files only use syntax the Apps Script editor accepts', () => {
   }
 });
 
-test('the script asks only for this spreadsheet, not all of them', () => {
-  assert.match(readFileSync(new URL('../Code.gs', import.meta.url), 'utf8'), /@OnlyCurrentDoc/);
+test('the script opens one other spreadsheet, Home – Groceries, and only from the Settings link', () => {
+  const code = readFileSync(new URL('../Code.gs', import.meta.url), 'utf8');
   const manifest = JSON.parse(readFileSync(new URL('../appsscript.json', import.meta.url), 'utf8'));
-  assert.ok(manifest.oauthScopes.includes('https://www.googleapis.com/auth/spreadsheets.currentonly'));
-  assert.ok(!manifest.oauthScopes.includes('https://www.googleapis.com/auth/spreadsheets'));
+  // Shopping needs the second sheet, so the scope is spreadsheets (Drive stays off).
+  assert.ok(manifest.oauthScopes.includes('https://www.googleapis.com/auth/spreadsheets'));
+  assert.ok(!manifest.oauthScopes.some((s) => /\/auth\/drive/.test(s)));
+  assert.equal(code.match(/SpreadsheetApp\.openBy(Id|Url)\(/g).length, 1, 'one place opens another sheet');
+  assert.match(code, /function groceries_\(\)[\s\S]{0,300}SpreadsheetApp\.openById\(id\)/);
 });
 
 test('checkSetup reports what the app would see', () => {

@@ -14,8 +14,8 @@
  *
  * Functions ending in "_" are private: the web page can't call them.
  *
- * @OnlyCurrentDoc  Limits the script to the spreadsheet it's attached to, so Google asks for
- *                  access to "this spreadsheet" rather than to all of your spreadsheets.
+ * Shopping lives in a second spreadsheet, Home – Groceries (see "Shopping" below), so the script
+ * asks Google for access to spreadsheets, not only this one. It opens no other sheet than those two.
  */
 
 // ---------------------------------------------------------------- Layout
@@ -50,6 +50,7 @@ const DEFAULT_SETTINGS = [
   ['Evening nudge time', '18:00', 'A task with a date but no time gets an email at this time the day before, asking for a time.'],
   ['App address', 'https://nasermutawi.github.io/hometest/', 'Where the app lives (GitHub Pages). Used in personal links and in email links.'],
   ['Server address', '', 'The web app link from Deploy (ends in /exec). Paste it here if myLink asks for it.'],
+  ['Groceries sheet', '', "The Home – Groceries Sheet's link. Shopping keeps its items, cart and price requests there."],
 ];
 
 // The Owner column holds a member's name, "Shared" or "Unassigned".
@@ -119,6 +120,12 @@ function checkSetup() {
   console.log(`In the Members tab: ${state.me ? `yes, as ${state.me.name}` : 'not yet (the app will ask for a name)'}`);
   console.log(`Members: ${state.members.map((m) => `${m.name} <${m.email}>`).join(', ') || 'none'}`);
   console.log(`Tasks: ${state.tasks.length}`);
+  try {
+    const shop = groceries_();
+    console.log(`Groceries sheet: ${shop ? `linked (${shop.getName()})` : 'not linked yet. Paste its link into the Groceries sheet row of Settings.'}`);
+  } catch (err) {
+    console.log(`Groceries sheet: ${err.message}`);
+  }
   console.log(`App address: ${state.household.appUrl}`);
   try {
     console.log(`Server address: ${serverAddress_()}`);
@@ -201,7 +208,10 @@ function fmt_(date, pattern) { return Utilities.formatDate(date, tz_(), pattern)
 function parseLocal_(text, pattern) { return Utilities.parseDate(text, tz_(), pattern); }
 
 function table_(name) {
-  const sh = sheet_(name);
+  return tableOf_(sheet_(name));
+}
+
+function tableOf_(sh) {
   const lastRow = sh.getLastRow();
   const lastCol = sh.getLastColumn();
   const values = lastRow > 0 ? sh.getRange(1, 1, lastRow, lastCol).getValues() : [[]];
@@ -626,6 +636,359 @@ function deleteTask_(id, actor) {
   deleteTaskRow_(t.row);
 }
 
+// ---------------------------------------------------------------- Shopping (a Melody Duet)
+
+// Shopping lives in its own Google Sheet, "Home – Groceries", whose link goes in the Groceries
+// sheet row of the Settings tab. There:
+//   Items          the catalogue: each thing we buy, typed once (name, size, brand, heart)
+//   Shopping list  the cart: one row per item with its quantity (Status Needed or In basket)
+//   Requests       "Get prices": a row each time someone asks a Claude to compare the stores
+//   Item insights  written by Claude from Order history; the app only reads it
+// The app never places orders. A Claude picks up a waiting request, fills baskets, and stops at checkout.
+
+const GROCERIES_SETTING = 'Groceries sheet';
+const ITEMS = 'Items';
+const CART = 'Shopping list';
+const REQUESTS = 'Requests';
+const INSIGHTS = 'Item insights';
+const ITEM_COLUMNS = ['ID', 'Item', 'Size', 'Brand', 'Heart', 'Aisle', 'Added by', 'Added on'];
+const CART_COLUMNS = ['Item', 'Qty', 'Added by', 'Added on', '1st choice store', '2nd choice store', 'Notes', 'Status', 'Size', 'Brand', 'Item ID'];
+const REQUEST_COLUMNS = ['ID', 'Status', 'Asked by', 'Asked on', 'Items', 'Started', 'Finished', 'Note'];
+const IN_CART = ['', 'needed', 'in basket'];
+const MAX_QTY = 99;
+
+// Aisles are set automatically from the name (Claude's Category in Item insights wins).
+// Earlier rules win: "eggplant" is veg before "egg" is dairy.
+const AISLES = [
+  ['Fruit and veg', '\\b(fruit|veg|salad|apple|banana|berr|blueberr|strawberr|raspberr|grape|orange|lemon|lime|mango|melon|watermelon|avocado|tomato|cucumber|lettuce|spinach|rocket|kale|onion|garlic|ginger|potato|carrot|pepper|capsicum|broccoli|cauliflower|eggplant|aubergine|zucchini|courgette|mushroom|herb|mint|parsley|coriander|basil|pomegranate|kiwi|pear|peach|plum|cherr)'],
+  ['Meat and fish', '\\b(chicken|beef|lamb|mince|steak|fish|salmon|tuna|shrimp|prawn|turkey|sausage|meat|hammour)'],
+  ['Dairy and eggs', '\\b(milk|laban|yogh?urt|labneh|cheese|butter|cream|eggs?\\b|egg white|halloumi|feta|mozzarella|ghee)'],
+  ['Bakery', '\\b(bread|bun|pitta?|khubz|croissant|bagel|wrap|tortilla|cake|muffin|toast)'],
+  ['Pantry', '\\b(oat|rice|pasta|noodle|flour|sugar|salt|oil|olive|honey|cereal|granola|nut|almond|bean|lentil|chickpea|sauce|ketchup|mayo|spice|jam|peanut|tahini|hummus|stock|vinegar|tin|can of|snack|crisp|chocolate|biscuit|cracker|date)'],
+  ['Frozen', '\\b(frozen|ice cream|ice\\b)'],
+  ['Drinks', '\\b(water|juice|coffee|tea\\b|soda|cola|sparkling)'],
+  ['Household', '\\b(toilet|tissue|kitchen roll|paper towel|detergent|dish|bin bag|rubbish bag|cleaner|bleach|foil|cling|sponge|laundry|softener|bulb|batter)'],
+  ['Personal care', '\\b(shampoo|conditioner|toothpaste|toothbrush|deodorant|razor|lotion|soap|body wash|sunscreen|floss|nappies|diaper|wipes)'],
+];
+const OTHER_AISLE = 'Other';
+
+function aisleFor_(name) {
+  const text = String(name || '').toLowerCase();
+  const hit = AISLES.find(([, pattern]) => new RegExp(pattern).test(text));
+  return hit ? hit[0] : OTHER_AISLE;
+}
+
+/** Lower case, letters and digits only, no plural s: "Organic Eggs" and "organic egg" match. */
+function itemKey_(name) {
+  return String(name || '').toLowerCase().replace(/[^a-z0-9؀-ۿ]+/g, ' ').trim().replace(/(?:es|s)\b/g, '');
+}
+
+function groceriesId_() {
+  const v = getSetting_(GROCERIES_SETTING);
+  const m = /\/d\/([\w-]{20,})/.exec(v) || /^([\w-]{20,})$/.exec(v);
+  return m ? m[1] : '';
+}
+
+/** The Home – Groceries spreadsheet, or null while its link isn't in Settings. */
+function groceries_() {
+  if (cache_.groceries) return cache_.groceries;
+  const id = groceriesId_();
+  if (!id) return null;
+  try {
+    cache_.groceries = SpreadsheetApp.openById(id);
+  } catch (err) {
+    throw new Error("Melody can't open the Home – Groceries sheet. Check its link in the Settings tab (Groceries sheet), and that the person who deployed the app can edit it.");
+  }
+  return cache_.groceries;
+}
+
+function requireGroceries_() {
+  const ss = groceries_();
+  if (!ss) throw new Error("Shopping isn't linked to the Home – Groceries sheet yet. Paste its link into the Groceries sheet row of the Settings tab.");
+  return ss;
+}
+
+/** A tab in the Groceries sheet, made (or given its missing columns) the first time it's needed. */
+function shopTab_(ss, name, headers) {
+  let sh = ss.getSheetByName(name);
+  if (!sh) {
+    sh = ss.insertSheet(name);
+    sh.appendRow(headers);
+    sh.setFrozenRows(1);
+    sh.getRange(1, 1, 1, headers.length).setFontWeight('bold');
+    return sh;
+  }
+  const width = Math.max(sh.getLastColumn(), 1);
+  const current = sh.getRange(1, 1, 1, width).getValues()[0].map(String);
+  if (!current.some(Boolean)) {
+    sh.getRange(1, 1, 1, headers.length).setValues([headers]);
+    return sh;
+  }
+  const missing = headers.filter((h) => !current.includes(h));
+  if (missing.length) sh.getRange(1, current.length + 1, 1, missing.length).setValues([missing]);
+  return sh;
+}
+
+function shopTable_(name, headers) {
+  return tableOf_(shopTab_(requireGroceries_(), name, headers));
+}
+
+const filled_ = (r, col) => String(r[col] == null ? '' : r[col]).trim() !== '';
+const qtyOf_ = (v) => { const n = parseInt(v, 10); return isNaN(n) || n < 1 ? 1 : Math.min(n, MAX_QTY); };
+const inCart_ = (r) => filled_(r, 'Item') && IN_CART.includes(String(r.Status || '').trim().toLowerCase());
+const numOrNull_ = (v) => { const n = Number(String(v == null ? '' : v).replace(/[^\d.]/g, '')); return String(v).trim() !== '' && !isNaN(n) ? n : null; };
+
+function shopItems_() {
+  const t = shopTable_(ITEMS, ITEM_COLUMNS);
+  t.rows = t.rows.filter((r) => filled_(r, 'Item'));
+  return t;
+}
+
+function toItem_(r) {
+  return {
+    id: Number(r.ID), name: String(r.Item).trim(), size: String(r.Size || '').trim(), brand: String(r.Brand || '').trim(),
+    heart: yes_(r.Heart), aisle: String(r.Aisle || '').trim() || aisleFor_(r.Item), addedBy: String(r['Added by'] || '').trim(),
+  };
+}
+
+function nextItemId_(t) {
+  return t.rows.reduce((m, r) => Math.max(m, Number(r.ID) || 0), 0) + 1;
+}
+
+function appendRow_(t, obj) {
+  writeRow_(t, Math.max(t.sh.getLastRow(), 1) + 1, obj);
+}
+
+function newItem_(t, data, me) {
+  const name = String(data.name || '').trim().slice(0, 60);
+  if (!name) throw new Error("Give it a name first. Even \"the good cheese\" works.");
+  const row = {
+    ID: nextItemId_(t), Item: name, Size: String(data.size || '').trim().slice(0, 40), Brand: String(data.brand || '').trim().slice(0, 40),
+    Heart: data.heart ? 'Yes' : '', Aisle: aisleFor_(name), 'Added by': me.name, 'Added on': fmt_(new Date(), 'yyyy-MM-dd'),
+  };
+  appendRow_(t, row);
+  return t.rows[t.rows.length - 1];
+}
+
+/**
+ * Cart rows typed straight into the sheet have no Item ID: each is matched to the catalogue by
+ * name, or added to it, so the app can show it.
+ */
+function linkCartRows_(items, cart) {
+  const loose = cart.rows.filter((r) => inCart_(r) && !(Number(r['Item ID']) > 0));
+  loose.forEach((r) => {
+    const key = itemKey_(r.Item);
+    let item = items.rows.find((i) => itemKey_(i.Item) === key);
+    if (!item) item = newItem_(items, { name: r.Item, size: r.Size, brand: r.Brand }, { name: String(r['Added by'] || '').trim() });
+    writeRow_(cart, r._row, { ...r, 'Item ID': Number(item.ID) });
+  });
+  return loose.length;
+}
+
+function insights_() {
+  const sh = requireGroceries_().getSheetByName(INSIGHTS);
+  if (!sh || sh.getLastRow() < 2) return new Map();
+  const out = new Map();
+  tableOf_(sh).rows.filter((r) => filled_(r, 'Item')).forEach((r) => {
+    const cheapest = numOrNull_(r['Cheapest seen (AED)']);
+    out.set(itemKey_(r.Item), {
+      category: String(r.Category || '').trim(),
+      usual: String(r['Usual store'] || '').trim(),
+      price: numOrNull_(r['Typical price (AED)']),
+      cheapest, cheapestAt: cheapest == null ? '' : String(r['Cheapest at'] || '').trim(),
+      every: numOrNull_(r['Avg days between orders']),
+      last: dateStr_(r['Last ordered']),
+      name: String(r.Item).trim(),
+    });
+  });
+  return out;
+}
+
+/** Whose Claude compares the stores: baskets.runner in the Groceries sheet's Settings tab, if there is one. */
+function shopRunner_() {
+  const sh = requireGroceries_().getSheetByName(SETTINGS);
+  if (!sh || sh.getLastRow() < 1) return '';
+  const rows = sh.getRange(1, 1, sh.getLastRow(), 2).getValues();
+  const row = rows.find((r) => String(r[0]).trim() === 'baskets.runner');
+  return row ? String(row[1]).trim() : '';
+}
+
+function daysBetween_(a, b) {
+  const d = (s) => Date.UTC(Number(s.slice(0, 4)), Number(s.slice(5, 7)) - 1, Number(s.slice(8, 10)));
+  return Math.round((d(b) - d(a)) / 86400000);
+}
+
+/** Everything the Shopping tab needs to draw itself. */
+function shoppingState_() {
+  const ss = groceries_();
+  if (!ss) return { linked: false };
+  const items = shopItems_();
+  const cart = shopTable_(CART, CART_COLUMNS);
+  const requests = shopTable_(REQUESTS, REQUEST_COLUMNS);
+  const learned = insights_();
+  const today = fmt_(new Date(), 'yyyy-MM-dd');
+
+  const list = items.rows.map((r) => {
+    const item = toItem_(r);
+    const l = learned.get(itemKey_(item.name)) || null;
+    if (l && l.category) item.aisle = l.category;
+    if (l) item.learned = { usual: l.usual, price: l.price, cheapest: l.cheapest, cheapestAt: l.cheapestAt, every: l.every, last: l.last };
+    return item;
+  });
+  const lines = [];
+  cart.rows.filter(inCart_).forEach((r) => {
+    const id = Number(r['Item ID']);
+    if (!(id > 0) || !list.some((i) => i.id === id)) return;
+    const same = lines.find((x) => x.itemId === id);
+    if (same) same.qty = Math.min(same.qty + qtyOf_(r.Qty), MAX_QTY);
+    else lines.push({ itemId: id, qty: qtyOf_(r.Qty), addedBy: String(r['Added by'] || '').trim() });
+  });
+
+  // "Usually by now": bought every N days, last bought N or more days ago, and not in the cart.
+  const inCart = new Set(lines.map((x) => x.itemId));
+  const due = [];
+  learned.forEach((l, key) => {
+    if (!l.every || !l.last || daysBetween_(l.last, today) < Math.round(l.every)) return;
+    const item = list.find((i) => itemKey_(i.name) === key);
+    if (item && inCart.has(item.id)) return;
+    due.push({ id: item ? item.id : null, name: item ? item.name : l.name });
+  });
+
+  // Things Claude has seen in our orders but nobody has added yet: the search offers them too.
+  const known = [];
+  learned.forEach((l, key) => { if (!list.some((i) => itemKey_(i.name) === key)) known.push(l.name); });
+
+  const last = requests.rows.filter((r) => filled_(r, 'ID')).pop();
+  return {
+    linked: true,
+    sheetUrl: ss.getUrl(),
+    runner: shopRunner_(),
+    aisles: AISLES.map(([name, pattern]) => [name, pattern]),
+    items: list,
+    cart: lines,
+    due: due.slice(0, 4),
+    known: known.slice(0, 300),
+    request: last ? {
+      id: Number(last.ID), status: String(last.Status || '').trim().toLowerCase(), askedBy: String(last['Asked by'] || '').trim(),
+      askedOn: String(last['Asked on'] || ''), note: String(last.Note || '').trim(),
+    } : null,
+  };
+}
+
+const shopReply_ = () => slimReply_({ shopping: shoppingState_() });
+
+function getShopping() {
+  fresh_();
+  requireMember_();
+  if (!groceries_()) return { linked: false };
+  withLock_(() => { linkCartRows_(shopItems_(), shopTable_(CART, CART_COLUMNS)); });
+  return shoppingState_();
+}
+
+/** Sets an item's quantity in the cart; 0 takes it out. */
+function setLine_(item, qty, me) {
+  const cart = shopTable_(CART, CART_COLUMNS);
+  const id = Number(item.ID);
+  const rows = cart.rows.filter((r) => inCart_(r) && Number(r['Item ID']) === id);
+  // Bottom up, so removing a row doesn't move the next one.
+  rows.slice(1).reverse().forEach((r) => cart.sh.deleteRow(r._row));
+  const n = Math.max(0, Math.min(MAX_QTY, Math.round(Number(qty) || 0)));
+  if (!rows.length && n) {
+    appendRow_(cart, {
+      Item: item.Item, Qty: n, 'Added by': me.name, 'Added on': fmt_(new Date(), 'yyyy-MM-dd'), Status: 'Needed',
+      Size: item.Size || '', Brand: item.Brand || '', 'Item ID': id,
+    });
+  } else if (rows.length && n) {
+    writeRow_(cart, rows[0]._row, { ...rows[0], Qty: n, Item: item.Item, Size: item.Size || '', Brand: item.Brand || '' });
+  } else if (rows.length) {
+    cart.sh.deleteRow(rows[0]._row);
+  }
+}
+
+function cartQty_(id) {
+  return shopTable_(CART, CART_COLUMNS).rows.filter((r) => inCart_(r) && Number(r['Item ID']) === Number(id))
+    .reduce((n, r) => n + qtyOf_(r.Qty), 0);
+}
+
+function itemRow_(t, id) {
+  const r = t.rows.find((x) => Number(x.ID) === Number(id));
+  if (!r) throw new Error("That item isn't in the catalogue any more. Pull down to refresh.");
+  return r;
+}
+
+/**
+ * Adds to the cart: ref is { id } for an item in the catalogue, or { name, size, brand } for
+ * something new (an item with the same name is reused). Adds qty (default 1) to what's there.
+ */
+function addToCart(ref, qty, opts) {
+  fresh_();
+  const me = requireMember_();
+  requireGroceries_();
+  withLock_(() => {
+    const items = shopItems_();
+    let item;
+    if (ref && Number(ref.id) > 0) item = itemRow_(items, ref.id);
+    else {
+      const key = itemKey_(ref && ref.name);
+      item = (key && items.rows.find((r) => itemKey_(r.Item) === key)) || newItem_(items, ref || {}, me);
+    }
+    setLine_(item, cartQty_(item.ID) + (Number(qty) > 0 ? Number(qty) : 1), me);
+  });
+  return shopReply_();
+}
+
+function setCartQty(id, qty, opts) {
+  fresh_();
+  const me = requireMember_();
+  requireGroceries_();
+  withLock_(() => setLine_(itemRow_(shopItems_(), id), qty, me));
+  return shopReply_();
+}
+
+/** Changes an item's name, size, brand or heart. Its cart line follows. */
+function saveItem(data, opts) {
+  fresh_();
+  const me = requireMember_();
+  requireGroceries_();
+  withLock_(() => {
+    const items = shopItems_();
+    const r = itemRow_(items, data && data.id);
+    const name = 'name' in data ? String(data.name || '').trim().slice(0, 60) : r.Item;
+    if (!name) throw new Error("It needs a name. Even \"the good cheese\" works.");
+    const next = {
+      ...r, Item: name,
+      Size: 'size' in data ? String(data.size || '').trim().slice(0, 40) : r.Size,
+      Brand: 'brand' in data ? String(data.brand || '').trim().slice(0, 40) : r.Brand,
+      Heart: 'heart' in data ? (data.heart ? 'Yes' : '') : r.Heart,
+      Aisle: name === r.Item ? r.Aisle || aisleFor_(name) : aisleFor_(name),
+    };
+    writeRow_(items, r._row, next);
+    const qty = cartQty_(r.ID);
+    if (qty) setLine_(next, qty, me);
+  });
+  return shopReply_();
+}
+
+/** "Get prices": parks a request for a Claude to compare the stores. Never places an order. */
+function requestPrices(opts) {
+  fresh_();
+  const me = requireMember_();
+  requireGroceries_();
+  withLock_(() => {
+    const state = shoppingState_();
+    if (!state.cart.length) throw new Error("The cart's empty. Add something first, then we'll hunt for prices.");
+    if (state.request && ['waiting', 'running'].includes(state.request.status)) return; // that one reads the latest cart anyway
+    const requests = shopTable_(REQUESTS, REQUEST_COLUMNS);
+    const id = requests.rows.reduce((m, r) => Math.max(m, Number(r.ID) || 0), 0) + 1;
+    const words = state.cart.map((line) => {
+      const i = state.items.find((x) => x.id === line.itemId);
+      return `${i.name}${i.size ? ` ${i.size}` : ''}${i.brand ? ` (${i.brand})` : ''} ×${line.qty}`;
+    });
+    appendRow_(requests, { ID: id, Status: 'waiting', 'Asked by': me.name, 'Asked on': fmt_(new Date(), 'yyyy-MM-dd HH:mm'), Items: words.join('; ') });
+  });
+  return shopReply_();
+}
+
 // ---------------------------------------------------------------- The app's private API
 
 // The app (docs/index.html on GitHub Pages) posts {key, fn, args} here. The web app is deployed
@@ -644,6 +1007,11 @@ const API_FUNCTIONS = {
   setPrepDone: (id, index, done, opts) => setPrepDone(id, index, done, opts),
   deleteTask: (id, opts) => deleteTask(id, opts),
   getActivity: () => getActivity(),
+  getShopping: () => getShopping(),
+  addToCart: (ref, qty, opts) => addToCart(ref, qty, opts),
+  setCartQty: (id, qty, opts) => setCartQty(id, qty, opts),
+  saveItem: (data, opts) => saveItem(data, opts),
+  requestPrices: (opts) => requestPrices(opts),
   addPerson: (name, email) => addPerson(name, email),
   linkFor: (name, reset) => linkFor(name, reset),
 };

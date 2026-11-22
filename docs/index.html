@@ -350,6 +350,7 @@ legend { padding: 0; }
 @starting-style { .toast { translate: 0 8px; opacity: 0; } }
 .toast.out { translate: 0 8px; opacity: 0; transition-duration: 150ms; }
 .toast.lift { bottom: calc(76px + env(safe-area-inset-bottom)); }
+.toast.lift.high { bottom: calc(92px + env(safe-area-inset-bottom)); }
 .toast svg { color: var(--toast-link); }
 .toast .msg { flex: 1; margin-left: 6px; font-weight: 600; padding: 8px 0; }
 .toast button { color: var(--toast-link); font-weight: 700; padding: 10px; }
@@ -437,11 +438,70 @@ legend { padding: 0; }
 .perf li { padding: 4px 0; border-top: 1px solid rgb(255 255 255 / 0.1); display: flex; flex-direction: column; }
 .perf li span { color: #a3aea8; }
 .perf li.bad span { color: #ef7d70; }
+
+/* Melody Duets: one switch between To-dos and Shopping */
+.duets { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; padding: 4px; border-radius: 14px; background: var(--chip); }
+.duets button { height: 36px; border-radius: 10px; font-size: calc(14px * var(--ts)); font-weight: 600; color: var(--muted); }
+.duets button[aria-current="page"] { background: var(--surface); color: var(--text); font-weight: 700; box-shadow: 0 1px 3px color-mix(in srgb, var(--text) 12%, transparent); }
+
+/* Shopping: the cart, with the catalogue as a search */
+.finder { display: flex; align-items: center; gap: 8px; height: 52px; padding: 0 6px 0 14px; border-radius: 16px; background: var(--surface); box-shadow: inset 0 0 0 1.5px var(--border-strong); color: var(--muted); }
+.finder:focus-within { box-shadow: inset 0 0 0 2px var(--accent); color: var(--text); }
+.finder input { flex: 1; min-width: 0; height: 100%; border: none; background: transparent; outline: none; font-size: max(16px, calc(16px * var(--ts))); color: var(--text); -webkit-appearance: none; appearance: none; }
+.finder input::placeholder { color: var(--muted); }
+.finder input::-webkit-search-cancel-button { display: none; }
+.finder .clear { width: 36px; height: 36px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; color: var(--muted); flex: 0 0 auto; }
+.finder .mic { width: 40px; height: 40px; border-radius: 12px; background: var(--accent); color: var(--on-accent); display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; }
+.usual { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 16px; background: var(--accent-soft); color: var(--accent-ink); font-size: calc(14px * var(--ts)); }
+.usual > span { flex: 1; min-width: 0; }
+.usual-btn { height: 36px; padding: 0 14px; border-radius: 999px; background: var(--accent); color: var(--on-accent); font-size: calc(14px * var(--ts)); font-weight: 700; flex: 0 0 auto; display: inline-flex; align-items: center; text-decoration: none; }
+.shop-list { padding: 4px 14px calc(120px + env(safe-area-inset-bottom)); }
+.card { background: var(--surface); border-radius: 22px; padding: 4px 0; overflow: hidden; margin-top: 12px; }
+.card:first-child { margin-top: 4px; }
+.card-h { padding: 12px 18px 0; font-size: calc(13px * var(--ts)); font-weight: 700; color: var(--muted); }
+.list-label { padding: 16px 6px 0; font-size: calc(13px * var(--ts)); font-weight: 700; color: var(--muted); }
+.ln { display: flex; align-items: center; gap: 10px; min-height: 58px; padding: 4px 12px 4px 18px; position: relative; }
+.ln + .ln::before { content: ""; position: absolute; left: 18px; right: 0; top: 0; border-top: 1px solid var(--line); }
+.ln-main { flex: 1; min-width: 0; min-height: 48px; text-align: start; display: flex; flex-direction: column; justify-content: center; gap: 1px; }
+.ln-name { font-size: calc(16px * var(--ts)); font-weight: 600; line-height: 1.25; display: flex; align-items: center; gap: 6px; overflow-wrap: anywhere; }
+.ln-meta { font-size: calc(13px * var(--ts)); color: var(--muted); overflow-wrap: anywhere; }
+.heart { color: var(--accent); }
+.qty { display: inline-flex; align-items: center; border-radius: 999px; background: var(--soft); flex: 0 0 auto; }
+.qty button { width: 40px; height: 40px; border-radius: 50%; color: var(--accent); font-size: 20px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; }
+.qty output { min-width: 20px; text-align: center; font-weight: 700; font-variant-numeric: tabular-nums; }
+.who { width: 22px; height: 22px; border-radius: 50%; font-size: 11px; font-weight: 800; display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; }
+.who.o-p1 { box-shadow: inset 0 0 0 1.5px var(--p1); }
+.who.o-p2 { box-shadow: inset 0 0 0 1.5px var(--p2); }
+.addbtn { height: 36px; padding: 0 16px; border-radius: 999px; background: var(--soft); color: var(--accent); font-size: calc(14px * var(--ts)); font-weight: 700; flex: 0 0 auto; }
+.incart { font-size: calc(13px * var(--ts)); font-weight: 700; color: var(--done); flex: 0 0 auto; padding: 0 6px; }
+.shop-note { padding: 40px 16px; text-align: center; color: var(--muted); display: flex; flex-direction: column; gap: 6px; align-items: center; }
+.shop-note strong { font-family: var(--display); font-variation-settings: 'SOFT' 100; font-size: calc(21px * var(--ts)); font-weight: 600; color: var(--text); }
+.cartbar-wrap { position: fixed; left: 0; right: 0; bottom: 0; z-index: 10; padding: 0 16px calc(14px + env(safe-area-inset-bottom)); pointer-events: none; }
+.cartbar { pointer-events: auto; max-width: 448px; margin: 0 auto; display: flex; align-items: center; gap: 12px; padding: 10px 10px 10px 14px; border-radius: 20px; background: var(--toast-bg); color: var(--toast-ink); box-shadow: 0 10px 24px color-mix(in srgb, var(--text) 24%, transparent); }
+.cartbar .count { min-width: 28px; height: 28px; padding: 0 8px; border-radius: 999px; background: var(--accent); color: var(--on-accent); font-size: calc(14px * var(--ts)); font-weight: 800; display: inline-flex; align-items: center; justify-content: center; font-variant-numeric: tabular-nums; flex: 0 0 auto; }
+.cartbar .what { flex: 1; min-width: 0; font-size: calc(13px * var(--ts)); line-height: 1.3; }
+.cartbar .what strong { display: block; font-size: calc(15px * var(--ts)); }
+.cartbar .what span { opacity: 0.8; }
+.cartbar .go { height: 44px; padding: 0 16px; border-radius: 14px; background: var(--toast-ink); color: var(--toast-bg); font-size: calc(15px * var(--ts)); font-weight: 800; flex: 0 0 auto; }
+.cartbar .go.asked { background: transparent; color: var(--toast-ink); box-shadow: inset 0 0 0 1.5px var(--toast-ink); }
+.item-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.item-head h2 { overflow-wrap: anywhere; }
+.heartbtn { width: 44px; height: 44px; border-radius: 50%; background: var(--bg); color: var(--accent); display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; }
+.hint { display: block; font-size: calc(13px * var(--ts)); color: var(--muted); margin-top: 6px; }
+.learned { background: var(--bg); border-radius: 16px; padding: 2px 16px; }
+.kv { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid var(--line); font-size: calc(14px * var(--ts)); }
+.kv:first-child { border-top: none; }
+.kv b { font-weight: 700; text-align: end; }
+.item-foot { display: flex; align-items: center; gap: 12px; }
+.item-foot .primary { flex: 1; height: 54px; }
 </style>
 </head>
 <body>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/></symbol>
+  <symbol id="i-heart" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></symbol>
+  <symbol id="i-heart-on" viewBox="0 0 24 24" fill="currentColor"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></symbol>
   <symbol id="i-mic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></symbol>
   <symbol id="i-list" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1"/><circle cx="4.5" cy="12" r="1"/><circle cx="4.5" cy="18" r="1"/></symbol>
   <symbol id="i-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></symbol>
@@ -479,6 +539,7 @@ legend { padding: 0; }
   <!-- A small title that appears at the top once the large one has scrolled away. -->
   <div class="minihead" id="tasks-mini" aria-hidden="true"><span>Tasks</span></div>
   <div class="list-top">
+    <nav class="duets" aria-label="Melody Duets"><button type="button" data-duet="tasks">To-dos</button><button type="button" data-duet="shop">Shopping</button></nav>
     <header class="bighead">
       <h1 class="title-xl" id="tasks-title">Tasks</h1>
       <span class="today-date" id="tasks-date"></span>
@@ -493,6 +554,28 @@ legend { padding: 0; }
       <button type="button" class="midmic" id="list-mic" aria-label="Record a task"><svg width="28" height="28"><use href="#i-mic"/></svg></button>
       <button type="button" class="round" id="settings-btn" data-settings aria-label="Settings"><svg width="22" height="22"><use href="#i-sliders"/></svg></button>
     </div>
+  </div>
+</div>
+
+<!-- Shopping, a Melody Duet: the cart, with the catalogue of things we buy as a search -->
+<div id="v-shop" class="screen" hidden>
+  <div class="list-top">
+    <nav class="duets" aria-label="Melody Duets"><button type="button" data-duet="tasks">To-dos</button><button type="button" data-duet="shop">Shopping</button></nav>
+    <header class="bighead">
+      <h1 class="title-xl">Shopping</h1>
+      <button type="button" class="round" data-settings aria-label="Settings"><svg width="22" height="22"><use href="#i-sliders"/></svg></button>
+    </header>
+    <form class="finder" id="shop-find" role="search" autocomplete="off">
+      <svg width="20" height="20" aria-hidden="true"><use href="#i-search"/></svg>
+      <input id="shop-q" type="search" enterkeyhint="go" maxlength="60" placeholder="Add or find something…" aria-label="Add or find something" autocapitalize="sentences">
+      <button type="button" class="clear" id="shop-clear" aria-label="Clear" hidden><svg width="18" height="18"><use href="#i-x"/></svg></button>
+      <button type="button" class="mic" id="shop-mic" aria-label="Say what we need"><svg width="22" height="22"><use href="#i-mic"/></svg></button>
+    </form>
+    <div id="shop-due"></div>
+  </div>
+  <main class="shop-list" id="shop-list" aria-live="polite"></main>
+  <div class="cartbar-wrap" id="cartbar-wrap" hidden>
+    <div class="cartbar"><span class="count" id="cart-count"></span><span class="what"><strong>in the cart</strong><span id="cart-sub"></span></span><button type="button" class="go" id="cart-go">Get prices</button></div>
   </div>
 </div>
 
@@ -686,6 +769,23 @@ legend { padding: 0; }
   </div>
 </dialog>
 
+<!-- One thing we buy: typed once, learned from by Claude -->
+<dialog id="d-item" class="sheet" aria-labelledby="item-title">
+  <form class="sheet-body" id="item-form" autocomplete="off">
+    <span class="grab" aria-hidden="true"></span>
+    <div class="item-head"><h2 class="title-l" id="item-title" dir="auto"></h2><button type="button" class="heartbtn" id="item-heart" aria-pressed="false"></button></div>
+    <label><span class="label">What is it</span><input class="field" id="item-name" maxlength="60" required dir="auto"></label>
+    <label><span class="label">Size</span><input class="field" id="item-size" maxlength="40" placeholder="e.g. 1.5 kg or 12 rolls" dir="auto"><span class="hint">So Claude compares the same amount everywhere, or works it out per kilo.</span></label>
+    <label><span class="label">Brand</span><input class="field" id="item-brand" maxlength="40" placeholder="Any brand" dir="auto"><span class="hint">Leave it empty if any brand will do. Claude then hunts for the best value.</span></label>
+    <div><span class="label">What Claude has learned</span><div id="item-learned"></div></div>
+    <p class="muted small" id="item-who"></p>
+    <div class="item-foot">
+      <span class="qty"><button type="button" id="item-less" aria-label="One less">−</button><output id="item-qty" aria-live="polite">1</output><button type="button" id="item-more" aria-label="One more">+</button></span>
+      <button type="submit" class="primary" id="item-save">Add 1 to the cart</button>
+    </div>
+  </form>
+</dialog>
+
 <div id="toast" class="toast" role="status" hidden></div>
 <div class="pull" id="pull" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M6 13l6 6 6-6"/></svg></div>
 
@@ -817,6 +917,8 @@ const taskIn = (data, id) => data.tasks.find((t) => t.id === realId(id));
 
 /** nowAt: when data.now was true (now, unless it comes from this phone's copy). */
 function setBase(data, nowAt = Date.now()) {
+  // Shopping loads on its own (getShopping): a whole household from getState keeps the cart we have.
+  if (sync.base && sync.base.shopping && data && !('shopping' in data)) data.shopping = sync.base.shopping;
   sync.base = data;
   sync.version++;
   sync.nowAt = nowAt;
@@ -922,6 +1024,7 @@ function merge(reply, op) {
     const gone = new Set([r.deletedId].concat(r.deletedIds || []).filter((x) => x != null).map(Number));
     if (gone.size) base.tasks = base.tasks.filter((t) => !gone.has(t.id));
     if (r.prefs && base.me) base.me.prefs = r.prefs;
+    if (r.shopping) base.shopping = r.shopping;
     if (r.now) base.now = r.now;
     setBase(base);
   } else if (Array.isArray(r.tasks) && 'me' in r) {
@@ -964,6 +1067,7 @@ async function refresh() {
     // A change confirmed meanwhile may be newer than this; fetch again shortly instead.
     if (sync.version !== version) { refresh.later = setTimeout(refresh, QUIET_AFTER_WRITE); return; }
     receive(data, false);
+    if (state.view === 'shop') await loadShopping();
   } catch (err) {
     perfEnd(entry, `failed: ${err.message}`, performance.now() - started);
     // Once the app is showing, a failed background refresh just waits for the next one.
@@ -1128,7 +1232,7 @@ const whoChoices = () => state.data.members.map((m) => m.name).concat(SHARED);
 // ---------------------------------------------------------------- Showing things
 
 function show(view) {
-  ['v-loading', 'v-blocked', 'v-join', 'v-tasks', 'v-detail', 'v-review'].forEach((id) => { $('#' + id).hidden = id !== view; });
+  ['v-loading', 'v-blocked', 'v-join', 'v-tasks', 'v-shop', 'v-detail', 'v-review'].forEach((id) => { $('#' + id).hidden = id !== view; });
 }
 
 function go(view) {
@@ -1168,7 +1272,8 @@ function toast(msg, actions = [], ms = 3500, kind = 'ok') {
   if (el.parentNode !== host) host.append(el);
   el.innerHTML = `${kind === 'alert' ? icon('alert', 20) : icon('tick', 20)}<span class="msg">${esc(msg)}</span>${actions.map((a, i) => `<button type="button" data-t="${i}">${esc(a.label)}</button>`).join('')}`;
   actions.forEach((a, i) => el.querySelector(`[data-t="${i}"]`).addEventListener('click', () => { hideToast(); a.fn(); }));
-  el.classList.toggle('lift', state.view === 'tasks');
+  el.classList.toggle('lift', state.view === 'tasks' || state.view === 'shop');
+  el.classList.toggle('high', state.view === 'shop');
   el.classList.remove('out');
   el.hidden = false;
   clearTimeout(toastTimer);
@@ -1212,9 +1317,12 @@ function render() {
   if (state.view === 'tasks') renderTasks();
   if (state.view === 'detail') renderDetail();
   if (state.view === 'review') renderReview();
+  if (state.view === 'shop') renderShop();
+  $$('.duets button').forEach((b) => b.setAttribute('aria-current', b.dataset.duet === state.view ? 'page' : 'false'));
   show('v-' + state.view);
   if (state.view === 'tasks') markChipOverflow(); // needs the screen showing to measure
-  $('#toast').classList.toggle('lift', state.view === 'tasks');
+  $('#toast').classList.toggle('lift', state.view === 'tasks' || state.view === 'shop');
+  $('#toast').classList.toggle('high', state.view === 'shop');
   onScroll();
 }
 
@@ -2314,7 +2422,19 @@ $('#task-form').addEventListener('submit', (e) => {
 
 // ---------------------------------------------------------------- Wiring
 
+/** The Melody Duets switch: To-dos or Shopping, remembered on this phone. */
+const DUET_KEY = 'melody-duet';
+function switchDuet(view) {
+  if (view === state.view) return;
+  try { localStorage.setItem(DUET_KEY, view); } catch (err) { /* fine */ }
+  go(view);
+  if (view === 'shop') loadShopping();
+}
+try { if (localStorage.getItem(DUET_KEY) === 'shop') state.view = 'shop'; } catch (err) { /* To-dos, then */ }
+
 document.addEventListener('click', (e) => {
+  const duet = e.target.closest('[data-duet]');
+  if (duet) { switchDuet(duet.dataset.duet); return; }
   const goBtn = e.target.closest('[data-go]');
   if (goBtn) { if (goBtn.dataset.go === 'tasks' && state.view !== 'tasks') state.filter = 'all'; go(goBtn.dataset.go); return; }
   const close = e.target.closest('[data-close]');
@@ -2773,7 +2893,7 @@ const pull = { y0: null, d: 0 };
 const PULL_AT = 70;
 document.addEventListener('touchstart', (e) => {
   pull.y0 = null;
-  if (state.view !== 'tasks' || window.scrollY > 0 || $('dialog[open]') || e.touches.length !== 1 || swipe.tracking && swipe.tracking.axis) return;
+  if ((state.view !== 'tasks' && state.view !== 'shop') || window.scrollY > 0 || $('dialog[open]') || e.touches.length !== 1 || swipe.tracking && swipe.tracking.axis) return;
   pull.y0 = e.touches[0].clientY;
   pull.x0 = e.touches[0].clientX;
   pull.d = 0;
@@ -3025,6 +3145,425 @@ if (PREVIEW) {
     return real(fn, args);
   };
 }
+
+// ---------------------------------------------------------------- Shopping (a Melody Duet)
+//
+// The cart, with the catalogue of things we buy as a search above it. It lives in the Home –
+// Groceries sheet and loads on its own (getShopping), so To-dos stay quick. Every change goes
+// through mutate() like tasks do; each reply carries the whole shopping state, which is small.
+// "Get prices" only asks a Claude to compare stores. Nothing here ever places an order.
+
+const shop = { q: '', itemId: null, form: null, loading: false, error: '', ids: new Map(), seq: 0 };
+const shopId = (id) => shop.ids.get(Number(id)) || Number(id);
+const shopData = (data = state.data) => (data && data.shopping) || null;
+const itemIn = (s, id) => s.items.find((i) => i.id === shopId(id));
+const lineIn = (s, id) => s.cart.find((l) => l.itemId === shopId(id));
+/** The same matching as the server: case, punctuation and a plural s don't count. */
+const shopKey = (name) => String(name || '').toLowerCase().replace(/[^a-z0-9؀-ۿ]+/g, ' ').trim().replace(/(?:es|s)\b/g, '');
+const SHOP_MAX = 99;
+const heartIcon = (size = 15) => `<svg class="heart" width="${size}" height="${size}" role="img" aria-label="Favourite"><use href="#i-heart-on"/></svg>`;
+
+function aisleOf(s, name) {
+  const text = String(name || '').toLowerCase();
+  const hit = (s.aisles || []).find(([, pattern]) => { try { return new RegExp(pattern).test(text); } catch (err) { return false; } });
+  return hit ? hit[0] : 'Other';
+}
+
+/** Fetches the cart and catalogue, unless changes are still on their way. */
+async function loadShopping() {
+  if (shop.loading || !sync.base || (!config && !PREVIEW)) return;
+  if (sync.ops.length || sync.sending) { clearTimeout(loadShopping.later); loadShopping.later = setTimeout(loadShopping, QUIET_AFTER_WRITE); return; }
+  shop.loading = true;
+  try {
+    const s = await run('getShopping');
+    shop.error = '';
+    if (sync.ops.length || sync.sending) return; // a change of ours is newer: its reply brings the cart
+    sync.base.shopping = s;
+    setBase(sync.base);
+    recompute();
+    if (state.view === 'shop') quietDraw();
+  } catch (err) {
+    if (err instanceof ServerError && err.code === 'link') return;
+    shop.error = err && err.code === 'unknown'
+      ? 'Shopping needs the new Code.gs on the server. Once it is deployed, pull down to refresh.'
+      : err.message;
+    if (state.view === 'shop') quietDraw();
+  } finally {
+    shop.loading = false;
+  }
+}
+
+/** A thing we just made on this phone got its real number from the server (found by name). */
+function shopRemap(temp, name) {
+  return (reply) => {
+    const real = reply && reply.shopping && reply.shopping.items && reply.shopping.items.find((i) => shopKey(i.name) === shopKey(name));
+    if (real) {
+      shop.ids.set(temp, real.id);
+      if (shop.itemId === temp) shop.itemId = real.id;
+    }
+    return reply;
+  };
+}
+
+/** Puts something in the cart: an item we know (one more of it), or a new name (a new item, in one step). */
+function cartAdd(ref, qty = 1) {
+  const s = shopData();
+  if (!s) return;
+  const known = ref.id ? itemIn(s, ref.id) : s.items.find((i) => shopKey(i.name) === shopKey(ref.name));
+  if (known) {
+    const line = lineIn(s, known.id);
+    cartSet(known.id, Math.min(SHOP_MAX, (line ? line.qty : 0) + qty));
+    return known;
+  }
+  const name = String(ref.name || '').trim().slice(0, 60);
+  if (!name) return null;
+  const temp = -(++shop.seq);
+  mutate({
+    label: 'Add to the cart',
+    apply: (data) => {
+      const d = shopData(data);
+      if (!d) return;
+      let item = d.items.find((i) => i.id === shopId(temp)) || d.items.find((i) => shopKey(i.name) === shopKey(name));
+      if (!item) {
+        item = { id: temp, name, size: '', brand: '', heart: false, aisle: aisleOf(d, name), addedBy: data.me.name };
+        d.items.push(item);
+      }
+      const line = d.cart.find((l) => l.itemId === item.id);
+      if (line) line.qty = Math.min(SHOP_MAX, line.qty + qty);
+      else d.cart.push({ itemId: item.id, qty, addedBy: data.me.name });
+    },
+    send: () => run('addToCart', { name }, qty, SLIM),
+    stateOf: shopRemap(temp, name),
+  });
+  return { id: temp, name };
+}
+
+/** Sets how many of something are in the cart. 0 takes it out, with a few seconds for Undo. */
+function cartSet(id, qty) {
+  const s = shopData();
+  const item = s && itemIn(s, id);
+  if (!item) return;
+  const n = Math.max(0, Math.min(SHOP_MAX, qty));
+  const before = (lineIn(s, id) || { qty: 0 }).qty;
+  if (n === before) return;
+  const op = mutate({
+    label: n ? 'Change how many' : 'Take out of the cart',
+    key: `cart:${shopId(id)}`,
+    hold: n ? 0 : 4000,
+    apply: (data) => {
+      const d = shopData(data);
+      const it = d && itemIn(d, id);
+      if (!it) return;
+      const line = d.cart.find((l) => l.itemId === it.id);
+      if (!n) d.cart = d.cart.filter((l) => l !== line);
+      else if (line) line.qty = n;
+      else d.cart.push({ itemId: it.id, qty: n, addedBy: data.me.name });
+    },
+    send: () => run('setCartQty', shopId(id), n, SLIM),
+  });
+  if (!n) toast(`${item.name}: out of the cart`, [{ label: 'Undo', fn: () => { if (!cancel(op)) cartSet(id, before); } }]);
+}
+
+/** Changes an item's name, size, brand or heart. */
+function itemSave(id, fields) {
+  mutate({
+    label: 'Save item',
+    apply: (data) => {
+      const d = shopData(data);
+      const it = d && itemIn(d, id);
+      if (!it) return;
+      if ('name' in fields && fields.name !== it.name) it.aisle = aisleOf(d, fields.name);
+      Object.assign(it, fields);
+    },
+    send: () => run('saveItem', { id: shopId(id), ...fields }, SLIM),
+  });
+}
+
+const runnerLabel = (s) => (!s.runner ? 'Claude' : s.runner === state.data.me.name ? 'your Claude' : `${s.runner}'s Claude`);
+const capFirst = (t) => t.charAt(0).toUpperCase() + t.slice(1);
+
+function getPrices() {
+  const s = shopData();
+  if (!s || !s.cart.length) return;
+  const r = s.request;
+  if (r && ['waiting', 'running'].includes(r.status)) {
+    toast(`Already asked. ${capFirst(runnerLabel(s))} reads the cart when it runs, so keep adding.`);
+    return;
+  }
+  mutate({
+    label: 'Get prices',
+    apply: (data) => {
+      const d = shopData(data);
+      if (d) d.request = { id: 0, status: 'waiting', askedBy: data.me.name, askedOn: '', note: '' };
+    },
+    send: () => run('requestPrices', SLIM),
+  });
+  toast(`Sent to ${runnerLabel(s)}. It compares the stores on its next run and leaves a basket for you to check.`);
+}
+
+// ------------------------------------------------ Drawing the Shopping tab
+
+function shopNote(title, text) {
+  return `<div class="shop-note"><strong>${esc(title)}</strong><span>${esc(text)}</span></div>`;
+}
+
+function itemMeta(i) {
+  return [i.size, i.brand].filter(Boolean).join(' · ');
+}
+
+function whoDot(name) {
+  if (!name || !state.data.members.some((m) => m.name === name)) return '';
+  return `<span class="who ${ownerClass(name)}" role="img" aria-label="Added by ${esc(name)}" title="Added by ${esc(name)}">${esc(name.charAt(0).toUpperCase())}</span>`;
+}
+
+function itemMain(i) {
+  const meta = itemMeta(i);
+  return `<button type="button" class="ln-main" data-item="${i.id}"><span class="ln-name" dir="auto">${esc(i.name)}${i.heart ? heartIcon() : ''}</span>${meta ? `<span class="ln-meta" dir="auto">${esc(meta)}</span>` : ''}</button>`;
+}
+
+function cartLine(s, line) {
+  const i = itemIn(s, line.itemId);
+  if (!i) return '';
+  return `<div class="ln">${itemMain(i)}
+    <span class="qty"><button type="button" data-qty="${i.id}" data-by="-1" aria-label="One less ${esc(i.name)}">−</button><output aria-live="polite">${line.qty}</output><button type="button" data-qty="${i.id}" data-by="1" aria-label="One more ${esc(i.name)}">+</button></span>
+    ${whoDot(line.addedBy)}</div>`;
+}
+
+function aisleRank(s) {
+  const order = (s.aisles || []).map(([name]) => name);
+  return (a) => (a === 'Other' ? 1000 : order.includes(a) ? order.indexOf(a) : 500);
+}
+
+function cartHtml(s) {
+  const groups = new Map();
+  s.cart.forEach((line) => {
+    const i = itemIn(s, line.itemId);
+    if (!i) return;
+    if (!groups.has(i.aisle)) groups.set(i.aisle, []);
+    groups.get(i.aisle).push(line);
+  });
+  const rank = aisleRank(s);
+  const aisles = [...groups.keys()].sort((a, b) => rank(a) - rank(b) || a.localeCompare(b));
+  let html = aisles.length
+    ? `<section class="card" aria-label="In the cart">${aisles.map((a) => `<h2 class="card-h">${esc(a)}</h2>${groups.get(a).map((l) => cartLine(s, l)).join('')}`).join('')}</section>`
+    : shopNote("The cart's empty", 'Suspiciously tidy. Type what we need above, or tap the mic.');
+  const inCart = new Set(s.cart.map((l) => l.itemId));
+  const regulars = s.items.filter((i) => i.heart && !inCart.has(i.id)).sort((a, b) => a.name.localeCompare(b.name)).slice(0, 12);
+  if (regulars.length) {
+    html += `<h2 class="list-label">Hearted, not in the cart</h2><section class="card">${regulars.map((i) => `<div class="ln">${itemMain(i)}<button type="button" class="addbtn" data-add-item="${i.id}" aria-label="Add ${esc(i.name)}">Add</button></div>`).join('')}</section>`;
+  }
+  return html;
+}
+
+function searchHtml(s, q) {
+  const k = q.toLowerCase();
+  const found = s.items.filter((i) => `${i.name} ${i.brand}`.toLowerCase().includes(k))
+    .sort((a, b) => (b.name.toLowerCase().startsWith(k) - a.name.toLowerCase().startsWith(k)) || (b.heart - a.heart) || a.name.localeCompare(b.name))
+    .slice(0, 25);
+  const key = shopKey(q);
+  const fromOrders = (s.known || []).filter((n) => n.toLowerCase().includes(k)).sort((a, b) => a.localeCompare(b)).slice(0, 10);
+  const exact = s.items.some((i) => shopKey(i.name) === key) || fromOrders.some((n) => shopKey(n) === key);
+  let html = '';
+  if (found.length) {
+    html += `<h2 class="list-label">Our things</h2><section class="card">${found.map((i) => {
+      const line = lineIn(s, i.id);
+      const right = line ? `<span class="incart">In cart ×${line.qty}</span>` : `<button type="button" class="addbtn" data-add-item="${i.id}" aria-label="Add ${esc(i.name)}">Add</button>`;
+      return `<div class="ln">${itemMain(i)}${right}</div>`;
+    }).join('')}</section>`;
+  }
+  if (fromOrders.length) {
+    html += `<h2 class="list-label">From your orders</h2><section class="card">${fromOrders.map((n) => `<div class="ln"><span class="ln-main"><span class="ln-name" dir="auto">${esc(n)}</span><span class="ln-meta">Claude spotted it in past orders</span></span><button type="button" class="addbtn" data-add-name="${esc(n)}" aria-label="Add ${esc(n)}">Add</button></div>`).join('')}</section>`;
+  }
+  if (!exact) {
+    html += `<section class="card"><div class="ln"><button type="button" class="ln-main" data-new><span class="ln-name" dir="auto">Add “${esc(q)}” as something new</span><span class="ln-meta">Size and brand can wait</span></button><button type="button" class="addbtn" data-new>New</button></div></section>`;
+  }
+  return html;
+}
+
+function bannerHtml(s) {
+  const r = s.request;
+  if (r && r.status === 'ready') {
+    return `<div class="usual"><span><strong>Baskets are ready.</strong> ${esc(capFirst(runnerLabel(s)))} left them in the Sheet for you to check.</span>${s.sheetUrl ? `<a class="usual-btn" href="${esc(s.sheetUrl)}" target="_blank" rel="noopener">Open</a>` : ''}</div>`;
+  }
+  if (r && r.status === 'failed') {
+    return `<div class="usual"><span><strong>The price run hit a snag.</strong> ${esc(r.note || 'No reason given.')}</span><button type="button" class="usual-btn" data-retry-prices>Try again</button></div>`;
+  }
+  const due = s.due || [];
+  if (!due.length) return '';
+  const names = due.map((d) => d.name);
+  const said = names.length === 1 ? names[0] : `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
+  return `<div class="usual"><span><strong>Usually by now:</strong> ${esc(said)}</span><button type="button" class="usual-btn" data-add-due>${names.length === 1 ? 'Add it' : names.length === 2 ? 'Add both' : 'Add all'}</button></div>`;
+}
+
+function cartSub(s) {
+  const r = s.request;
+  if (r && r.status === 'waiting') return `Waiting for ${runnerLabel(s)}`;
+  if (r && r.status === 'running') return `${capFirst(runnerLabel(s))} is comparing stores…`;
+  const priced = s.cart.map((l) => ({ l, i: itemIn(s, l.itemId) })).filter((x) => x.i && x.i.learned && x.i.learned.price != null);
+  if (!priced.length) return 'Claude finds the prices';
+  const total = Math.round(priced.reduce((sum, x) => sum + x.l.qty * x.i.learned.price, 0));
+  return priced.length === s.cart.length ? `About AED ${total} last time` : `About AED ${total} for ${priced.length} of ${s.cart.length}`;
+}
+
+function renderShop() {
+  const s = shopData();
+  const q = shop.q.trim();
+  const list = $('#shop-list');
+  $('#shop-clear').hidden = !q;
+  const bar = $('#cartbar-wrap');
+  bar.hidden = true;
+  if (!s) {
+    $('#shop-due').innerHTML = '';
+    list.innerHTML = shop.error ? shopNote('Shopping is stuck', shop.error) : '<p class="empty">Fetching the cart…</p>';
+    return;
+  }
+  if (!s.linked) {
+    $('#shop-due').innerHTML = '';
+    list.innerHTML = shopNote('Shopping needs its Sheet', "Paste the Home – Groceries Sheet's link into the Groceries sheet row of the Settings tab (in the To-do Sheet), then pull down to refresh.");
+    return;
+  }
+  $('#shop-due').innerHTML = q ? '' : bannerHtml(s);
+  list.innerHTML = q ? searchHtml(s, q) : cartHtml(s);
+  if (q || !s.cart.length) return;
+  bar.hidden = false;
+  $('#cart-count').textContent = s.cart.reduce((n, l) => n + l.qty, 0);
+  $('#cart-sub').textContent = cartSub(s);
+  const asked = s.request && ['waiting', 'running'].includes(s.request.status);
+  $('#cart-go').textContent = asked ? 'Asked' : 'Get prices';
+  $('#cart-go').classList.toggle('asked', Boolean(asked));
+}
+
+// ------------------------------------------------ One item: the sheet
+
+function openItem(id) {
+  const s = shopData();
+  const i = s && itemIn(s, id);
+  if (!i) return;
+  perfLocal('Open item');
+  const line = lineIn(s, id);
+  shop.itemId = i.id;
+  shop.form = { heart: i.heart, qty: line ? line.qty : 1, inCart: Boolean(line) };
+  $('#item-name').value = i.name;
+  $('#item-size').value = i.size;
+  $('#item-brand').value = i.brand;
+  drawItem();
+  $('#d-item').showModal();
+}
+
+function learnedHtml(l) {
+  const rows = [];
+  if (l && l.usual) rows.push(['Usually from', l.usual]);
+  if (l && l.price != null) rows.push(['Typical price', `AED ${l.price.toFixed(2)}`]);
+  if (l && l.cheapest != null) rows.push(['Cheapest seen', `AED ${l.cheapest.toFixed(2)}${l.cheapestAt ? ` at ${l.cheapestAt}` : ''}`]);
+  if (l && l.every) rows.push(['You buy it', `About every ${Math.round(l.every)} days`]);
+  if (l && l.last) rows.push(['Last bought', shortDate(l.last)]);
+  if (!rows.length) return '<p class="hint">Nothing yet. Claude fills this in from your orders, no typing needed.</p>';
+  return `<div class="learned">${rows.map(([k, v]) => `<div class="kv"><span>${esc(k)}</span><b>${esc(v)}</b></div>`).join('')}</div><p class="hint">Filled in from your orders. Nothing to type.</p>`;
+}
+
+function drawItem() {
+  const s = shopData();
+  const i = s && itemIn(s, shop.itemId);
+  const f = shop.form;
+  if (!i || !f) return;
+  $('#item-title').textContent = $('#item-name').value.trim() || i.name;
+  const heart = $('#item-heart');
+  heart.setAttribute('aria-pressed', String(f.heart));
+  heart.setAttribute('aria-label', f.heart ? 'Hearted: one of our regulars' : 'Heart it: one of our regulars');
+  heart.innerHTML = icon(f.heart ? 'heart-on' : 'heart', 22);
+  $('#item-learned').innerHTML = learnedHtml(i.learned);
+  $('#item-who').textContent = i.addedBy ? `First added by ${i.addedBy}` : '';
+  $('#item-qty').textContent = f.qty;
+  $('#item-less').disabled = f.qty <= (f.inCart ? 0 : 1);
+  $('#item-more').disabled = f.qty >= SHOP_MAX;
+  $('#item-save').textContent = f.inCart ? (f.qty ? 'Save' : 'Take out of the cart') : `Add ${f.qty} to the cart`;
+}
+
+$('#item-heart').addEventListener('click', () => {
+  if (!shop.form) return;
+  shop.form.heart = !shop.form.heart;
+  itemSave(shop.itemId, { heart: shop.form.heart }); // a heart counts straight away
+  drawItem();
+});
+$('#item-less').addEventListener('click', () => { shop.form.qty = Math.max(0, shop.form.qty - 1); drawItem(); });
+$('#item-more').addEventListener('click', () => { shop.form.qty = Math.min(SHOP_MAX, shop.form.qty + 1); drawItem(); });
+$('#item-name').addEventListener('input', () => { $('#item-title').textContent = $('#item-name').value.trim() || ' '; });
+$('#item-form').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const s = shopData();
+  const i = s && itemIn(s, shop.itemId);
+  if (!i) { $('#d-item').close(); return; }
+  const name = $('#item-name').value.trim();
+  if (!name) { toast('It needs a name. Even "the good cheese" works.', [], 4000, 'alert'); $('#item-name').focus(); return; }
+  const fields = {};
+  if (name !== i.name) fields.name = name;
+  if ($('#item-size').value.trim() !== i.size) fields.size = $('#item-size').value.trim();
+  if ($('#item-brand').value.trim() !== i.brand) fields.brand = $('#item-brand').value.trim();
+  if (Object.keys(fields).length) itemSave(i.id, fields);
+  const line = lineIn(s, i.id);
+  if (shop.form.qty !== (line ? line.qty : 0)) cartSet(i.id, shop.form.qty);
+  $('#d-item').close();
+  if (!shop.form.inCart && shop.form.qty) toast(`${name} is in the cart`);
+});
+
+// ------------------------------------------------ Wiring
+
+function setSearch(text) {
+  shop.q = text;
+  $('#shop-q').value = text;
+  renderShop();
+}
+
+$('#shop-q').addEventListener('input', () => { shop.q = $('#shop-q').value; renderShop(); });
+$('#shop-clear').addEventListener('click', () => { setSearch(''); $('#shop-q').focus(); });
+// Enter: what you typed goes in the cart, as the thing we know by that name or as something new.
+$('#shop-find').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const q = shop.q.trim();
+  if (!q || !shopData() || !shopData().linked) return;
+  const added = cartAdd({ name: q });
+  if (added) toast(`${added.name} is in the cart`);
+  setSearch('');
+});
+$('#shop-mic').addEventListener('click', () => {
+  listen({
+    label: 'What do we need?',
+    manual: 'Type it instead',
+    onText: (text) => { setSearch(text.replace(/[.?!]+$/, '').trim()); $('#shop-q').focus(); },
+    onUnavailable: () => $('#shop-q').focus(),
+  });
+});
+$('#cart-go').addEventListener('click', getPrices);
+$('#v-shop').addEventListener('click', (e) => {
+  const qty = e.target.closest('[data-qty]');
+  if (qty) {
+    const s = shopData();
+    const line = lineIn(s, qty.dataset.qty);
+    cartSet(qty.dataset.qty, (line ? line.qty : 0) + Number(qty.dataset.by));
+    return;
+  }
+  const add = e.target.closest('[data-add-item]');
+  if (add) { cartAdd({ id: Number(add.dataset.addItem) }); return; }
+  const addName = e.target.closest('[data-add-name]');
+  if (addName) { cartAdd({ name: addName.dataset.addName }); return; }
+  if (e.target.closest('[data-new]')) {
+    const added = cartAdd({ name: shop.q.trim() });
+    if (added) toast(`${added.name} is in the cart. Tap it to add a size or brand.`);
+    setSearch('');
+    return;
+  }
+  if (e.target.closest('[data-add-due]')) {
+    const s = shopData();
+    (s.due || []).forEach((d) => cartAdd(d.id ? { id: d.id } : { name: d.name }));
+    return;
+  }
+  if (e.target.closest('[data-retry-prices]')) {
+    getPrices();
+    return;
+  }
+  const item = e.target.closest('[data-item]');
+  if (item) openItem(Number(item.dataset.item));
+});
 
 // ---------------------------------------------------------------- Starting up and staying fresh
 
