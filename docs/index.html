@@ -113,6 +113,8 @@ svg { flex: 0 0 auto; }
 .seg { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 4px; padding: 4px; border-radius: 14px; background: var(--chip); }
 .seg button { height: 36px; border-radius: 10px; font-size: calc(14px * var(--ts)); font-weight: 600; color: var(--muted); padding: 0 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .seg button[aria-checked="true"] { background: var(--accent); color: var(--on-accent); font-weight: 700; }
+.seg.locked button { cursor: default; }
+.seg.locked button[aria-checked="true"] { background: var(--surface); color: var(--text); }
 .seg.sm button { height: 32px; font-size: calc(13px * var(--ts)); padding: 0 12px; }
 .attention { display: flex; align-items: center; gap: 10px; padding: 14px 16px; border-radius: 14px; background: var(--amber-bg); color: var(--amber-ink); font-size: calc(15px * var(--ts)); font-weight: 600; text-align: left; width: 100%; }
 .attention span:nth-child(2) { flex: 1; }
@@ -756,6 +758,12 @@ legend { padding: 0; }
         <button type="button" class="secondary" id="share-link" hidden style="height:44px">Share…</button>
         <p class="muted small">Anyone with this link can use the app as them, so send it only to them (WhatsApp or text is fine).</p>
       </div>
+    </section>
+    <section class="stack" style="gap:10px" id="runner-box" hidden>
+      <h2 class="eyebrow">Price hunts</h2>
+      <p class="small" id="runner-q">Whose Claude compares the stores and fills the baskets?</p>
+      <div class="seg" role="radiogroup" aria-labelledby="runner-q" id="runner-seg"></div>
+      <p class="muted small" id="runner-note"></p>
     </section>
     <section class="stack">
       <h2 class="eyebrow">More</h2>
@@ -2950,6 +2958,8 @@ function openSettings() {
   const d = state.data;
   fillPrefs();
   renderPeople();
+  renderRunner();
+  if (!shopData()) loadShopping();
   $('#person-form').hidden = true;
   $('#person-open').hidden = false;
   $('#link-box').hidden = true;
@@ -3182,6 +3192,7 @@ async function loadShopping() {
     setBase(sync.base);
     recompute();
     if (state.view === 'shop') quietDraw();
+    if ($('#d-settings').open) renderRunner();
   } catch (err) {
     if (err instanceof ServerError && err.code === 'link') return;
     shop.error = err && err.code === 'unknown'
@@ -3300,6 +3311,52 @@ function getPrices() {
   });
   toast(`Sent to ${runnerLabel(s)}. It compares the stores on its next run and leaves a basket for you to check.`);
 }
+
+// ------------------------------------------------ Whose Claude hunts for prices (Settings)
+// Admin only (the person who deployed the app); everyone else sees it, read-only. It never
+// changes on its own: if that person's computer is off, the run waits for it.
+
+const claudeOf = (name, me) => (name === me ? 'My Claude' : `${name}'s Claude`);
+
+function renderRunner() {
+  const s = shopData();
+  const box = $('#runner-box');
+  box.hidden = !(s && s.linked && Array.isArray(s.runnerChoices));
+  if (box.hidden) return;
+  const me = state.data.me.name;
+  const can = Boolean(s.canSetRunner);
+  const seg = $('#runner-seg');
+  seg.classList.toggle('locked', !can);
+  seg.setAttribute('aria-disabled', String(!can));
+  const names = s.runnerChoices.slice().sort((a, b) => (a === me ? -1 : b === me ? 1 : 0));
+  if (s.runner && !names.includes(s.runner)) names.push(s.runner);
+  seg.innerHTML = names.map((n) => `<button type="button" role="radio" aria-checked="${n === s.runner}" data-runner="${esc(n)}"${can ? '' : ' tabindex="-1"'}>${esc(claudeOf(n, me))}</button>`).join('');
+  const other = s.runner && s.runner !== me ? s.runner : '';
+  $('#runner-note').textContent = !s.runnerChoices.includes(s.runner)
+    ? `The Sheet says "${s.runner}", who isn't in the household. ${can ? 'Pick someone above.' : `Ask ${s.admin || 'the admin'} to pick someone.`}`
+    : can
+      ? `Only you can change this. No sneaky swaps: if ${other ? `${other}'s` : 'your'} computer is asleep, the hunt waits for it.`
+      : `${s.admin || 'The admin'} is in charge of this one. ${other ? 'If their computer is asleep, the hunt waits for it.' : "If your computer is asleep, the hunt waits for it."}`;
+}
+
+$('#runner-seg').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-runner]');
+  const s = shopData();
+  if (!b || !s || !s.canSetRunner || b.dataset.runner === s.runner) return;
+  const name = b.dataset.runner;
+  const spec = {
+    label: 'Whose Claude hunts for prices',
+    key: 'runner',
+    apply: (data) => { const d = shopData(data); if (d) d.runner = name; },
+    send: () => run('setRunner', name, SLIM),
+    done: () => { if ($('#d-settings').open) renderRunner(); },
+    fail: (err) => { if ($('#d-settings').open) renderRunner(); couldntSave({ spec }, err); },
+  };
+  mutate(spec);
+  renderRunner();
+  haptic();
+  toast(name === state.data.me.name ? "Done. Your Claude's on price duty now." : `Done. ${name}'s Claude is on price duty now.`);
+});
 
 // ------------------------------------------------ Drawing the Shopping tab
 

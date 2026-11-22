@@ -804,13 +804,62 @@ function insights_() {
   return out;
 }
 
-/** Whose Claude compares the stores: baskets.runner in the Groceries sheet's Settings tab, if there is one. */
+// Whose Claude compares the stores ("runs the baskets"): baskets.runner in the Groceries sheet's
+// Settings tab, column A the key and column B a member's name (the tab may have no header row).
+// Only the household's admin, the person who deployed the app, changes it; nobody else's Claude
+// ever takes over on its own. While nothing is set, it's the admin's.
+const RUNNER_KEY = 'baskets.runner';
+
+/** The household's admin: the member who deployed the app (it runs as them). */
+function admin_() {
+  return findMember_(String(Session.getEffectiveUser().getEmail() || '').toLowerCase());
+}
+
+const isAdmin_ = (me) => Boolean(me && admin_() && admin_().email === me.email);
+
+/** A member named by text typed into the Sheet: exact name first, then "Nas" for Naser (only if one fits). */
+function runnerMember_(text) {
+  const v = String(text || '').trim().toLowerCase();
+  if (!v) return null;
+  const exact = memberByName_(v);
+  if (exact) return exact;
+  const close = members_().filter((m) => m.name.toLowerCase().startsWith(v) || v.startsWith(m.name.toLowerCase()));
+  return close.length === 1 ? close[0] : null;
+}
+
+function runnerRow_(sh) {
+  if (!sh || sh.getLastRow() < 1) return -1;
+  return sh.getRange(1, 1, sh.getLastRow(), 1).getValues().findIndex((r) => String(r[0]).trim() === RUNNER_KEY);
+}
+
+/** Whose Claude runs the baskets: a member's name, the raw text if it names nobody we know, or the admin while unset. */
 function shopRunner_() {
   const sh = requireGroceries_().getSheetByName(SETTINGS);
-  if (!sh || sh.getLastRow() < 1) return '';
-  const rows = sh.getRange(1, 1, sh.getLastRow(), 2).getValues();
-  const row = rows.find((r) => String(r[0]).trim() === 'baskets.runner');
-  return row ? String(row[1]).trim() : '';
+  const i = runnerRow_(sh);
+  const raw = i >= 0 ? String(sh.getRange(i + 1, 2).getValue()).trim() : '';
+  if (!raw) { const a = admin_(); return a ? a.name : ''; }
+  const m = runnerMember_(raw);
+  return m ? m.name : raw;
+}
+
+/** Admin only: sets whose Claude runs the baskets. */
+function setRunner(name, opts) {
+  fresh_();
+  const me = requireMember_();
+  const ss = requireGroceries_();
+  if (!isAdmin_(me)) {
+    const a = admin_();
+    throw new Error(`Only ${a ? a.name : 'the admin'} can change whose Claude hunts for prices.`);
+  }
+  const who = memberByName_(name);
+  if (!who) throw new Error(`${String(name || 'That').trim() || 'That'} isn't in the household, so their Claude can't do the hunting.`);
+  withLock_(() => {
+    const sh = ss.getSheetByName(SETTINGS) || ss.insertSheet(SETTINGS);
+    const i = runnerRow_(sh);
+    if (i >= 0) sh.getRange(i + 1, 2).setValue(who.name);
+    else sh.appendRow([RUNNER_KEY, who.name]);
+  });
+  return shopReply_();
 }
 
 function daysBetween_(a, b) {
@@ -863,6 +912,9 @@ function shoppingState_() {
     linked: true,
     sheetUrl: ss.getUrl(),
     runner: shopRunner_(),
+    runnerChoices: members_().map((m) => m.name),
+    canSetRunner: isAdmin_(currentMember_()),
+    admin: admin_() ? admin_().name : '',
     aisles: AISLES.map(([name, pattern]) => [name, pattern]),
     items: list,
     cart: lines,
@@ -1012,6 +1064,7 @@ const API_FUNCTIONS = {
   setCartQty: (id, qty, opts) => setCartQty(id, qty, opts),
   saveItem: (data, opts) => saveItem(data, opts),
   requestPrices: (opts) => requestPrices(opts),
+  setRunner: (name, opts) => setRunner(name, opts),
   addPerson: (name, email) => addPerson(name, email),
   linkFor: (name, reset) => linkFor(name, reset),
 };
