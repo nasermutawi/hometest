@@ -108,6 +108,9 @@ Melody is a web app saved to the home screen. A native iPhone app may come later
 
 | Idea | Why it matters | Effort | Native |
 |---|---|---|---|
+| **Name + Details instead of Size and Brand** (Nov 23, Naser's idea). An item keeps a clean name ("Blueberries") and one free-text **Details** field for everything else ("1.5 kg pack, product of India, any brand"). Claude reads Details as plain language when it hunts prices. Keep the name clean so "blueberries" still finds the same item; how many stays on the cart line, not in Details. Merges the Items tab's Size and Brand columns (existing values move across) and changes the item page. | Fewer fields to fill, and nothing said has to fit a box | Small | — |
+| **Mixed recordings on the To-dos mic** (S2, part 2). "Cook the ragu tonight, and we need milk" makes one task and puts milk in the cart, shown on Review. Needs Code.gs (capture) and the Review screen. | One recording for everything, wherever you tap the mic | Medium | — |
+| **Split on pauses** (Nov 23, only if needed). Treat a pause as a comma when dictation drops them. iPhone's speech recognition doesn't tell the page when you paused, so it can't be done reliably today. | Fewer "eggs milk bananas" lines | — | **Native only**: the web speech API gives no word timings on iOS |
 | **Delivery slots we can take** (Nov 23). Kibsons needs a booked slot with someone home. Let each of us set which days and times work (for example "weekday evenings after 6, Saturday mornings"), saved as a Sheet setting, so the price hunt only reports free slots that fit and can say when none do. Same setting for any store with slots later. | The run tells us a slot we can actually make, not just the next free one | Small | — |
 
 ## From the UX audit (Oct 24, 2026)
