@@ -54,6 +54,7 @@ A Melody Duet for building our online orders: a cart backed by a catalogue of th
 | S5 | **Linked to tasks** | A task's prep step ("Get groceries at the supermarket") holds shopping items. Ticking them all off ticks the step; "Cook the ragu" puts its ingredients on the list |
 | S6 | **Repeat staples** | Mark regulars (milk, eggs). Once bought, they come back after a while, or with one tap from "Add again" |
 | S7 | **Baskets in the app** | When Claude has finished a price run, show its basket options (store, total after fees and credit, what's missing, the specific reason it wins) in the Shopping tab, instead of "Open the Sheet" |
+| S9 | **A full cart at every store** | Extends Smart baskets: the price run fills a cart at every store with the best match for each item (same pack sizes, fees, minimums and cashback counted), not only the winner's. One is marked Recommended with the real reason ("AED 12 cheaper after the HOP credit", "only Kibsons has egg whites"); Nas or Sandi can pick another store's basket instead, for any reason (speed, a slot, a mood). Today's shopping skills (`melody-shopping-run`, `melody-store-basket` in claude-skills) fill only the winner's cart, so they change too, and S7 shows the choice. Claude still never places an order: Naser confirms and pays |
 
 ### Ideas (to discuss)
 
