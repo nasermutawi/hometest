@@ -644,6 +644,7 @@ function deleteTask_(id, actor) {
 //   Shopping list  the cart: one row per item with its quantity (Status Needed or In basket)
 //   Requests       "Get prices": a row each time someone asks a Claude to compare the stores
 //   Item insights  written by Claude from Order history; the app only reads it
+//   Baskets, Basket lines  written by Claude after a price run; the app only reads them
 // The app never places orders. A Claude picks up a waiting request, fills baskets, and stops at checkout.
 
 const GROCERIES_SETTING = 'Groceries sheet';
@@ -924,7 +925,66 @@ function shoppingState_() {
       id: Number(last.ID), status: String(last.Status || '').trim().toLowerCase(), askedBy: String(last['Asked by'] || '').trim(),
       askedOn: String(last['Asked on'] || ''), note: String(last.Note || '').trim(),
     } : null,
+    // What Claude found on the latest run, shown in the app instead of sending people to the Sheet.
+    baskets: last && String(last.Status || '').trim().toLowerCase() === 'ready' ? basketsFor_(last.ID) : [],
   };
+}
+
+// A finished price run, as Claude wrote it (the melody-shopping-run skill keeps these columns):
+//   Baskets       one row per option (a store, or a split), the winner marked Pick = Yes
+//   Basket lines  one row per item per store checked
+// The app only reads these tabs, and never makes them.
+const BASKETS = 'Baskets';
+const BASKET_LINES = 'Basket lines';
+
+/** Rows of a tab Claude writes, or [] while it isn't there yet. */
+function claudeRows_(name) {
+  const sh = requireGroceries_().getSheetByName(name);
+  if (!sh || sh.getLastRow() < 2) return [];
+  return tableOf_(sh).rows;
+}
+
+const storeKey_ = (s) => String(s || '').trim().toLowerCase().replace(/\s+/g, ' ');
+
+/** "Kibsons: https://a ; HOP: https://b" or a bare address: only https links, with their label. */
+function cartLinks_(text, stores) {
+  return String(text || '').split(/\s;\s|\n/).map((part, i) => {
+    const m = /^\s*(?:([^:]{1,40}?):\s*)?(https:\/\/\S+)\s*$/.exec(part);
+    if (!m) return null;
+    return { store: (m[1] || stores[i] || stores[0] || '').trim(), url: m[2] };
+  }).filter(Boolean);
+}
+
+/** The options Claude priced for one request, the pick first, then cheapest first. */
+function basketsFor_(requestId) {
+  const id = Number(requestId);
+  const lines = claudeRows_(BASKET_LINES).filter((r) => Number(r['Request ID']) === id && filled_(r, 'Item'));
+  const text = (v) => String(v == null ? '' : v).trim();
+  const list = claudeRows_(BASKETS).filter((r) => Number(r['Request ID']) === id && (filled_(r, 'Store') || filled_(r, 'Option'))).map((r) => {
+    const stores = text(r.Store || r.Option).split(/\s+\+\s+/).map((x) => x.trim()).filter(Boolean);
+    const keys = stores.map(storeKey_);
+    return {
+      option: text(r.Option) || stores.join(' + '),
+      stores,
+      found: numOrNull_(r['Items found']),
+      missing: text(r.Missing).split(/\s*;\s*/).filter(Boolean),
+      subtotal: numOrNull_(r['Subtotal (AED)']),
+      delivery: numOrNull_(r['Delivery (AED)']),
+      credit: numOrNull_(r['Credit (AED)']),
+      total: numOrNull_(r['Total (AED)']),
+      pick: yes_(r.Pick),
+      filled: text(r.Filled).toLowerCase(),
+      why: text(r.Why),
+      links: cartLinks_(r['Cart link'], stores),
+      checkedOn: dateStr_(r['Checked on']),
+      lines: lines.filter((l) => keys.includes(storeKey_(l.Store))).map((l) => ({
+        store: text(l.Store), item: text(l.Item), qty: qtyOf_(l.Qty), product: text(l['Product matched']), pack: text(l['Pack size']),
+        total: numOrNull_(l['Line total (AED)']), unit: text(l['Unit price']), status: text(l.Status).toLowerCase() || 'found', note: text(l.Note),
+      })),
+    };
+  });
+  const cost = (b) => (b.total == null ? Infinity : b.total);
+  return list.sort((a, b) => (b.pick - a.pick) || (cost(a) - cost(b)));
 }
 
 const shopReply_ = () => slimReply_({ shopping: shoppingState_() });

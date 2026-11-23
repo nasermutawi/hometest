@@ -496,6 +496,30 @@ legend { padding: 0; }
 .kv b { font-weight: 700; text-align: end; }
 .item-foot { display: flex; align-items: center; gap: 12px; }
 .item-foot .primary { flex: 1; height: 54px; }
+/* A finished price run: Claude's pick, its items and the way to its cart */
+.bk-total { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.bk-total strong { font-family: var(--display); font-variation-settings: 'SOFT' 100; font-size: calc(34px * var(--ts)); line-height: 1; font-weight: 600; font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+.bk-total span { color: var(--muted); font-size: calc(14px * var(--ts)); }
+.bk-why { font-size: calc(15px * var(--ts)); line-height: 1.45; overflow-wrap: anywhere; }
+.bk-lines { background: var(--bg); border-radius: 16px; padding: 2px 16px; }
+.bk-line { display: flex; gap: 12px; padding: 11px 0; border-top: 1px solid var(--line); }
+.bk-line:first-child { border-top: none; }
+.bk-line > span { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.bk-line b { font-weight: 600; font-size: calc(15px * var(--ts)); overflow-wrap: anywhere; }
+.bk-line small { color: var(--muted); font-size: calc(13px * var(--ts)); overflow-wrap: anywhere; }
+.bk-line small.flag { color: var(--amber-ink); font-weight: 600; }
+.bk-line output { font-weight: 700; font-variant-numeric: tabular-nums; flex: 0 0 auto; font-size: calc(15px * var(--ts)); }
+.bk-line output.none { color: var(--muted); font-weight: 600; }
+.bk-carts { display: flex; flex-direction: column; gap: 10px; }
+.bk-carts a { text-decoration: none; }
+.bk-others { display: flex; flex-direction: column; gap: 8px; }
+.bk-other { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 16px; background: var(--bg); text-align: start; width: 100%; min-height: 56px; }
+.bk-other > span { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.bk-other b { font-weight: 600; font-size: calc(15px * var(--ts)); }
+.bk-other small { color: var(--muted); font-size: calc(13px * var(--ts)); }
+.bk-other output { font-weight: 700; font-variant-numeric: tabular-nums; }
+.bk-foot { text-align: center; color: var(--muted); font-size: calc(13px * var(--ts)); }
+.bk-foot a { color: var(--accent); font-weight: 700; }
 </style>
 </head>
 <body>
@@ -792,6 +816,11 @@ legend { padding: 0; }
       <button type="submit" class="primary" id="item-save">Add 1 to the cart</button>
     </div>
   </form>
+</dialog>
+
+<!-- A finished price run: what Claude found, without opening the Sheet -->
+<dialog id="d-basket" class="sheet" aria-labelledby="basket-title">
+  <div class="sheet-body" id="basket-body"></div>
 </dialog>
 
 <div id="toast" class="toast" role="status" hidden></div>
@@ -3163,7 +3192,7 @@ if (PREVIEW) {
 // through mutate() like tasks do; each reply carries the whole shopping state, which is small.
 // "Get prices" only asks a Claude to compare stores. Nothing here ever places an order.
 
-const shop = { q: '', itemId: null, form: null, loading: false, error: '', ids: new Map(), seq: 0 };
+const shop = { q: '', itemId: null, basket: '', form: null, loading: false, error: '', ids: new Map(), seq: 0 };
 const shopId = (id) => shop.ids.get(Number(id)) || Number(id);
 const shopData = (data = state.data) => (data && data.shopping) || null;
 const itemIn = (s, id) => s.items.find((i) => i.id === shopId(id));
@@ -3550,6 +3579,11 @@ function searchHtml(s, q) {
 
 function bannerHtml(s) {
   const r = s.request;
+  const pick = r && r.status === 'ready' ? basketPick(s) : null;
+  if (pick) {
+    const total = pick.total == null ? '' : ` at ${money(pick.total, 0)}`;
+    return `<div class="usual"><span><strong>Basket's ready.</strong> ${esc(optionName(pick))} wins${esc(total)}.</span><button type="button" class="usual-btn" data-open-basket>See it</button></div>`;
+  }
   if (r && r.status === 'ready') {
     return `<div class="usual"><span><strong>Baskets are ready.</strong> ${esc(capFirst(runnerLabel(s)))} left them in the Sheet for you to check.</span>${s.sheetUrl ? `<a class="usual-btn" href="${esc(s.sheetUrl)}" target="_blank" rel="noopener">Open</a>` : ''}</div>`;
   }
@@ -3562,6 +3596,84 @@ function bannerHtml(s) {
   const said = names.length === 1 ? names[0] : `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
   return `<div class="usual"><span><strong>Usually by now:</strong> ${esc(said)}</span><button type="button" class="usual-btn" data-add-due>${names.length === 1 ? 'Add it' : names.length === 2 ? 'Add both' : 'Add all'}</button></div>`;
 }
+
+// ------------------------------------------------ A finished price run: the basket sheet
+
+const money = (n, dp = 2) => `AED ${Number(n).toFixed(dp)}`;
+const basketPick = (s) => (s.baskets || []).find((b) => b.pick) || (s.baskets || [])[0] || null;
+const optionName = (b) => b.option.replace(/^split:\s*/i, '');
+
+function openBasket() {
+  const s = shopData();
+  const pick = s && basketPick(s);
+  if (!pick) return;
+  perfLocal('Open basket');
+  shop.basket = pick.option;
+  drawBasket();
+  $('#d-basket').showModal();
+}
+
+function lineHtml(l) {
+  const what = [l.product, l.pack, l.unit].filter(Boolean).join(' · ');
+  const flag = l.status === 'swapped' ? `Swapped${l.note ? `: ${l.note}` : ''}`
+    : ['not sold', 'out of stock', 'unsure'].includes(l.status) ? `${capFirst(l.status)}${l.note ? `: ${l.note}` : ''}` : '';
+  const price = l.total == null ? '<output class="none">None</output>' : `<output>${esc(l.total.toFixed(2))}</output>`;
+  return `<div class="bk-line"><span><b dir="auto">${esc(l.item)}${l.qty > 1 ? ` ×${l.qty}` : ''}</b>${what ? `<small dir="auto">${esc(what)}</small>` : ''}${flag ? `<small class="flag" dir="auto">${esc(flag)}</small>` : ''}</span>${price}</div>`;
+}
+
+function basketHtml(s, b) {
+  const all = s.baskets || [];
+  const many = b.links.length > 1 || b.stores.length > 1;
+  const sums = [];
+  if (b.subtotal != null) sums.push(`${money(b.subtotal)} items`);
+  if (b.delivery) sums.push(`+ ${b.delivery.toFixed(2)} fees`);
+  if (b.credit) sums.push(`− ${b.credit.toFixed(2)} credit`);
+  const filled = b.filled === 'yes' ? (many ? 'Claude filled these carts.' : 'Claude filled this cart.')
+    : b.filled === 'partly' ? 'Claude filled part of the cart. Check what made it in.' : '';
+  let html = '<span class="grab" aria-hidden="true"></span>';
+  html += `<div class="sheet-head"><span class="small muted">${b.pick ? "Claude's pick" : 'Another option'}${b.checkedOn ? ` · checked ${esc(shortDate(b.checkedOn))}` : ''}</span><h2 class="title-l" id="basket-title" tabindex="-1" autofocus dir="auto">${esc(optionName(b))}</h2></div>`;
+  if (b.total != null) html += `<div class="bk-total"><strong>${esc(money(b.total))}</strong>${sums.length > 1 ? `<span>${esc(sums.join(' '))}</span>` : ''}</div>`;
+  if (b.missing.length) html += `<div class="attention" role="note">Missing here: ${esc(b.missing.join(', '))}</div>`;
+  if (b.why) html += `<p class="bk-why" dir="auto">${esc(b.why)}</p>`;
+  if (b.links.length) {
+    const kind = b.filled === 'yes' || b.filled === 'partly' ? 'primary' : 'secondary';
+    html += `<div class="bk-carts">${b.links.map((k) => `<a class="${kind}" href="${esc(k.url)}" target="_blank" rel="noopener">Open the ${esc(k.store || 'store')} cart</a>`).join('')}`;
+    html += `<span class="hint">${esc(filled || "Claude only fills the pick's cart, so this one may be empty.")} Checking out and paying is all yours: Claude never orders.</span></div>`;
+  }
+  if (b.lines.length) {
+    const byStore = b.stores.length > 1;
+    html += `<div><span class="label">What's in it</span>${b.stores.map((st) => {
+      const ls = b.lines.filter((l) => l.store.toLowerCase() === st.toLowerCase());
+      if (!ls.length) return '';
+      return `${byStore ? `<span class="hint">${esc(st)}</span>` : ''}<div class="bk-lines">${ls.map(lineHtml).join('')}</div>`;
+    }).join('')}</div>`;
+  }
+  const others = all.filter((o) => o !== b);
+  if (others.length) {
+    html += `<div><span class="label">${b.pick ? 'What the others came to' : 'All the options'}</span><div class="bk-others">${others.map((o) => {
+      const sub = o.pick ? "Claude's pick" : o.missing.length ? `Missing ${o.missing.length}` : 'Has everything';
+      return `<button type="button" class="bk-other" data-basket-option="${esc(o.option)}"><span><b dir="auto">${esc(optionName(o))}</b><small>${esc(sub)}</small></span>${o.total == null ? '' : `<output>${esc(money(o.total))}</output>`}</button>`;
+    }).join('')}</div></div>`;
+  }
+  if (s.sheetUrl) html += `<p class="bk-foot">Every price Claude saw is in <a href="${esc(s.sheetUrl)}" target="_blank" rel="noopener">the Sheet</a>.</p>`;
+  return html;
+}
+
+function drawBasket() {
+  const s = shopData();
+  const all = (s && s.baskets) || [];
+  const b = all.find((o) => o.option === shop.basket) || basketPick(s || {});
+  if (!b) { if ($('#d-basket').open) $('#d-basket').close(); return; }
+  $('#basket-body').innerHTML = basketHtml(s, b);
+}
+
+$('#basket-body').addEventListener('click', (e) => {
+  const other = e.target.closest('[data-basket-option]');
+  if (!other) return;
+  shop.basket = other.dataset.basketOption;
+  drawBasket();
+  $('#d-basket').scrollTop = 0;
+});
 
 function cartSub(s) {
   const r = s.request;
@@ -3591,6 +3703,7 @@ function renderShop() {
     return;
   }
   $('#shop-due').innerHTML = q ? '' : bannerHtml(s);
+  if ($('#d-basket').open) drawBasket();
   list.innerHTML = q ? searchHtml(s, q) : cartHtml(s);
   if (q || !s.cart.length) return;
   bar.hidden = false;
@@ -3744,6 +3857,10 @@ $('#v-shop').addEventListener('click', (e) => {
   if (e.target.closest('[data-add-due]')) {
     const s = shopData();
     (s.due || []).forEach((d) => cartAdd(d.id ? { id: d.id } : { name: d.name }));
+    return;
+  }
+  if (e.target.closest('[data-open-basket]')) {
+    openBasket();
     return;
   }
   if (e.target.closest('[data-retry-prices]')) {

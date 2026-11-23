@@ -217,3 +217,64 @@ test('shopping calls need a member key, and the To-do state stays as it was', ()
   const state = api('nas', 'getState');
   assert.equal('shopping' in state, false, 'Shopping loads on its own, so To-dos stay quick');
 });
+
+test('a finished price run shows its baskets in the app: the pick first, its items, and only https cart links', () => {
+  const { gas, api } = household();
+  api('nas', 'addToCart', { name: 'Eggs', size: '12 pack', brand: 'Organic' }, 1, SLIM);
+  api('nas', 'addToCart', { name: 'Blueberries', size: '1 kg' }, 1, SLIM);
+  api('nas', 'requestPrices', SLIM);
+  // Nothing to show while Claude hasn't finished, and the app never makes Claude's tabs itself.
+  assert.deepEqual(api('nas', 'getShopping').baskets, []);
+  assert.equal(gas.gsheet('Baskets'), null);
+
+  // Claude's run writes the tabs (columns as the melody-shopping-run skill writes them).
+  const baskets = gas.groceries.insertSheet('Baskets');
+  baskets.appendRow(['Request ID', 'Option', 'Store', 'Items found', 'Missing', 'Subtotal (AED)', 'Delivery (AED)', 'Credit (AED)', 'Total (AED)', 'Pick', 'Filled', 'Why', 'Cart link', 'Checked on', 'Logged by']);
+  baskets.appendRow([1, 'Kibsons', 'Kibsons', 2, '', '92.76', '8', '0', '100.76', '', 'No', 'Only store with a 12-pack.', 'https://www.kibsons.com/en/cart', '2026-11-22', 'Naser']);
+  baskets.appendRow([1, 'Spinneys', 'Spinneys', 1, 'Eggs', '65.25', '0', '0', '65.25', '', 'No', 'No organic eggs.', 'javascript:alert(1)', '2026-11-22', 'Naser']);
+  baskets.appendRow([1, 'Deliveroo HOP', 'Deliveroo Hop', 2, '', '70.72', '3.95', '7.07', '67.60', 'Yes', 'Yes', 'Cheapest after the 10% credit.', 'https://deliveroo.ae/en/menu/Dubai/hopmc/deliveroo-hop-motor-city', '2026-11-22', 'Naser']);
+  const lines = gas.groceries.insertSheet('Basket lines');
+  lines.appendRow(['Request ID', 'Store', 'Item', 'Qty', 'Product matched', 'Pack size', 'Price (AED)', 'Line total (AED)', 'Unit price', 'Status', 'Note', 'Checked on', 'Logged by']);
+  lines.appendRow([1, 'Deliveroo Hop', 'Eggs', 1, 'Gardenz Organic Eggs 10', '10 eggs', '23.44', '23.44', '2.34 / egg', 'swapped', 'No 12-pack at HOP', '2026-11-22', 'Naser']);
+  lines.appendRow([1, 'Deliveroo Hop', 'Blueberries', 1, 'Blueberries 500g', '500 g', '47.28', '47.28', '9.46 / 100 g', 'found', '', '2026-11-22', 'Naser']);
+  lines.appendRow([1, 'Kibsons', 'Eggs', 1, 'Organic Eggs 12', '12 eggs', '55.86', '55.86', '4.66 / egg', 'found', '', '2026-11-22', 'Naser']);
+  lines.appendRow([0, 'Deliveroo Hop', 'Milk', 1, 'An older run', '', '5', '5', '', 'found', '', '2026-11-20', 'Naser']);
+
+  // Still running: nothing yet.
+  gas.gsheet('Requests').getRange(2, 2).setValue('running');
+  assert.deepEqual(api('nas', 'getShopping').baskets, []);
+
+  gas.gsheet('Requests').getRange(2, 2).setValue('ready');
+  const shop = api('sandi', 'getShopping');
+  assert.deepEqual(shop.baskets.map((b) => b.option), ['Deliveroo HOP', 'Spinneys', 'Kibsons'], 'the pick first, then cheapest');
+  const [pick, spinneys] = shop.baskets;
+  assert.equal(pick.pick, true);
+  assert.equal(pick.total, 67.6);
+  assert.equal(pick.credit, 7.07);
+  assert.equal(pick.filled, 'yes');
+  assert.equal(pick.why, 'Cheapest after the 10% credit.');
+  assert.deepEqual(pick.links, [{ store: 'Deliveroo Hop', url: 'https://deliveroo.ae/en/menu/Dubai/hopmc/deliveroo-hop-motor-city' }]);
+  assert.deepEqual(pick.lines.map((l) => [l.item, l.product, l.status, l.total]),
+    [['Eggs', 'Gardenz Organic Eggs 10', 'swapped', 23.44], ['Blueberries', 'Blueberries 500g', 'found', 47.28]]);
+  assert.deepEqual(spinneys.missing, ['Eggs']);
+  assert.deepEqual(spinneys.links, [], 'a link that is not https is dropped');
+  assert.equal(gas.outbox.length, 0);
+});
+
+test('a split basket keeps one cart link per store', () => {
+  const { gas, api } = household();
+  api('nas', 'addToCart', { name: 'Eggs' }, 1, SLIM);
+  api('nas', 'requestPrices', SLIM);
+  const baskets = gas.groceries.insertSheet('Baskets');
+  baskets.appendRow(['Request ID', 'Option', 'Store', 'Items found', 'Missing', 'Subtotal (AED)', 'Delivery (AED)', 'Credit (AED)', 'Total (AED)', 'Pick', 'Filled', 'Why', 'Cart link', 'Checked on', 'Logged by']);
+  baskets.appendRow([1, 'Split: Kibsons + HOP', 'Kibsons + Deliveroo Hop', 6, '', '184.24', '11.95', '8.72', '187.47', 'Yes', 'Yes', 'Saves about AED 44.',
+    'Kibsons: https://www.kibsons.com/en/cart ; HOP: https://deliveroo.ae/en/menu/Dubai/hopmc/deliveroo-hop-motor-city', '2026-11-22', 'Naser']);
+  gas.gsheet('Requests').getRange(2, 2).setValue('ready');
+  const [split] = api('nas', 'getShopping').baskets;
+  assert.deepEqual(split.stores, ['Kibsons', 'Deliveroo Hop']);
+  assert.deepEqual(split.links, [
+    { store: 'Kibsons', url: 'https://www.kibsons.com/en/cart' },
+    { store: 'HOP', url: 'https://deliveroo.ae/en/menu/Dubai/hopmc/deliveroo-hop-motor-city' },
+  ]);
+  assert.deepEqual(split.lines, [], 'no Basket lines tab yet is fine');
+});
