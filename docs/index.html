@@ -3179,6 +3179,116 @@ function aisleOf(s, name) {
   return hit ? hit[0] : 'Other';
 }
 
+// <spoken-items> Turns one recording into cart lines (tested in google-sheets/test/spoken-items.test.js).
+// "eggs, milk and two packs of blueberries" → Eggs, Milk, Blueberries ×2. Names we already know
+// (our things and past orders) are kept whole, so "egg whites" or "mac and cheese" don't split,
+// and dictation without commas ("eggs milk bread") splits when every word is a known name.
+// Anything else stays as one line: nothing said is lost, and Undo takes the lot back.
+const SPOKEN_NUMBERS = { a: 1, an: 1, one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10, eleven: 11, twelve: 12, couple: 2, few: 3, some: 1 };
+const SPOKEN_PACKS = 'packs?|packets?|bottles?|boxe?s?|bags?|cartons?|loa(?:f|ves)|tins?|cans?|jars?|bunche?s?|tubs?|trays?|pieces?|rolls?|dozens?';
+const SPOKEN_UNITS = { kg: 'kg', kgs: 'kg', kilo: 'kg', kilos: 'kg', kilogram: 'kg', kilograms: 'kg', g: 'g', gram: 'g', grams: 'g', gm: 'g', l: 'L', litre: 'L', litres: 'L', liter: 'L', liters: 'L', ml: 'ml' };
+const SPOKEN_NUM = `\\d+(?:\\.\\d+)?|${Object.keys(SPOKEN_NUMBERS).join('|')}`;
+const SPOKEN_LEAD = /^(?:(?:and|also|plus|then|oh|um+|uh+|so|okay|ok|please|can you|could you|we(?:'re| are)? (?:need|out of|ran out of|have run out of)|i(?:'d like| need| want)|we(?:'ll)? want|add|get|buy|grab|pick up|put|some more|more|another|of)\b[\s,]*)+/i;
+const SPOKEN_TAIL = /(?:\b(?:please|as well|too|to the (?:cart|list)|in the (?:cart|list)|on the list|thanks|thank you))+\s*$/i;
+
+/** Matching key for one word: case, punctuation and plurals don't count ("berries" = "berry"). */
+function spokenWord(w) {
+  return w.toLowerCase().replace(/[^a-z0-9؀-ۿ]+/g, '').replace(/ies$/, 'y').replace(/(?:es|s)$/, '');
+}
+const spokenWords = (s) => String(s || '').split(/[^A-Za-z0-9؀-ۿ.']+/).map((w) => w.replace(/^[.']+|[.']+$/g, '')).filter(Boolean);
+
+/** Reads "two packs of", "1.5 kilo", "a dozen" off the front of one piece. */
+function spokenAmount(piece) {
+  let rest = piece.trim();
+  let qty = 1;
+  let size = '';
+  const num = (w) => (/^\d/.test(w) ? Number(w) : SPOKEN_NUMBERS[w.toLowerCase()]);
+  let m = rest.match(new RegExp(`^(${SPOKEN_NUM})\\s*(${Object.keys(SPOKEN_UNITS).join('|')})\\b\\.?\\s*(?:of\\s+)?`, 'i'));
+  if (m) {
+    size = `${num(m[1])} ${SPOKEN_UNITS[m[2].toLowerCase()]}`;
+    return { qty, size, name: rest.slice(m[0].length) };
+  }
+  m = rest.match(new RegExp(`^(?:a\\s+)?(${SPOKEN_NUM})\\b\\s*(?:x\\s*)?(?:(?:of\\s+)?(${SPOKEN_PACKS})\\s+)?(?:of\\s+)?`, 'i'));
+  if (m && m[0].trim()) {
+    const n = num(m[1]);
+    if (m[2] && /^dozens?$/i.test(m[2])) size = '12';
+    else if (n) qty = n;
+    rest = rest.slice(m[0].length);
+    // "two 1.5 kilo packs of blueberries"
+    const s2 = rest.match(new RegExp(`^(\\d+(?:\\.\\d+)?)\\s*(${Object.keys(SPOKEN_UNITS).join('|')})\\b\\.?\\s*(?:(?:${SPOKEN_PACKS})\\s+)?(?:of\\s+)?`, 'i'));
+    if (s2) { size = `${Number(s2[1])} ${SPOKEN_UNITS[s2[2].toLowerCase()]}`; rest = rest.slice(s2[0].length); }
+  } else if ((m = rest.match(new RegExp(`^(?:${SPOKEN_PACKS})\\s+of\\s+`, 'i')))) {
+    rest = rest.slice(m[0].length); // "pack of oats"
+  }
+  // "milk times two", "milk x2"
+  const t = rest.match(new RegExp(`\\s+(?:x|times)\\s*(${SPOKEN_NUM})$`, 'i'));
+  if (t) { qty = num(t[1]) || qty; rest = rest.slice(0, t.index); }
+  return { qty, size, name: rest };
+}
+
+/**
+ * Splits what was said into [{ name, qty, size }]. known is the names we already have (catalogue
+ * first, then past orders): a match takes that spelling, so it lands on the same item.
+ */
+function splitSpoken(text, known = []) {
+  const dict = new Map();
+  known.forEach((n) => {
+    const key = spokenWords(n).map(spokenWord).filter(Boolean).join(' ');
+    if (key && !dict.has(key)) dict.set(key, n);
+  });
+  const longest = Math.max(1, ...[...dict.keys()].map((k) => k.split(' ').length));
+  // Known names with a joining word inside ("mac and cheese") are protected before splitting.
+  let said = String(text || '').replace(/[“”"]/g, ' ');
+  const kept = [];
+  [...dict.values()].filter((n) => /\b(?:and|also|plus|then)\b|[,;]/i.test(n)).sort((a, b) => b.length - a.length).forEach((n) => {
+    const re = new RegExp(`\\b${spokenWords(n).map((w) => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('[\\s,]+')}\\b`, 'gi');
+    said = said.replace(re, () => { kept.push(n); return ` §${kept.length - 1}§ `; });
+  });
+  const pieces = said
+    .split(/[,;!?]+|\.(?!\d)|\s+(?:and|also|plus|then|and then|oh and)\s+/i)
+    // A number or "a pack of" mid-piece starts a new thing: "eggs milk two packs of blueberries".
+    .flatMap((p) => p.split(new RegExp(`(?<!\\b(?:x|times|${SPOKEN_NUM}))\\s+(?=(?:\\d+(?:\\.\\d+)?|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)\\b(?!\\s*(?:x|times)\\b)|(?:a|an|one)\\s+(?:${SPOKEN_PACKS})\\b)`, 'i')))
+    .map((p) => p.replace(/§(\d+)§/g, (_, i) => kept[Number(i)]));
+  const out = [];
+  pieces.forEach((raw) => {
+    let p = raw.replace(SPOKEN_LEAD, '').replace(SPOKEN_TAIL, '').trim();
+    if (!p) return;
+    const amt = spokenAmount(p);
+    p = amt.name.replace(SPOKEN_LEAD, '').replace(SPOKEN_TAIL, '').replace(/^(?:the|some|of)\s+/i, '').trim();
+    if (!p || !/[A-Za-z0-9؀-ۿ]/.test(p)) return;
+    const ws = spokenWords(p);
+    const keys = ws.map(spokenWord);
+    const whole = dict.get(keys.join(' '));
+    if (whole) { out.push({ name: whole, qty: amt.qty, size: amt.size }); return; }
+    // No commas: split only if every word belongs to a known name, longest names first.
+    const parts = [];
+    for (let i = 0; i < keys.length;) {
+      let hit = null;
+      for (let len = Math.min(longest, keys.length - i); len > 0 && !hit; len--) {
+        const n = dict.get(keys.slice(i, i + len).join(' '));
+        if (n) hit = { n, len };
+      }
+      if (!hit) { parts.length = 0; break; }
+      parts.push(hit.n);
+      i += hit.len;
+    }
+    if (parts.length > 1) parts.forEach((n, i) => out.push({ name: n, qty: i ? 1 : amt.qty, size: i ? '' : amt.size }));
+    else {
+      const name = p.replace(/\s+/g, ' ').slice(0, 60);
+      out.push({ name: name.charAt(0).toUpperCase() + name.slice(1), qty: amt.qty, size: amt.size });
+    }
+  });
+  // The same thing said twice is one line with the counts added up.
+  const merged = [];
+  out.forEach((it) => {
+    const key = spokenWords(it.name).map(spokenWord).join(' ');
+    const same = merged.find((m) => m.key === key);
+    if (same) { same.qty += it.qty; if (!same.size) same.size = it.size; } else merged.push({ ...it, key });
+  });
+  return merged.map(({ key, ...it }) => ({ ...it, qty: Math.max(1, Math.min(99, Math.round(it.qty))) }));
+}
+// </spoken-items>
+
 /** Fetches the cart and catalogue, unless changes are still on their way. */
 async function loadShopping() {
   if (shop.loading || !sync.base || (!config && !PREVIEW)) return;
@@ -3228,6 +3338,7 @@ function cartAdd(ref, qty = 1) {
   }
   const name = String(ref.name || '').trim().slice(0, 60);
   if (!name) return null;
+  const size = String(ref.size || '').trim().slice(0, 40);
   const temp = -(++shop.seq);
   mutate({
     label: 'Add to the cart',
@@ -3236,21 +3347,21 @@ function cartAdd(ref, qty = 1) {
       if (!d) return;
       let item = d.items.find((i) => i.id === shopId(temp)) || d.items.find((i) => shopKey(i.name) === shopKey(name));
       if (!item) {
-        item = { id: temp, name, size: '', brand: '', heart: false, aisle: aisleOf(d, name), addedBy: data.me.name };
+        item = { id: temp, name, size, brand: '', heart: false, aisle: aisleOf(d, name), addedBy: data.me.name };
         d.items.push(item);
       }
       const line = d.cart.find((l) => l.itemId === item.id);
       if (line) line.qty = Math.min(SHOP_MAX, line.qty + qty);
       else d.cart.push({ itemId: item.id, qty, addedBy: data.me.name });
     },
-    send: () => run('addToCart', { name }, qty, SLIM),
+    send: () => run('addToCart', size ? { name, size } : { name }, qty, SLIM),
     stateOf: shopRemap(temp, name),
   });
   return { id: temp, name };
 }
 
 /** Sets how many of something are in the cart. 0 takes it out, with a few seconds for Undo. */
-function cartSet(id, qty) {
+function cartSet(id, qty, { quiet = false } = {}) {
   const s = shopData();
   const item = s && itemIn(s, id);
   if (!item) return;
@@ -3272,7 +3383,7 @@ function cartSet(id, qty) {
     },
     send: () => run('setCartQty', shopId(id), n, SLIM),
   });
-  if (!n) toast(`${item.name}: out of the cart`, [{ label: 'Undo', fn: () => { if (!cancel(op)) cartSet(id, before); } }]);
+  if (!n && !quiet) toast(`${item.name}: out of the cart`, [{ label: 'Undo', fn: () => { if (!cancel(op)) cartSet(id, before); } }]);
 }
 
 /** Changes an item's name, size, brand or heart. */
@@ -3582,11 +3693,32 @@ $('#shop-find').addEventListener('submit', (e) => {
   if (added) toast(`${added.name} is in the cart`);
   setSearch('');
 });
+/**
+ * What was said into the Shopping mic goes straight into the cart, one line per thing, with one
+ * Undo for the lot. If nothing in it looks like a thing to buy, it lands in the search field.
+ */
+function addSpoken(text) {
+  const s = shopData();
+  const said = String(text || '').trim();
+  const parts = s && s.linked ? splitSpoken(said, [...s.items.map((i) => i.name), ...(s.known || [])]) : [];
+  if (!parts.length) { setSearch(said.replace(/[.?!]+$/, '').trim()); $('#shop-q').focus(); return; }
+  const added = parts.map((p) => {
+    const before = ((s.items.find((i) => shopKey(i.name) === shopKey(p.name)) || {}).id);
+    const was = before ? (lineIn(s, before) || { qty: 0 }).qty : 0;
+    const item = cartAdd({ name: p.name, size: p.size }, p.qty);
+    return item && { id: item.id, name: item.name, qty: p.qty, was };
+  }).filter(Boolean);
+  if (!added.length) return;
+  setSearch('');
+  const list = added.map((a) => (a.qty > 1 ? `${a.name} ×${a.qty}` : a.name)).join(', ');
+  const msg = added.length === 1 ? `${list} is in the cart` : `${added.length} in the cart: ${list}`;
+  toast(msg, [{ label: 'Undo', fn: () => added.forEach((a) => cartSet(a.id, a.was, { quiet: true })) }], 6000);
+}
 $('#shop-mic').addEventListener('click', () => {
   listen({
     label: 'What do we need?',
     manual: 'Type it instead',
-    onText: (text) => { setSearch(text.replace(/[.?!]+$/, '').trim()); $('#shop-q').focus(); },
+    onText: addSpoken,
     onUnavailable: () => $('#shop-q').focus(),
   });
 });
