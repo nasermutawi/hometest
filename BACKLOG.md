@@ -104,6 +104,12 @@ Melody is a web app saved to the home screen. A native iPhone app may come later
 | App icon updates only when the app is removed and re-added to the home screen (found Oct 2026, when the new B6 icon went live) | Future icon changes need a note to both of you to re-add the app | — (note) | **Better native**: native app icons update with the app |
 | Possible icon tweak: B6's split-ring dot on a damson tile (B3's background), if the light oat tile gets lost on the home screen | Bolder on light wallpapers | Small | — |
 
+## Shopping
+
+| Idea | Why it matters | Effort | Native |
+|---|---|---|---|
+| **Delivery slots we can take** (Nov 23). Kibsons needs a booked slot with someone home. Let each of us set which days and times work (for example "weekday evenings after 6, Saturday mornings"), saved as a Sheet setting, so the price hunt only reports free slots that fit and can say when none do. Same setting for any store with slots later. | The run tells us a slot we can actually make, not just the next free one | Small | — |
+
 ## From the UX audit (Oct 24, 2026)
 
 Found by running the app locally at iPhone size (390 and 320px, light and dark) with the repo's skills: **impeccable** (audit, critique and its automated scan), **ui-ux-pro-max**, **mobile-native**, **apple-design** and **break-ui** (worst-case data: long names, Arabic, emoji, 8 prep steps, 50 tasks, an empty filter). Hearth (`docs/design/hearth.md`) wins where a skill disagrees; those cases are under "Decisions" below rather than in the table.
