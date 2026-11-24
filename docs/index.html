@@ -3970,7 +3970,7 @@ function stageHtml(s, stage, dock) {
 function pullBack() {
   const s = shopData();
   const r = s && s.request;
-  if (!r || !s.locked) return;
+  if (!r || !['waiting', 'running', 'ready'].includes(r.status)) return;
   const wasReady = r.status === 'ready';
   mutate({
     label: wasReady ? 'Change the list' : 'Pull it back',
