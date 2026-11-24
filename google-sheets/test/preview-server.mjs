@@ -38,9 +38,9 @@ if (process.env.SHOP !== 'off' && process.env.BASKETS === 'demo') {
     [1, 'Spinneys', 'Spinneys', 2, 'Organic chicken breasts', 171.5, 0, 0, 171.5, '', 'No', 'No organic chicken breast; blueberries 13.05 / 100 g.', 'https://deliveroo.ae/en/menu/Dubai/marina-west/spinneys-marina', day(0), 'Naser']]
     .forEach((r) => b.appendRow(r));
   const l = gas.groceries.insertSheet('Basket lines');
-  [['Request ID', 'Store', 'Item', 'Qty', 'Product matched', 'Pack size', 'Price (AED)', 'Line total (AED)', 'Unit price', 'Status', 'Note', 'Checked on', 'Logged by'],
+  [['Request ID', 'Store', 'Item', 'Qty', 'Product matched', 'Pack size', 'Price (AED)', 'Line total (AED)', 'Unit price', 'Status', 'Note', 'Checked on', 'Logged by', 'Was (AED)'],
     [1, 'Deliveroo Hop', 'Eggs', 1, 'Gardenz Organic Eggs Pack of 10 Cage Free Grade AA', '10 eggs', 23.44, 23.44, '2.34 / egg', 'swapped', 'no organic 12-pack at HOP', day(0), 'Naser'],
-    [1, 'Deliveroo Hop', 'Organic chicken breasts', 1, 'The Meat Avenue - Organic Chicken Breast 500g', '500 g', 63.75, 63.75, '12.75 / 100 g', 'found', '', day(0), 'Naser'],
+    [1, 'Deliveroo Hop', 'Organic chicken breasts', 1, 'The Meat Avenue - Organic Chicken Breast 500g', '500 g', 63.75, 63.75, '12.75 / 100 g', 'found', '', day(0), 'Naser', 69],
     [1, 'Deliveroo Hop', 'Blueberries', 1, 'Blueberries 500g', '500 g', 47.28, 47.28, '9.46 / 100 g', 'found', '', day(0), 'Naser'],
     [1, 'Deliveroo Hop', 'Blueberries', 1, "Driscoll's Blueberries 500g", '500 g', 49.2, 49.2, '9.84 / 100 g', 'found', '', day(0), 'Naser'],
     [1, 'Kibsons', 'Eggs', 1, 'Organic Eggs (Ireland) 12 eggs', '12 eggs', 55.86, 55.86, '4.66 / egg', 'found', '', day(0), 'Naser'],
@@ -72,8 +72,27 @@ http.createServer((req, res) => {
     res.writeHead(200, { 'Content-Type': 'application/json' }).end(JSON.stringify(gas.outbox.splice(0)));
     return;
   }
+  // /status?s=running (or waiting, ready, failed…) moves the newest price request along, as Claude would.
+  // Add &started=2026-11-24 18:02 or &note=… to set those columns too.
+  if (req.url.startsWith('/status')) {
+    const q = new URL(req.url, 'http://x').searchParams;
+    const sh = gas.gsheet('Requests');
+    const row = sh ? sh.data.length : 0;
+    if (row > 1) {
+      const head = sh.data[0];
+      [['Status', q.get('s')], ['Started', q.get('started')], ['Note', q.get('note')], ['Asked on', q.get('asked')]]
+        .forEach(([col, v]) => { if (v != null) sh.getRange(row, head.indexOf(col) + 1).setValue(v); });
+    }
+    res.writeHead(200, { 'Content-Type': 'application/json' }).end(JSON.stringify(gas.grows('Requests')));
+    return;
+  }
   if (req.url.startsWith('/sheet')) {
     res.writeHead(200, { 'Content-Type': 'application/json' }).end(JSON.stringify({ Tasks: gas.rows('Tasks'), Activity: gas.rows('Activity'), Items: gas.grows('Items'), 'Shopping list': gas.grows('Shopping list'), Requests: gas.grows('Requests') }, null, 1));
+    return;
+  }
+  if (req.url.startsWith('/stores/')) {
+    // Store logos, as GitHub Pages serves them next to the app.
+    try { res.writeHead(200, { 'Content-Type': 'image/png' }).end(readFileSync(new URL(`../../docs/stores/${req.url.slice(8).replace(/[^\w.-]/g, '')}`, import.meta.url))); } catch (err) { res.writeHead(404).end(); }
     return;
   }
   res.writeHead(200, { 'Content-Type': 'text/html' }).end(page().replace('<head>', `<head>${shim}`));

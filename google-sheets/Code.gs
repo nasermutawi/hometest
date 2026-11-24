@@ -654,7 +654,12 @@ const REQUESTS = 'Requests';
 const INSIGHTS = 'Item insights';
 const ITEM_COLUMNS = ['ID', 'Item', 'Size', 'Brand', 'Heart', 'Aisle', 'Added by', 'Added on'];
 const CART_COLUMNS = ['Item', 'Qty', 'Added by', 'Added on', '1st choice store', '2nd choice store', 'Notes', 'Status', 'Size', 'Brand', 'Item ID'];
-const REQUEST_COLUMNS = ['ID', 'Status', 'Asked by', 'Asked on', 'Items', 'Started', 'Finished', 'Note'];
+const REQUEST_COLUMNS = ['ID', 'Status', 'Asked by', 'Asked on', 'Items', 'Started', 'Finished', 'Note', 'Saved (AED)'];
+// A request's Status, as the app and the melody-shopping-run skill use it:
+//   waiting → running → ready (or failed), then ordered / closed (Ordered it?) or pulled back.
+// While the newest request is waiting, running or ready, the cart is locked: it's what Claude is
+// pricing (or priced), so nobody can +1 it from an old copy. Pull it back unlocks it.
+const CART_LOCKED = ['waiting', 'running', 'ready'];
 const IN_CART = ['', 'needed', 'in basket'];
 const MAX_QTY = 99;
 
@@ -737,7 +742,7 @@ function shopTable_(name, headers) {
 const filled_ = (r, col) => String(r[col] == null ? '' : r[col]).trim() !== '';
 const qtyOf_ = (v) => { const n = parseInt(v, 10); return isNaN(n) || n < 1 ? 1 : Math.min(n, MAX_QTY); };
 const inCart_ = (r) => filled_(r, 'Item') && IN_CART.includes(String(r.Status || '').trim().toLowerCase());
-const numOrNull_ = (v) => { const n = Number(String(v == null ? '' : v).replace(/[^\d.]/g, '')); return String(v).trim() !== '' && !isNaN(n) ? n : null; };
+const numOrNull_ = (v) => { const n = Number(String(v == null ? '' : v).replace(/[^\d.]/g, '')); return v != null && String(v).trim() !== '' && !isNaN(n) ? n : null; };
 
 function shopItems_() {
   const t = shopTable_(ITEMS, ITEM_COLUMNS);
@@ -828,9 +833,16 @@ function runnerMember_(text) {
   return close.length === 1 ? close[0] : null;
 }
 
-function runnerRow_(sh) {
+function runnerRow_(sh, key = RUNNER_KEY) {
   if (!sh || sh.getLastRow() < 1) return -1;
-  return sh.getRange(1, 1, sh.getLastRow(), 1).getValues().findIndex((r) => String(r[0]).trim() === RUNNER_KEY);
+  return sh.getRange(1, 1, sh.getLastRow(), 1).getValues().findIndex((r) => String(r[0]).trim() === key);
+}
+
+/** baskets.after: the earliest time Claude's scheduled run starts (HH:mm, default 18:00). */
+function shopAfter_() {
+  const sh = requireGroceries_().getSheetByName(SETTINGS);
+  const i = runnerRow_(sh, 'baskets.after');
+  return (i >= 0 && timeStr_(sh.getRange(i + 1, 2).getValue())) || '18:00';
 }
 
 /** Whose Claude runs the baskets: a member's name, the raw text if it names nobody we know, or the admin while unset. */
@@ -866,6 +878,18 @@ function setRunner(name, opts) {
 function daysBetween_(a, b) {
   const d = (s) => Date.UTC(Number(s.slice(0, 4)), Number(s.slice(5, 7)) - 1, Number(s.slice(8, 10)));
   return Math.round((d(b) - d(a)) / 86400000);
+}
+
+const statusOf_ = (r) => (r ? String(r.Status || '').trim().toLowerCase() : '');
+const lastRequest_ = (t) => t.rows.filter((r) => filled_(r, 'ID')).pop() || null;
+/** A time Claude or the app wrote, as "yyyy-MM-dd HH:mm" (the Sheet may have turned it into a date). */
+const stamp_ = (v) => (v instanceof Date && !isNaN(v) ? fmt_(v, 'yyyy-MM-dd HH:mm') : String(v == null ? '' : v).trim());
+
+/** Stops a cart change while Claude has the list (the phone may be showing an old copy). */
+function assertCartOpen_() {
+  const status = statusOf_(lastRequest_(shopTable_(REQUESTS, REQUEST_COLUMNS)));
+  if (status === 'ready') throw new Error("Claude's basket is waiting for you. Tap Change the list to edit it.");
+  if (CART_LOCKED.includes(status)) throw new Error("The list is with Claude right now. Pull it back to change it.");
 }
 
 /** Everything the Shopping tab needs to draw itself. */
@@ -908,7 +932,11 @@ function shoppingState_() {
   const known = [];
   learned.forEach((l, key) => { if (!list.some((i) => itemKey_(i.name) === key)) known.push(l.name); });
 
-  const last = requests.rows.filter((r) => filled_(r, 'ID')).pop();
+  const last = lastRequest_(requests);
+  const status = statusOf_(last);
+  const month = fmt_(new Date(), 'yyyy-MM');
+  const savedMonth = requests.rows.filter((r) => statusOf_(r) === 'ordered' && stamp_(r.Finished).slice(0, 7) === month)
+    .reduce((sum, r) => sum + (numOrNull_(r['Saved (AED)']) || 0), 0);
   return {
     linked: true,
     sheetUrl: ss.getUrl(),
@@ -922,11 +950,16 @@ function shoppingState_() {
     due: due.slice(0, 4),
     known: known.slice(0, 300),
     request: last ? {
-      id: Number(last.ID), status: String(last.Status || '').trim().toLowerCase(), askedBy: String(last['Asked by'] || '').trim(),
-      askedOn: String(last['Asked on'] || ''), note: String(last.Note || '').trim(),
+      id: Number(last.ID), status, askedBy: String(last['Asked by'] || '').trim(),
+      askedOn: stamp_(last['Asked on']), note: String(last.Note || '').trim(),
+      started: stamp_(last.Started), finished: stamp_(last.Finished), saved: numOrNull_(last['Saved (AED)']),
     } : null,
+    locked: CART_LOCKED.includes(status),
+    after: shopAfter_(),
+    savedMonth: Math.round(savedMonth * 100) / 100,
     // What Claude found on the latest run, shown in the app instead of sending people to the Sheet.
-    baskets: last && String(last.Status || '').trim().toLowerCase() === 'ready' ? basketsFor_(last.ID) : [],
+    // A failed run can still have priced some stores; an ordered one shows where it went.
+    baskets: ['ready', 'failed', 'ordered'].includes(status) ? basketsFor_(last.ID) : [],
   };
 }
 
@@ -977,11 +1010,21 @@ function basketsFor_(requestId) {
       why: text(r.Why),
       links: cartLinks_(r['Cart link'], stores),
       checkedOn: dateStr_(r['Checked on']),
+      savedGiven: numOrNull_(r['Saved (AED)']),
       lines: lines.filter((l) => keys.includes(storeKey_(l.Store))).map((l) => ({
         store: text(l.Store), item: text(l.Item), qty: qtyOf_(l.Qty), product: text(l['Product matched']), pack: text(l['Pack size']),
-        total: numOrNull_(l['Line total (AED)']), unit: text(l['Unit price']), status: text(l.Status).toLowerCase() || 'found', note: text(l.Note),
+        total: numOrNull_(l['Line total (AED)']), was: numOrNull_(l['Was (AED)']), unit: text(l['Unit price']), status: text(l.Status).toLowerCase() || 'found', note: text(l.Note),
       })),
     };
+  });
+  // What this basket saves: Claude's own figure if it wrote one, else credit back plus offers
+  // (a line's Was (AED), the line total before the offer, over what it costs now).
+  list.forEach((b) => {
+    const given = b.savedGiven;
+    delete b.savedGiven;
+    const offers = b.lines.reduce((sum, l) => sum + (l.was != null && l.total != null && l.was > l.total ? l.was - l.total : 0), 0);
+    b.offers = Math.round(offers * 100) / 100;
+    b.saved = given != null ? given : Math.round(((b.credit || 0) + offers) * 100) / 100;
   });
   const cost = (b) => (b.total == null ? Infinity : b.total);
   return list.sort((a, b) => (b.pick - a.pick) || (cost(a) - cost(b)));
@@ -1037,6 +1080,7 @@ function addToCart(ref, qty, opts) {
   const me = requireMember_();
   requireGroceries_();
   withLock_(() => {
+    assertCartOpen_();
     const items = shopItems_();
     let item;
     if (ref && Number(ref.id) > 0) item = itemRow_(items, ref.id);
@@ -1053,7 +1097,10 @@ function setCartQty(id, qty, opts) {
   fresh_();
   const me = requireMember_();
   requireGroceries_();
-  withLock_(() => setLine_(itemRow_(shopItems_(), id), qty, me));
+  withLock_(() => {
+    assertCartOpen_();
+    setLine_(itemRow_(shopItems_(), id), qty, me);
+  });
   return shopReply_();
 }
 
@@ -1101,6 +1148,54 @@ function requestPrices(opts) {
   return shopReply_();
 }
 
+/**
+ * "Pull it back": takes the list back from Claude (waiting or running), or puts a finished
+ * basket aside (ready) so the list can change. Either way the cart opens again. Asking twice,
+ * or from both phones, is fine.
+ */
+function pullBack(opts) {
+  fresh_();
+  const me = requireMember_();
+  requireGroceries_();
+  withLock_(() => {
+    const t = shopTable_(REQUESTS, REQUEST_COLUMNS);
+    const r = lastRequest_(t);
+    if (!CART_LOCKED.includes(statusOf_(r))) return; // already back with us
+    const note = [String(r.Note || '').trim(), `Pulled back by ${me.name}`].filter(Boolean).join('. ');
+    writeRow_(t, r._row, { ...r, Status: 'pulled back', Finished: fmt_(new Date(), 'yyyy-MM-dd HH:mm'), Note: note });
+  });
+  return shopReply_();
+}
+
+/**
+ * "Ordered it?" after a basket is ready. 'yes': the order went in at Claude's pick, so the cart
+ * clears and the saving is counted. 'elsewhere': the cart clears, nothing is counted. Melody never
+ * orders anything itself; this only records what the person did in the store.
+ */
+function markOrdered(answer, opts) {
+  fresh_();
+  const me = requireMember_();
+  requireGroceries_();
+  const yes = answer === 'yes';
+  if (!yes && answer !== 'elsewhere') throw new Error('Ordered it? takes yes or elsewhere.');
+  withLock_(() => {
+    const t = shopTable_(REQUESTS, REQUEST_COLUMNS);
+    const r = lastRequest_(t);
+    if (statusOf_(r) !== 'ready') throw new Error("There's no basket waiting on that any more. Pull down to refresh.");
+    const pick = basketsFor_(r.ID).find((b) => b.pick) || null;
+    const cart = shopTable_(CART, CART_COLUMNS);
+    cart.rows.filter(inCart_).forEach((row) => writeRow_(cart, row._row, { ...row, Status: yes ? 'Ordered' : 'Done' }));
+    const where = pick ? pick.option.replace(/^split:\s*/i, '') : '';
+    writeRow_(t, r._row, {
+      ...r, Status: yes ? 'ordered' : 'closed',
+      Finished: fmt_(new Date(), 'yyyy-MM-dd HH:mm'),
+      'Saved (AED)': yes && pick ? pick.saved : '',
+      Note: [String(r.Note || '').trim(), yes ? `Ordered${where ? ` at ${where}` : ''} by ${me.name}` : `${me.name} went another way`].filter(Boolean).join('. '),
+    });
+  });
+  return shopReply_();
+}
+
 // ---------------------------------------------------------------- The app's private API
 
 // The app (docs/index.html on GitHub Pages) posts {key, fn, args} here. The web app is deployed
@@ -1124,6 +1219,8 @@ const API_FUNCTIONS = {
   setCartQty: (id, qty, opts) => setCartQty(id, qty, opts),
   saveItem: (data, opts) => saveItem(data, opts),
   requestPrices: (opts) => requestPrices(opts),
+  pullBack: (opts) => pullBack(opts),
+  markOrdered: (answer, opts) => markOrdered(answer, opts),
   setRunner: (name, opts) => setRunner(name, opts),
   addPerson: (name, email) => addPerson(name, email),
   linkFor: (name, reset) => linkFor(name, reset),

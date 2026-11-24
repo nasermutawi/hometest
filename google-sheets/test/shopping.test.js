@@ -158,7 +158,9 @@ test('Get prices parks one waiting request for Claude, and never orders anything
   setSettingIn(gas.gsheet('Settings') || gas.groceries.insertSheet('Settings'), 'baskets.runner', 'Sandi');
   const shop = api('nas', 'requestPrices', SLIM).shopping;
   assert.equal(shop.runner, 'Sandi');
-  assert.deepEqual(shop.request, { id: 1, status: 'waiting', askedBy: 'Naser', askedOn: '2026-11-22 10:00', note: '' });
+  assert.deepEqual(shop.request, { id: 1, status: 'waiting', askedBy: 'Naser', askedOn: '2026-11-22 10:00', note: '', started: '', finished: '', saved: null });
+  assert.equal(shop.locked, true, 'the list is with Claude now');
+  assert.equal(shop.after, '18:00', 'the scheduled run starts at 18:00 unless baskets.after says otherwise');
   assert.equal(gas.grows('Requests')[0].Items, 'Blueberries 1.5 kg ×1; Chicken breast 1 kg (Al Ain) ×2');
   // Asking again while one waits doesn't pile up requests: Claude reads the latest cart when it runs.
   api('sandi', 'requestPrices', SLIM);
@@ -277,4 +279,133 @@ test('a split basket keeps one cart link per store', () => {
     { store: 'HOP', url: 'https://deliveroo.ae/en/menu/Dubai/hopmc/deliveroo-hop-motor-city' },
   ]);
   assert.deepEqual(split.lines, [], 'no Basket lines tab yet is fine');
+});
+
+// ---------------------------------------------------------------- Submit to basket: the lock, Pull it back, Ordered it?
+
+const BASKET_HEAD = ['Request ID', 'Option', 'Store', 'Items found', 'Missing', 'Subtotal (AED)', 'Delivery (AED)', 'Credit (AED)', 'Total (AED)', 'Pick', 'Filled', 'Why', 'Cart link', 'Checked on', 'Logged by'];
+const LINE_HEAD = ['Request ID', 'Store', 'Item', 'Qty', 'Product matched', 'Pack size', 'Price (AED)', 'Line total (AED)', 'Unit price', 'Status', 'Note', 'Checked on', 'Logged by', 'Was (AED)'];
+
+/** Sandi sends eggs and blueberries; Nas's Claude prices them at HOP (the pick) and Kibsons. */
+function pricedRun() {
+  const h = household();
+  h.api('sandi', 'addToCart', { name: 'Organic eggs', size: '12 pack' }, 1, SLIM);
+  h.api('sandi', 'addToCart', { name: 'Blueberries' }, 2, SLIM);
+  h.api('sandi', 'requestPrices', SLIM);
+  const b = h.gas.groceries.insertSheet('Baskets');
+  [BASKET_HEAD,
+    [1, 'Deliveroo HOP', 'Deliveroo Hop', 2, '', '76.25', '0', '7.63', '68.62', 'Yes', 'Yes', 'AED 30 less than Kibsons.', 'https://deliveroo.ae/en/menu/Dubai/hopmc/deliveroo-hop-motor-city', '2026-11-22', 'Naser'],
+    [1, 'Kibsons', 'Kibsons', 2, '', '90.65', '8', '0', '98.65', '', 'No', 'Needs a slot.', 'https://www.kibsons.com/en/cart', '2026-11-22', 'Naser']]
+    .forEach((r) => b.appendRow(r));
+  const l = h.gas.groceries.insertSheet('Basket lines');
+  [LINE_HEAD,
+    [1, 'Deliveroo Hop', 'Organic eggs', 1, 'Gardenz Organic Eggs 12', '12 eggs', '26.50', '26.50', '2.21 / egg', 'found', '', '2026-11-22', 'Naser', '29.00'],
+    [1, 'Deliveroo Hop', 'Blueberries', 2, 'Blueberries 500g', '500 g', '24.75', '49.50', '4.95 / 100 g', 'swapped', 'the 1 kg was out', '2026-11-22', 'Naser', ''],
+    [1, 'Kibsons', 'Organic eggs', 1, 'Organic Eggs 12', '12 eggs', '55.86', '55.86', '4.66 / egg', 'found', '', '2026-11-22', 'Naser', '']]
+    .forEach((r) => l.appendRow(r));
+  return h;
+}
+
+test('once sent, the cart is locked on the server too: an old copy on the other phone cannot +1 it', () => {
+  const { gas, api } = household();
+  api('sandi', 'addToCart', { name: 'Milk' }, 1, SLIM);
+  assert.equal(api('sandi', 'getShopping').locked, false);
+  api('sandi', 'requestPrices', SLIM);
+  assert.throws(() => api('nas', 'addToCart', { name: 'Yoghurt' }, 1, SLIM), /with Claude right now. Pull it back/);
+  assert.throws(() => api('nas', 'setCartQty', 1, 3, SLIM), /with Claude right now/);
+  gas.gsheet('Requests').getRange(2, 2).setValue('running');
+  assert.throws(() => api('nas', 'setCartQty', 1, 0, SLIM), /with Claude right now/);
+  assert.equal(gas.grows('Shopping list').length, 1, 'nothing was written');
+  assert.equal(gas.grows('Shopping list')[0].Qty, 1);
+  // Editing what an item is (its heart, its size) is still fine: it doesn't change what's being priced.
+  api('nas', 'saveItem', { id: 1, heart: true }, SLIM);
+});
+
+test('Pull it back opens the cart again, from either phone, whether Claude has started or not', () => {
+  const { gas, api } = household();
+  api('sandi', 'addToCart', { name: 'Milk' }, 1, SLIM);
+  api('sandi', 'requestPrices', SLIM);
+  let shop = api('nas', 'pullBack', SLIM).shopping;
+  assert.equal(shop.request.status, 'pulled back');
+  assert.equal(shop.locked, false);
+  const row = gas.grows('Requests')[0];
+  assert.equal(row.Note, 'Pulled back by Naser');
+  assert.equal(row.Finished, '2026-11-22 10:00');
+  // Both phones tapping it is fine, and changes nothing more.
+  api('sandi', 'pullBack', SLIM);
+  assert.equal(gas.grows('Requests')[0].Note, 'Pulled back by Naser');
+  // The cart is editable again, and Get prices makes a fresh request.
+  api('sandi', 'addToCart', { name: 'Yoghurt' }, 1, SLIM);
+  shop = api('sandi', 'requestPrices', SLIM).shopping;
+  assert.equal(shop.request.id, 2);
+  // Once Claude has started, Pull it back still works: the skill checks the status before it writes.
+  gas.gsheet('Requests').getRange(3, 2).setValue('running');
+  assert.equal(api('nas', 'pullBack', SLIM).shopping.request.status, 'pulled back');
+});
+
+test('a ready basket shows its savings: credit back plus offers (Was), and Claude can give its own figure', () => {
+  const { gas, api } = pricedRun();
+  gas.gsheet('Requests').getRange(2, 2).setValue('ready');
+  const shop = api('nas', 'getShopping');
+  assert.equal(shop.locked, true, 'a ready basket keeps the list as it was priced');
+  const [hop, kibsons] = shop.baskets;
+  assert.equal(hop.offers, 2.5);
+  assert.equal(hop.saved, 10.13, '7.63 credit + 2.50 off the eggs');
+  assert.equal(hop.lines[0].was, 29);
+  assert.equal(hop.lines[1].was, null);
+  assert.equal(kibsons.saved, 0);
+  assert.throws(() => api('sandi', 'addToCart', { name: 'Bread' }, 1, SLIM), /Tap Change the list/);
+  gas.gsheet('Baskets').getRange(1, 16).setValue('Saved (AED)');
+  gas.gsheet('Baskets').getRange(2, 16).setValue('24.50');
+  assert.equal(api('nas', 'getShopping').baskets[0].saved, 24.5);
+});
+
+test('Ordered it? yes clears the cart, files the order and adds its saving to the month', () => {
+  const { gas, api } = pricedRun();
+  assert.throws(() => api('nas', 'markOrdered', 'yes', SLIM), /no basket waiting/);
+  gas.gsheet('Requests').getRange(2, 2).setValue('ready');
+  const shop = api('nas', 'markOrdered', 'yes', SLIM).shopping;
+  assert.deepEqual(shop.cart, []);
+  assert.equal(shop.locked, false);
+  assert.equal(shop.request.status, 'ordered');
+  assert.equal(shop.request.saved, 10.13);
+  assert.equal(shop.savedMonth, 10.13);
+  assert.equal(shop.baskets[0].option, 'Deliveroo HOP', 'the Ordered screen can say where it went');
+  assert.deepEqual(gas.grows('Shopping list').map((r) => r.Status), ['Ordered', 'Ordered'], 'rows are kept, just out of the cart');
+  assert.equal(gas.grows('Requests')[0].Note, 'Ordered at Deliveroo HOP by Naser');
+  assert.throws(() => api('sandi', 'markOrdered', 'yes', SLIM), /no basket waiting/, 'the other phone answering too changes nothing');
+  assert.equal(gas.outbox.length, 0);
+});
+
+test('Ordered it? "we went another way" clears the cart without counting a saving', () => {
+  const { gas, api } = pricedRun();
+  gas.gsheet('Requests').getRange(2, 2).setValue('ready');
+  const shop = api('sandi', 'markOrdered', 'elsewhere', SLIM).shopping;
+  assert.deepEqual(shop.cart, []);
+  assert.equal(shop.request.status, 'closed');
+  assert.equal(shop.savedMonth, 0);
+  assert.deepEqual(gas.grows('Shopping list').map((r) => r.Status), ['Done', 'Done']);
+  assert.equal(gas.grows('Requests')[0].Note, 'Sandi went another way');
+  assert.throws(() => api('sandi', 'markOrdered', 'maybe', SLIM), /yes or elsewhere/);
+});
+
+test('Change the list on a ready basket puts it aside, and a failed run unlocks the cart but keeps what was priced', () => {
+  const { gas, api } = pricedRun();
+  gas.gsheet('Requests').getRange(2, 2).setValue('failed');
+  let shop = api('nas', 'getShopping');
+  assert.equal(shop.locked, false);
+  assert.equal(shop.baskets.length, 2, 'what Claude did price is still there to see');
+  api('nas', 'addToCart', { name: 'Bread' }, 1, SLIM);
+  gas.gsheet('Requests').getRange(2, 2).setValue('ready');
+  shop = api('nas', 'pullBack', SLIM).shopping;
+  assert.equal(shop.request.status, 'pulled back');
+  assert.deepEqual(shop.baskets, []);
+});
+
+test('the scheduled run time comes from baskets.after in the Groceries Settings tab', () => {
+  const { gas, api } = household();
+  const sh = gas.groceries.insertSheet('Settings');
+  sh.appendRow(['baskets.runner', 'Naser']);
+  sh.appendRow(['baskets.after', '19:30']);
+  assert.equal(api('nas', 'getShopping').after, '19:30');
 });
