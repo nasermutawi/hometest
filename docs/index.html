@@ -29,6 +29,7 @@
   --p2: #D98A3F; --p2-fill: #EFA35C; --p2-bg: #FBE7D2; --p2-ink: #8A4E14;
   --shared-bg: linear-gradient(90deg, var(--p1-bg) 50%, var(--p2-bg) 50%); --shared-ink: #4A3F36; --none-bg: transparent; --none-ink: #75685C;
   --on-p1: #FFFFFF; --on-p2: #3E2208; --late-bg: #F8E4DD;
+  --kraft: #D9B98C; --kraft-deep: #B8925F; --kraft-ink: #6B4E2A; --wall: #EDE3D3; --lamp: #F6D38A; --sun: #F2B66D; --blush: #F0B9C6; --done-soft: #E3ECDD;
   --danger: #A63A2B; --done: #557A4A; --toast-bg: #2E2620; --toast-ink: #FFFBF4; --toast-link: #F0B9C6; --scrim: rgb(46 38 32 / 0.42);
   --font: 'Figtree', -apple-system, 'Segoe UI', system-ui, sans-serif;
   --display: 'Fraunces', Georgia, 'Times New Roman', serif;
@@ -48,6 +49,7 @@
     --p2: #F4B57A; --p2-fill: #F4B57A; --p2-bg: #3D2A17; --p2-ink: #F7CB9F;
     --shared-ink: #E5DACD; --none-ink: #B9AC9E;
     --on-p1: #0F2326; --on-p2: #3E2208; --late-bg: #3A231F;
+    --kraft: #8A6E4B; --kraft-deep: #6E5638; --kraft-ink: #F1DDBF; --wall: #2A231E; --lamp: #E9B85E; --sun: #F1E3B5; --blush: #6B3445; --done-soft: #26301F;
     --danger: #EF8A7A; --done: #7FA571; --toast-bg: #F3EADF; --toast-ink: #1C1714; --toast-link: #8E3B52; --scrim: rgb(0 0 0 / 0.6);
     color-scheme: dark;
   }
@@ -496,6 +498,139 @@ legend { padding: 0; }
 .kv b { font-weight: 700; text-align: end; }
 .item-foot { display: flex; align-items: center; gap: 12px; }
 .item-foot .primary { flex: 1; height: 54px; }
+/* A finished price run: Claude's pick, its items and the way to its cart */
+.bk-total { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.bk-total strong { font-family: var(--display); font-variation-settings: 'SOFT' 100; font-size: calc(34px * var(--ts)); line-height: 1; font-weight: 600; font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+.bk-total span { color: var(--muted); font-size: calc(14px * var(--ts)); }
+.bk-why { font-size: calc(15px * var(--ts)); line-height: 1.45; overflow-wrap: anywhere; }
+.bk-lines { background: var(--bg); border-radius: 16px; padding: 2px 16px; }
+.bk-line { display: flex; gap: 12px; padding: 11px 0; border-top: 1px solid var(--line); }
+.bk-line:first-child { border-top: none; }
+.bk-line > span { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.bk-line b { font-weight: 600; font-size: calc(15px * var(--ts)); overflow-wrap: anywhere; }
+.bk-line small { color: var(--muted); font-size: calc(13px * var(--ts)); overflow-wrap: anywhere; }
+.bk-line small.flag { color: var(--amber-ink); font-weight: 600; }
+.bk-line output { font-weight: 700; font-variant-numeric: tabular-nums; flex: 0 0 auto; font-size: calc(15px * var(--ts)); }
+.bk-line output.none { color: var(--muted); font-weight: 600; }
+.bk-carts { display: flex; flex-direction: column; gap: 10px; }
+.bk-carts a { text-decoration: none; }
+.bk-others { display: flex; flex-direction: column; gap: 8px; }
+.bk-other { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 16px; background: var(--bg); text-align: start; width: 100%; min-height: 56px; }
+.bk-other > span { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.bk-other b { font-weight: 600; font-size: calc(15px * var(--ts)); }
+.bk-other small { color: var(--muted); font-size: calc(13px * var(--ts)); }
+.bk-other output { font-weight: 700; font-variant-numeric: tabular-nums; }
+/* Submit to basket: once Get prices is tapped, the Shopping tab itself moves through stages
+   (Sent, Claude's on it, Ready, Ordered). Mel, a small woven basket, keeps you company.
+   Motion is quiet: things arrive once when a stage starts; only a blink and a soft glow repeat. */
+.stage { display: flex; flex-direction: column; gap: 12px; padding-top: 4px; }
+.stage-head { display: flex; align-items: center; gap: 12px; min-height: 48px; }
+.stage-head > div { flex: 1; min-width: 0; }
+.stage-head h2 { overflow-wrap: anywhere; }
+.stage-head small { display: block; color: var(--muted); font-size: calc(14px * var(--ts)); margin-top: 2px; }
+.runsteps { display: flex; align-items: center; gap: 6px; font-size: calc(12px * var(--ts)); font-weight: 700; color: var(--faint); }
+.runsteps span { display: inline-flex; align-items: center; gap: 5px; }
+.runsteps i { width: 8px; height: 8px; border-radius: 50%; background: var(--border-strong); }
+.runsteps .ok { color: var(--done); } .runsteps .ok i { background: var(--done); }
+.runsteps .now { color: var(--accent); } .runsteps .now i { background: var(--accent); }
+.runsteps .stuck { color: var(--danger); } .runsteps .stuck i { background: var(--danger); }
+.runsteps hr { flex: 1; border: 0; border-top: 1.5px dashed var(--border-strong); margin: 0; min-width: 10px; }
+.scene { border-radius: 18px; background: var(--wall); overflow: hidden; }
+.scene svg { display: block; width: 100%; height: auto; }
+.bagged { background: var(--surface); border-radius: 18px; }
+.bagged summary { display: flex; align-items: center; gap: 12px; padding: 12px 14px; cursor: pointer; list-style: none; }
+.bagged summary::-webkit-details-marker { display: none; }
+.bagged .ic { width: 32px; height: 32px; border-radius: 10px; background: var(--chip); color: var(--muted); display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; }
+.bagged .t { flex: 1; min-width: 0; line-height: 1.3; }
+.bagged .t b { display: block; font-size: calc(15px * var(--ts)); }
+.bagged .t span { color: var(--muted); font-size: calc(13px * var(--ts)); }
+.bagged .chev { color: var(--faint); transition: transform 240ms var(--ease-out); }
+.bagged[open] .chev { transform: rotate(90deg); }
+.bagged ul { margin: 0; padding: 0 14px 12px 58px; list-style: none; font-size: calc(14px * var(--ts)); color: var(--muted); display: flex; flex-direction: column; gap: 4px; }
+.stores { display: flex; flex-wrap: wrap; gap: 6px; }
+.stores span { display: inline-flex; align-items: center; gap: 6px; font-size: calc(13px * var(--ts)); font-weight: 600; padding: 3px 10px 3px 3px; border-radius: 999px; background: var(--soft); }
+.store-logo { width: 24px; height: 24px; border-radius: 50%; object-fit: cover; flex: 0 0 auto; background: var(--chip); display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800; color: var(--muted); }
+.store-logo.big { width: 40px; height: 40px; font-size: 15px; }
+.stage-card { background: var(--surface); border-radius: 18px; padding: 12px 14px; font-size: calc(14px * var(--ts)); line-height: 1.45; display: flex; flex-direction: column; gap: 8px; }
+.stage-card .st-row { display: flex; justify-content: space-between; gap: 12px; }
+.rcpt { background: var(--surface); border-radius: 18px; padding: 8px 14px 12px; }
+.rl { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; padding: 5px 0; font-size: calc(15px * var(--ts)); font-weight: 600; }
+.rl > span:first-child { min-width: 0; overflow-wrap: anywhere; }
+.rl i { font-style: normal; font-weight: 500; font-size: calc(13px * var(--ts)); color: var(--muted); }
+.rl s { color: var(--faint); font-weight: 500; font-size: calc(13px * var(--ts)); margin-right: 6px; }
+.rl .money, .money { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.rl.sm { font-size: calc(14px * var(--ts)); font-weight: 500; color: var(--muted); padding: 2px 0; }
+.rl.sm .money { color: var(--text); }
+.rl.note { font-size: calc(13px * var(--ts)); font-weight: 500; color: var(--muted); }
+.rl.tot { font-size: calc(17px * var(--ts)); font-weight: 800; }
+.rl .cur { font-size: 0.72em; font-weight: 700; letter-spacing: 0.02em; margin-right: 3px; color: var(--muted); }
+.rcpt hr { border: 0; border-top: 1px dashed var(--border-strong); margin: 6px 0; }
+.alt { font-size: calc(11px * var(--ts)); font-weight: 800; color: var(--accent); background: var(--accent-soft); padding: 2px 7px; border-radius: 6px; margin-left: 4px; vertical-align: 1px; }
+.saved { margin-top: 8px; font-size: calc(13px * var(--ts)); color: var(--done); background: var(--done-soft); border-radius: 10px; padding: 7px 10px; line-height: 1.4; }
+.why { font-size: calc(13px * var(--ts)); color: var(--muted); line-height: 1.45; padding: 0 4px; overflow-wrap: anywhere; }
+.otherbar { width: 100%; display: flex; align-items: center; gap: 8px; padding: 12px 14px; min-height: 48px; border-radius: 16px; box-shadow: inset 0 0 0 1px var(--border); font-size: calc(14px * var(--ts)); font-weight: 700; text-align: start; }
+.otherbar .muted { flex: 1; font-weight: 500; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.otherbar .chev { color: var(--faint); transition: transform 240ms var(--ease-out); }
+.otherbar[aria-expanded="true"] .chev { transform: rotate(90deg); }
+.others { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 320ms var(--ease-drawer); }
+.others > div { overflow: hidden; }
+.others.open { grid-template-rows: 1fr; }
+.others .inner { margin-top: 6px; padding: 4px 8px; border-radius: 16px; background: var(--soft); display: flex; flex-direction: column; }
+.orow { display: flex; align-items: center; gap: 10px; text-align: start; padding: 8px 4px; min-height: 48px; font-size: calc(14px * var(--ts)); font-weight: 700; width: 100%; }
+.orow > span { flex: 1; min-width: 0; line-height: 1.25; }
+.orow small { display: block; font-weight: 500; color: var(--muted); font-size: calc(12px * var(--ts)); }
+.stale { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 14px; background: var(--amber-bg); color: var(--amber-ink); font-size: calc(14px * var(--ts)); }
+.stale span { flex: 1; }
+.stage-dock { position: fixed; left: 0; right: 0; bottom: 0; z-index: 10; padding: 14px 16px calc(14px + env(safe-area-inset-bottom)); background: linear-gradient(transparent, var(--bg) 14px); }
+.stage-dock > div { max-width: 448px; margin: 0 auto; display: flex; flex-direction: column; gap: 6px; }
+.stage-dock a.primary { text-decoration: none; }
+.stage-dock .whose { font-size: calc(12px * var(--ts)); color: var(--muted); text-align: center; }
+.stage-dock .ask { display: flex; gap: 8px; }
+.stage-dock .ask > * { flex: 1; }
+.stage-dock .ask .secondary, .stage-dock .ask .primary { height: 52px; }
+.ghostbtn { height: 40px; color: var(--accent); font-weight: 700; font-size: calc(15px * var(--ts)); border-radius: 12px; width: 100%; }
+.shop-list.staged { padding-bottom: calc(190px + env(safe-area-inset-bottom)); }
+.danger-ink { color: var(--danger); }
+/* Arrivals, played once when a stage starts */
+.play .drop { animation: st-drop 700ms var(--ease-out) both; }
+.play .drop.d2 { animation-delay: 160ms; } .play .drop.d3 { animation-delay: 320ms; }
+@keyframes st-drop { from { transform: translateY(-60px); opacity: 0; } 60% { opacity: 1; } }
+.fold { transform-box: fill-box; transform-origin: bottom center; }
+.play .fold { animation: st-fold 420ms var(--ease-out) 900ms both; }
+@keyframes st-fold { from { transform: scaleY(-1); opacity: 0; } 40% { opacity: 1; } }
+.tag { transform-box: view-box; transform-origin: 150px 96px; }
+.play .tag { animation: st-swing 1200ms var(--ease-out) 1200ms both; }
+@keyframes st-swing { from { transform: rotate(0); opacity: 0; } 10% { opacity: 1; transform: rotate(14deg); } 45% { transform: rotate(-6deg); } 75% { transform: rotate(2deg); } }
+.play .land { animation: st-land 600ms var(--ease-out) 200ms both; transform-box: fill-box; transform-origin: bottom center; }
+@keyframes st-land { from { transform: translateY(-14px); opacity: 0; } 60% { transform: translateY(0) scaleY(0.92); opacity: 1; } }
+.play .rise { animation: st-rise 420ms var(--ease-out) both; }
+.play .rise.r2 { animation-delay: 80ms; } .play .rise.r3 { animation-delay: 160ms; }
+@keyframes st-rise { from { opacity: 0; transform: translateY(8px); } }
+.play .coin { animation: st-coin 700ms var(--ease-out) both; }
+.play .coin.c2 { animation-delay: 180ms; }
+@keyframes st-coin { from { transform: translateY(-36px); opacity: 0; } 60% { opacity: 1; } }
+.jarfill { transform-box: fill-box; transform-origin: bottom; }
+.play .jarfill { animation: st-fill 1000ms var(--ease-out) 300ms both; }
+@keyframes st-fill { from { transform: scaleY(0.4); } }
+/* The only things that repeat: a slow blink, a door light breathing, a sleepy z */
+.eye { transform-box: fill-box; transform-origin: center; }
+.blink .eye { animation: st-blink 5s ease-in-out infinite; }
+@keyframes st-blink { 0%, 94%, 100% { transform: none; } 97% { transform: scaleY(0.15); } }
+.doorlight { opacity: 0.35; animation: st-glow 4s ease-in-out infinite; }
+@keyframes st-glow { 50% { opacity: 0.8; } }
+.zz { animation: st-zz 2.6s ease-in-out infinite; opacity: 0; }
+.zz.z2 { animation-delay: 1.3s; }
+@keyframes st-zz { 30% { opacity: 1; } 100% { opacity: 0; transform: translate(8px, -14px); } }
+.runsteps .now i { animation: st-breathe 1600ms ease-in-out infinite; }
+@keyframes st-breathe { 50% { transform: scale(1.4); opacity: 0.6; } }
+@media (prefers-reduced-motion: reduce) {
+  .play .drop, .play .fold, .play .tag, .play .land, .play .rise, .play .coin, .play .jarfill, .blink .eye, .doorlight, .zz, .runsteps .now i { animation: none; }
+  .zz { opacity: 1; }
+  .others, .bagged .chev, .otherbar .chev { transition: none; }
+}
+
+.bk-foot { text-align: center; color: var(--muted); font-size: calc(13px * var(--ts)); }
+.bk-foot a { color: var(--accent); font-weight: 700; }
 </style>
 </head>
 <body>
@@ -579,6 +714,7 @@ legend { padding: 0; }
   <div class="cartbar-wrap" id="cartbar-wrap" hidden>
     <div class="cartbar"><span class="count" id="cart-count"></span><span class="what"><strong>in the cart</strong><span id="cart-sub"></span></span><button type="button" class="go" id="cart-go">Get prices</button></div>
   </div>
+  <div class="stage-dock" id="stage-dock" hidden><div id="stage-dock-in"></div></div>
 </div>
 
 <!-- One task -->
@@ -792,6 +928,21 @@ legend { padding: 0; }
       <button type="submit" class="primary" id="item-save">Add 1 to the cart</button>
     </div>
   </form>
+</dialog>
+
+<!-- A finished price run: what Claude found, without opening the Sheet -->
+<dialog id="d-basket" class="sheet" aria-labelledby="basket-title">
+  <div class="sheet-body" id="basket-body"></div>
+</dialog>
+
+<!-- Pull it back (or put a ready basket aside) asks first: it's easy to tap by mistake -->
+<dialog id="d-pull" class="sheet" aria-labelledby="pull-title">
+  <div class="sheet-body">
+    <span class="grab" aria-hidden="true"></span>
+    <div class="sheet-head"><h2 class="title-l" id="pull-title">Pull it back?</h2><p class="muted" id="pull-text"></p></div>
+    <button type="button" class="primary" id="pull-keep">Keep shopping</button>
+    <button type="button" class="secondary danger-ink" id="pull-yes">Yes, pull it back</button>
+  </div>
 </dialog>
 
 <div id="toast" class="toast" role="status" hidden></div>
@@ -3163,7 +3314,7 @@ if (PREVIEW) {
 // through mutate() like tasks do; each reply carries the whole shopping state, which is small.
 // "Get prices" only asks a Claude to compare stores. Nothing here ever places an order.
 
-const shop = { q: '', itemId: null, form: null, loading: false, error: '', ids: new Map(), seq: 0 };
+const shop = { q: '', itemId: null, basket: '', form: null, loading: false, error: '', ids: new Map(), seq: 0, stage: '', othersOpen: false };
 const shopId = (id) => shop.ids.get(Number(id)) || Number(id);
 const shopData = (data = state.data) => (data && data.shopping) || null;
 const itemIn = (s, id) => s.items.find((i) => i.id === shopId(id));
@@ -3412,15 +3563,19 @@ function getPrices() {
     toast(`Already asked. ${capFirst(runnerLabel(s))} reads the cart when it runs, so keep adding.`);
     return;
   }
+  // No "are you sure": the screen turning into Sent is the confirmation, and Pull it back is the undo.
   mutate({
     label: 'Get prices',
     apply: (data) => {
       const d = shopData(data);
-      if (d) d.request = { id: 0, status: 'waiting', askedBy: data.me.name, askedOn: '', note: '' };
+      if (!d) return;
+      d.request = { id: 0, status: 'waiting', askedBy: data.me.name, askedOn: householdNow().replace('T', ' '), note: '', started: '', finished: '', saved: null };
+      d.locked = true;
+      d.baskets = [];
     },
     send: () => run('requestPrices', SLIM),
   });
-  toast(`Sent to ${runnerLabel(s)}. It compares the stores on its next run and leaves a basket for you to check.`);
+  haptic();
 }
 
 // ------------------------------------------------ Whose Claude hunts for prices (Settings)
@@ -3549,19 +3704,412 @@ function searchHtml(s, q) {
 }
 
 function bannerHtml(s) {
-  const r = s.request;
-  if (r && r.status === 'ready') {
-    return `<div class="usual"><span><strong>Baskets are ready.</strong> ${esc(capFirst(runnerLabel(s)))} left them in the Sheet for you to check.</span>${s.sheetUrl ? `<a class="usual-btn" href="${esc(s.sheetUrl)}" target="_blank" rel="noopener">Open</a>` : ''}</div>`;
-  }
-  if (r && r.status === 'failed') {
-    return `<div class="usual"><span><strong>The price run hit a snag.</strong> ${esc(r.note || 'No reason given.')}</span><button type="button" class="usual-btn" data-retry-prices>Try again</button></div>`;
-  }
+  // A price run in progress, ready or stuck is drawn as a stage of the tab (stageHtml), not a banner.
   const due = s.due || [];
   if (!due.length) return '';
   const names = due.map((d) => d.name);
   const said = names.length === 1 ? names[0] : `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
   return `<div class="usual"><span><strong>Usually by now:</strong> ${esc(said)}</span><button type="button" class="usual-btn" data-add-due>${names.length === 1 ? 'Add it' : names.length === 2 ? 'Add both' : 'Add all'}</button></div>`;
 }
+
+// ------------------------------------------------ Submit to basket: the tab moves through stages
+//
+// Building (the cart) → Sent → Claude's on it → Ready → Ordered, with Hit a snag and Waiting for
+// a wake-up on the side. The stage comes from the newest request's Status in the Sheet, so both
+// phones show the same one. While Claude has the list the cart is locked (the server refuses a
+// +1 too); Pull it back is the way out. Nothing here places an order: Check out opens the store.
+
+const QUIET_MINUTES = 45;
+const ORDERED_SHOWS_HOURS = 12;
+const memo = {
+  get(key) { try { return JSON.parse(localStorage.getItem(`melody-shop-${key}`) || 'null'); } catch (err) { return null; } },
+  set(key, v) { try { localStorage.setItem(`melody-shop-${key}`, JSON.stringify(v)); } catch (err) { /* private mode: fine */ } },
+};
+
+/** Minutes since a "yyyy-MM-dd HH:mm" time in the household's time zone (Infinity if unknown). */
+function minutesSince(stamp) {
+  const at = Date.parse(`${String(stamp || '').trim().replace(' ', 'T')}:00Z`);
+  const now = Date.parse(`${householdNow()}:00Z`);
+  return isNaN(at) || isNaN(now) ? Infinity : (now - at) / 60000;
+}
+const hhmm = (stamp) => String(stamp || '').slice(11, 16);
+
+/** When Claude should pick a waiting request up: the scheduled time that day, or straight away if that's passed. */
+function expectedStart(s) {
+  const asked = s.request.askedOn || '';
+  const slot = `${asked.slice(0, 10)} ${s.after || '18:00'}`;
+  return asked && asked < slot ? slot : asked;
+}
+
+function shopStage(s) {
+  const r = s && s.linked ? s.request : null;
+  const st = r ? r.status : '';
+  if (st === 'waiting') return minutesSince(expectedStart(s)) > QUIET_MINUTES ? 'asleep' : 'sent';
+  if (st === 'running') return 'running';
+  if (st === 'ready') return 'ready';
+  if (st === 'failed') return 'snag';
+  if (st === 'ordered' && memo.get('seen') !== r.id && minutesSince(r.finished) < ORDERED_SHOWS_HOURS * 60) return 'ordered';
+  return 'building';
+}
+
+// Store logos (from Naser, 24 Nov). HOP and Spinneys are both shops inside Deliveroo.
+const STORES = [
+  { re: /kibsons/i, name: 'Kibsons', logo: 'stores/kibsons.png' },
+  { re: /hop|deliveroo/i, name: 'HOP', logo: 'stores/hop.png' },
+  { re: /spinneys/i, name: 'Spinneys', logo: 'stores/spinneys.png' },
+];
+const storeOf = (name) => STORES.find((x) => x.re.test(name || '')) || null;
+function storeLogo(name, big = false) {
+  const st = storeOf(name);
+  const cls = `store-logo${big ? ' big' : ''}`;
+  return st ? `<img class="${cls}" src="${st.logo}" alt="" width="${big ? 40 : 24}" height="${big ? 40 : 24}">` : `<span class="${cls}" aria-hidden="true">${esc(String(name || '?').trim().charAt(0).toUpperCase())}</span>`;
+}
+const shortStore = (name) => { const st = storeOf(name); return st && /hop/i.test(name) ? 'HOP' : String(name || '').trim(); };
+
+/** Mel, the woven basket. o: { full, sad, sleep }. Drawn round 0,0, about 34 wide. */
+function mel(o = {}) {
+  return `<ellipse cx="0" cy="${o.sleep ? 30 : 34}" rx="15" ry="3" fill="var(--text)" opacity="0.12"/>
+    ${o.full ? '<circle cx="-7" cy="0" r="6" fill="var(--done)"/><circle cx="5" cy="-2" r="6" fill="var(--blush)"/><circle cx="0" cy="-8" r="5" fill="var(--accent)"/>' : ''}
+    ${o.sleep ? '' : '<path d="M-11 4 q11 -20 22 0" fill="none" stroke="var(--accent)" stroke-width="3.2" stroke-linecap="round"/>'}
+    <path d="M-16 4 h32 l-4 26 q-12 5 -24 0z" fill="var(--kraft)" stroke="var(--kraft-ink)" stroke-width="1.8" stroke-linejoin="round"/>
+    <path d="M-14 12 h28 M-13 20 h26 M-6 5 v24 M6 5 v24" stroke="var(--kraft-deep)" stroke-width="1.4"/>
+    ${o.sleep ? '<path d="M-9 15 q3 2 6 0 M3 15 q3 2 6 0" fill="none" stroke="var(--text)" stroke-width="1.6" stroke-linecap="round"/>'
+    : o.sad ? '<circle cx="-5" cy="15" r="2" fill="var(--text)"/><circle cx="5" cy="15" r="2" fill="var(--text)"/><path d="M-3 22 q3 -2 6 0" fill="none" stroke="var(--text)" stroke-width="1.4" stroke-linecap="round"/>'
+    : '<circle class="eye" cx="-5" cy="15" r="2" fill="var(--text)"/><circle class="eye" cx="5" cy="15" r="2" fill="var(--text)"/><path d="M-3 20 q3 3 6 0" fill="none" stroke="var(--text)" stroke-width="1.4" stroke-linecap="round"/>'}
+    <circle cx="-10" cy="19" r="2.2" fill="var(--blush)"/><circle cx="10" cy="19" r="2.2" fill="var(--blush)"/>`;
+}
+
+const SCENES = {
+  // The list drops into a paper bag, the top folds over and a tag swings on: that's the lock.
+  sent: (who) => `<svg viewBox="0 44 300 96" role="img" aria-label="The list drops into a paper bag, which folds shut with ${esc(who)}'s tag">
+    <path d="M0 132 H300" stroke="var(--border-strong)" stroke-width="2"/>
+    <g class="drop"><ellipse cx="136" cy="70" rx="8" ry="10" fill="var(--surface)" stroke="var(--text)" stroke-width="1.6"/></g>
+    <g class="drop d2"><circle cx="160" cy="66" r="6" fill="var(--accent)"/><circle cx="168" cy="72" r="5" fill="var(--accent-ink)"/></g>
+    <g class="drop d3"><rect x="142" y="54" width="18" height="22" rx="3" fill="var(--chip)" stroke="var(--text)" stroke-width="1.6"/></g>
+    <path d="M118 74 h64 l-4 58 h-56z" fill="var(--kraft)" stroke="var(--kraft-ink)" stroke-width="2" stroke-linejoin="round"/>
+    <path d="M126 86 v40 M174 86 v40" stroke="var(--kraft-deep)" stroke-width="1.2" opacity="0.6"/>
+    <path class="fold" d="M118 74 h64 l-4 16 h-56z" fill="var(--kraft-deep)" stroke="var(--kraft-ink)" stroke-width="2" stroke-linejoin="round"/>
+    <g class="tag"><path d="M150 90 v12" stroke="var(--kraft-ink)" stroke-width="1.2"/><rect x="128" y="102" width="44" height="20" rx="4" fill="var(--surface)" stroke="var(--accent)" stroke-width="1.5"/>
+      <text x="150" y="116" text-anchor="middle" font-size="10" font-weight="800" fill="var(--accent)" font-family="Figtree, sans-serif">${esc(String(who).slice(0, 7))}</text></g>
+    <path d="M40 132 v-30 a14 14 0 0 1 28 0 v30" fill="none" stroke="var(--border-strong)" stroke-width="2"/>
+    <path d="M238 132 c-2 -18 6 -26 12 -34 c4 10 4 22 -2 34z" fill="var(--done)" opacity="0.5"/></svg>`,
+  // Mel waits by one doorway: a blink now and then, and the door light breathing. Nothing travels.
+  running: () => `<svg viewBox="0 0 300 84" role="img" aria-label="Mel waits by a shop doorway while Claude shops">
+    <path d="M0 76 H300" stroke="var(--border-strong)" stroke-width="2"/>
+    <path d="M150 76 V30 a22 22 0 0 1 44 0 V76" fill="var(--surface)" stroke="var(--text)" stroke-width="1.6"/>
+    <path d="M161 76 V50 a11 11 0 0 1 22 0 V76z" fill="var(--soft)" stroke="var(--text)" stroke-width="1.3"/>
+    <path class="doorlight" d="M161 76 V50 a11 11 0 0 1 22 0 V76z" fill="var(--lamp)"/>
+    <circle cx="172" cy="27" r="6" fill="var(--soft)" stroke="var(--border-strong)" stroke-width="1.3"/>
+    <g transform="translate(120 42)"><g class="blink">${mel()}</g></g></svg>`,
+  // Mel naps under a moonlit window while the computer that runs Claude is asleep.
+  asleep: () => `<svg viewBox="0 24 300 96" role="img" aria-label="Mel asleep on a cushion under a window with the moon">
+    <path d="M0 112 H300" stroke="var(--border-strong)" stroke-width="2"/>
+    <path d="M190 100 V44 a26 26 0 0 1 52 0 V100z" fill="var(--soft)" stroke="var(--text)" stroke-width="2"/>
+    <circle cx="224" cy="44" r="8" fill="var(--sun)"/><circle cx="228" cy="41" r="7" fill="var(--soft)"/>
+    <path d="M216 18 V100 M190 66 H242" stroke="var(--surface)" stroke-width="1.6" opacity="0.7"/>
+    <path d="M184 100 H248" stroke="var(--text)" stroke-width="2.5" stroke-linecap="round"/>
+    <ellipse cx="110" cy="106" rx="42" ry="9" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.4"/>
+    <g transform="translate(110 70)">${mel({ sleep: true })}</g>
+    <text class="zz" x="134" y="62" font-size="12" font-weight="800" fill="var(--muted)" font-family="Figtree, sans-serif">z</text>
+    <text class="zz z2" x="142" y="52" font-size="9" font-weight="800" fill="var(--muted)" font-family="Figtree, sans-serif">z</text></svg>`,
+  // A shop door is shut, with a "back soon" sign.
+  snag: () => `<svg viewBox="0 24 300 92" role="img" aria-label="Mel waits at a closed door with a back soon sign">
+    <path d="M0 112 H300" stroke="var(--border-strong)" stroke-width="2"/>
+    <path d="M120 112 V58 a30 30 0 0 1 60 0 V112" fill="var(--surface)" stroke="var(--text)" stroke-width="2"/>
+    <path d="M132 112 V64 a18 18 0 0 1 36 0 V112z" fill="var(--soft)" stroke="var(--text)" stroke-width="1.6"/>
+    <g transform="rotate(-4 150 84)"><rect x="130" y="76" width="40" height="16" rx="3" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.2"/><text x="150" y="87" text-anchor="middle" font-size="6.5" font-weight="800" fill="var(--accent)" font-family="Figtree, sans-serif">BACK SOON</text></g>
+    <g transform="translate(96 76)">${mel({ sad: true })}</g></svg>`,
+  // Ordered: what Claude saved drops into a jar.
+  ordered: (label) => `<svg viewBox="0 20 300 104" role="img" aria-label="Coins drop into a savings jar">
+    <path d="M0 116 H300" stroke="var(--border-strong)" stroke-width="2"/>
+    <path d="M70 116 h56 l-4 -40 h-48z" fill="var(--kraft)" stroke="var(--kraft-ink)" stroke-width="2" stroke-linejoin="round"/>
+    <path d="M74 76 h48 l-2 9 h-44z" fill="var(--kraft-deep)" stroke="var(--kraft-ink)" stroke-width="1.6"/>
+    <circle cx="98" cy="98" r="9" fill="var(--done)"/><path d="M93 98 l3.5 3.5 6 -7" fill="none" stroke="var(--surface)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    <g class="coin"><circle cx="198" cy="40" r="6" fill="var(--sun)" stroke="var(--kraft-ink)" stroke-width="1.2"/></g>
+    <g class="coin c2"><circle cx="206" cy="30" r="5" fill="var(--sun)" stroke="var(--kraft-ink)" stroke-width="1.2"/></g>
+    <path d="M176 52 h44 v6 q6 4 6 12 v40 q0 6 -6 6 h-44 q-6 0 -6 -6 v-40 q0 -8 6 -12z" fill="var(--surface)" stroke="var(--text)" stroke-width="2"/>
+    <rect class="jarfill" x="173" y="76" width="50" height="38" rx="5" fill="var(--sun)" opacity="0.55"/>
+    <rect x="174" y="46" width="48" height="8" rx="3" fill="var(--kraft-deep)" stroke="var(--kraft-ink)" stroke-width="1.4"/>
+    <text x="198" y="100" text-anchor="middle" font-size="11" font-weight="800" fill="var(--text)" font-family="Figtree, sans-serif">${esc(label)}</text></svg>`,
+};
+
+function stepsHtml(at) {
+  const order = ['Sent', 'Shopping', 'Ready'];
+  const cls = (i) => (at === 'stuck' ? (i === 0 ? 'ok' : i === 1 ? 'stuck' : '') : i < at ? 'ok' : i === at ? 'now' : '');
+  return `<div class="runsteps" aria-hidden="true">${order.map((w, i) => `<span class="${cls(i)}"><i></i>${at === 'stuck' && i === 1 ? 'Stuck' : at === 'waiting' && i === 1 ? 'Waiting' : w}</span>`).join('<hr>')}</div>`;
+}
+
+const ICON_LOCK = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
+
+/** The locked list, folded: "6 things, bagged", tap to see them. */
+function baggedHtml(s, sub) {
+  const n = s.cart.reduce((sum, l) => sum + l.qty, 0);
+  const names = s.cart.map((l) => { const i = itemIn(s, l.itemId); return i ? `<li dir="auto">${esc(i.name)}${l.qty > 1 ? ` ×${l.qty}` : ''}</li>` : ''; }).join('');
+  return `<details class="bagged"><summary><span class="ic">${ICON_LOCK}</span><span class="t"><b>${n} ${n === 1 ? 'thing' : 'things'}, bagged</b><span>${esc(sub)}</span></span><span class="chev" aria-hidden="true">›</span></summary><ul>${names}</ul></details>`;
+}
+
+function storesRowHtml() {
+  return `<div class="stores">${STORES.map((x) => `<span>${storeLogo(x.name)}${esc(x.name)}</span>`).join('')}</div>`;
+}
+
+const amount = (n) => Number(n || 0).toFixed(2);
+const aed = (n) => `<span class="money"><span class="cur">AED</span>${amount(n)}</span>`;
+
+/** Ready: reads like a store's order summary. Each saving sits where it happened. */
+function receiptHtml(s, b) {
+  const lines = b.lines.filter((l) => !['not sold', 'out of stock'].includes(l.status) && l.total != null);
+  const gone = b.lines.filter((l) => !lines.includes(l)).map((l) => l.item);
+  b.missing.forEach((m) => { if (!gone.some((g) => shopKey(g) === shopKey(m))) gone.push(m); });
+  let html = lines.map((l, i) => {
+    const alt = l.status === 'swapped' || l.status === 'unsure';
+    const pack = [l.pack, l.qty > 1 ? `×${l.qty}` : ''].filter(Boolean).join(' ');
+    const was = l.was != null && l.was > l.total ? `<s>${amount(l.was)}</s>` : '';
+    return `<div class="rl"><span dir="auto">${esc(l.item)}${pack ? ` <i>${esc(pack)}</i>` : ''}${alt ? `<button type="button" class="alt" data-alt="${i}" aria-expanded="false" aria-label="Alternative: tap for why">⇄ Alt</button>` : ''}</span><span class="money">${was}${amount(l.total)}</span></div>`
+      + (alt ? `<div class="rl note" data-alt-note="${i}" hidden dir="auto">⇄ ${esc(l.status === 'unsure' ? 'Check this one' : 'Alternative')}${l.product ? `: ${l.product}` : ''}${l.note ? `. ${capFirst(l.note)}` : ''}</div>` : '');
+  }).join('');
+  gone.forEach((g) => { html += `<div class="rl note"><span dir="auto">${esc(g)}: not in this basket</span></div>`; });
+  html += '<hr>';
+  if (b.subtotal != null) html += `<div class="rl sm"><span>Items</span><span class="money">${amount(b.subtotal)}</span></div>`;
+  if (b.delivery != null) html += `<div class="rl sm"><span>Delivery and fees</span><span class="money">${b.delivery ? amount(b.delivery) : 'Free'}</span></div>`;
+  if (b.credit) html += `<div class="rl sm"><span>Credit back</span><span class="money">−${amount(b.credit)}</span></div>`;
+  if (b.total != null) html += `<hr><div class="rl tot"><span>Total</span>${aed(b.total)}</div>`;
+  if (b.saved > 0) {
+    const parts = [b.offers ? `offers ${amount(b.offers)}` : '', b.credit ? `credit ${amount(b.credit)}` : ''].filter(Boolean);
+    html += `<div class="saved">You save <b>AED ${amount(b.saved)}</b>${parts.length > 1 ? ` · ${parts.join(' · ')}` : ''}</div>`;
+  }
+  return `<div class="rcpt rise">${html}</div>`;
+}
+
+function othersHtml(s, b) {
+  const others = (s.baskets || []).filter((o) => o !== b);
+  if (!others.length) return '';
+  const open = Boolean(shop.othersOpen);
+  return `<div class="rise r2"><button type="button" class="otherbar" data-others aria-expanded="${open}"><span>Other stores</span><span class="muted">${esc(others.map((o) => optionName(o)).join(', '))}</span><span class="chev" aria-hidden="true">›</span></button>
+    <div class="others${open ? ' open' : ''}"><div><div class="inner">${others.map((o) => {
+      const sub = o.missing.length ? `missing ${o.missing.join(', ')}` : 'has everything';
+      return `<button type="button" class="orow" data-basket-option="${esc(o.option)}">${storeLogo(o.stores[0] || o.option)}<span dir="auto">${esc(optionName(o))}<small>${esc(sub)}</small></span>${o.total == null ? '' : `<b class="money">AED ${amount(o.total)}</b>`}</button>`;
+    }).join('')}</div></div></div></div>`;
+}
+
+/** The stage view, or '' while the cart is being built. dock is filled with the stage's buttons. */
+function stageHtml(s, stage, dock) {
+  const r = s.request;
+  if (stage === 'building' || !r) return '';
+  const who = runnerLabel(s);
+  const runnerName = s.runner || 'Claude';
+  const asker = r.askedBy && r.askedBy !== state.data.me.name ? r.askedBy : 'you';
+  const pullBtn = '<button type="button" class="secondary" data-pull>Pull it back</button>';
+  if (stage === 'sent' || stage === 'asleep' || stage === 'running') {
+    const quiet = stage === 'running' && minutesSince(r.started) > QUIET_MINUTES;
+    const head = stage === 'sent' ? ['Sent', `to ${who}`]
+      : stage === 'asleep' ? ['Waiting for a wake-up', `${capFirst(who)} hasn't picked it up yet`]
+        : ["Claude's on it", quiet ? 'Taking longer than usual' : `${capFirst(who)}, in Chrome`];
+    const start = expectedStart(s);
+    const when = stage === 'sent'
+      ? (start > (r.askedOn || '') ? `Claude starts about ${hhmm(start)}.` : 'Claude picks it up on its next look.')
+      : stage === 'asleep' ? `Claude looks about every 6 hours and runs the moment ${runnerName === state.data.me.name ? 'your' : `${runnerName}'s`} computer is awake. It never hands the run to someone else.`
+        : `Started ${hhmm(r.started) || 'just now'}. Usually ready in about 20 min.`;
+    const sent = `Sent by ${asker}${r.askedOn ? ` at ${hhmm(r.askedOn)}` : ''}`;
+    dock.push(pullBtn, `<span class="whose">Pulling it back stops the run and opens the list.</span>`);
+    return `<div class="stage-head"><div><h2 class="title-l">${esc(head[0])}</h2><small>${esc(head[1])}</small></div></div>
+      ${stepsHtml(stage === 'running' ? 1 : stage === 'asleep' ? 'waiting' : 0)}
+      <div class="scene">${SCENES[stage === 'sent' ? 'sent' : stage](s.runner || r.askedBy || 'Claude')}</div>
+      ${stage === 'running' ? `<div class="stage-card"><div class="st-row"><b>Checking the stores</b></div>${storesRowHtml()}</div>` : ''}
+      <div class="stage-card"><span>${esc(when)}</span></div>
+      ${baggedHtml(s, sent)}`;
+  }
+  if (stage === 'ready') {
+    const b = basketPick(s);
+    if (!b) {
+      dock.push('<button type="button" class="primary" data-fresh>Get fresh prices</button>', '<button type="button" class="ghostbtn" data-pull>Change the list</button>');
+      return `<div class="stage-head"><div><h2 class="title-l">No basket this time</h2><small>${esc(r.note || "Claude finished but didn't leave a basket.")}</small></div></div>`;
+    }
+    const name = optionName(b);
+    const store = b.stores.length === 1 ? shortStore(b.stores[0]) : name;
+    const old = b.checkedOn && b.checkedOn !== today();
+    const links = b.links.length ? b.links : [];
+    const checkedOut = memo.get('checkout') === r.id;
+    if (checkedOut || !links.length) {
+      dock.push(`<div class="whose">Did you order it?</div><div class="ask"><button type="button" class="secondary" data-ordered="later">Not yet</button><button type="button" class="primary" data-ordered="yes">Yes, ordered</button></div>`,
+        `<button type="button" class="ghostbtn" data-ordered="elsewhere">We went another way</button>`);
+    } else {
+      links.forEach((k, i) => dock.push(`<a class="${i ? 'secondary' : 'primary'}" href="${esc(k.url)}" target="_blank" rel="noopener" data-checkout>Check out at ${esc(shortStore(k.store) || store)} ↗</a>`));
+      dock.push(`<span class="whose">Opens ${esc(runnerName === state.data.me.name ? 'your' : `${runnerName}'s`)} ${esc(links.length > 1 ? 'carts' : `${store} cart`)}. You place the order.</span>`,
+        '<button type="button" class="ghostbtn" data-pull>Change the list</button>');
+    }
+    const pickNote = b.pick ? 'Best basket' : 'Your choice';
+    return `<div class="stage-head">${storeLogo(b.stores[0] || name, true)}<div><h2 class="title-l" dir="auto">${esc(name)}</h2><small>${esc(pickNote)}${b.checkedOn ? ` · checked ${esc(b.checkedOn === today() ? 'today' : shortDate(b.checkedOn))}` : ''}</small></div>
+        <svg width="40" height="42" viewBox="-26 -22 52 56" aria-hidden="true"><g class="land">${mel({ full: true })}</g></svg></div>
+      ${old ? '<div class="stale"><span>Prices can move overnight.</span><button type="button" class="usual-btn" data-fresh>Get fresh prices</button></div>' : ''}
+      ${receiptHtml(s, b)}
+      ${b.why ? `<p class="why rise r2" dir="auto">${esc(b.why)}</p>` : ''}
+      ${othersHtml(s, b)}`;
+  }
+  if (stage === 'snag') {
+    const some = (s.baskets || []).length;
+    return `<div class="stage-head"><div><h2 class="title-l">Hit a snag</h2><small>The list is open again</small></div></div>
+      ${stepsHtml('stuck')}
+      <div class="scene">${SCENES.snag()}</div>
+      <div class="stage-card"><span dir="auto">${esc(r.note || "Claude couldn't finish this run and didn't say why.")}</span>
+        <span class="muted">Fix that on ${esc(runnerName === state.data.me.name ? 'your' : `${runnerName}'s`)} computer if it needs it, then tap Try again below.</span>
+        ${some ? `<button type="button" class="usual-btn" style="align-self:flex-start" data-open-basket>See what Claude did price</button>` : ''}</div>`;
+  }
+  if (stage === 'ordered') {
+    const b = basketPick(s);
+    dock.push('<button type="button" class="primary" data-ordered-seen>Back to the list</button>');
+    return `<div class="stage-head"><div><h2 class="title-l">Ordered</h2><small>${esc(b ? `at ${optionName(b)}` : 'Nice one')}</small></div></div>
+      <div class="scene">${SCENES.ordered(`AED ${Math.round(s.savedMonth || 0)}`)}</div>
+      <div class="stage-card">
+        ${r.saved ? `<div class="st-row"><b>Saved this run</b><b class="money" style="color:var(--done)">AED ${amount(r.saved)}</b></div>` : ''}
+        <div class="st-row muted"><span>Saved this month</span><span class="money">AED ${amount(s.savedMonth)}</span></div></div>
+      <div class="stage-card"><div class="st-row"><b>List cleared</b></div><span class="muted">Ready for the next shop.</span></div>`;
+  }
+  return '';
+}
+
+function pullBack() {
+  const s = shopData();
+  const r = s && s.request;
+  if (!r || !['waiting', 'running', 'ready'].includes(r.status)) return;
+  const wasReady = r.status === 'ready';
+  mutate({
+    label: wasReady ? 'Change the list' : 'Pull it back',
+    apply: (data) => {
+      const d = shopData(data);
+      if (!d || !d.request) return;
+      d.request.status = 'pulled back';
+      d.locked = false;
+      d.baskets = [];
+    },
+    send: () => run('pullBack', SLIM),
+  });
+  toast(wasReady ? 'The list is open. Change away, then Get prices again.' : 'Pulled back. Tweak away, then hit Get prices again.');
+}
+
+function openPull() {
+  const s = shopData();
+  if (!s || !s.request) return;
+  const ready = s.request.status === 'ready';
+  $('#pull-title').textContent = ready ? 'Change the list?' : 'Pull it back?';
+  $('#pull-text').textContent = ready
+    ? "These prices get put aside and the list opens for changes. Tap Get prices again when you're ready."
+    : `Claude stops this run and the list opens for changes. Tap Get prices again when you're ready.`;
+  $('#pull-keep').textContent = ready ? 'Keep this basket' : 'Keep shopping';
+  $('#pull-yes').textContent = ready ? 'Yes, change the list' : 'Yes, pull it back';
+  $('#d-pull').showModal();
+}
+$('#pull-keep').addEventListener('click', () => $('#d-pull').close());
+$('#pull-yes').addEventListener('click', () => { $('#d-pull').close(); pullBack(); });
+
+/** "Ordered it?" yes or "we went another way": the cart clears. "Not yet" keeps the basket showing. */
+function answerOrdered(answer) {
+  const s = shopData();
+  const r = s && s.request;
+  if (!r || r.status !== 'ready') return;
+  if (answer === 'later') {
+    memo.set('checkout', null);
+    renderShop();
+    toast("No rush. The basket stays here until you've ordered.");
+    return;
+  }
+  const pick = basketPick(s);
+  const saved = answer === 'yes' && pick ? pick.saved || 0 : 0;
+  mutate({
+    label: answer === 'yes' ? 'Ordered it' : 'Went another way',
+    apply: (data) => {
+      const d = shopData(data);
+      if (!d || !d.request) return;
+      d.request.status = answer === 'yes' ? 'ordered' : 'closed';
+      d.request.finished = householdNow().replace('T', ' ');
+      d.request.saved = saved || null;
+      d.savedMonth = Math.round(((d.savedMonth || 0) + saved) * 100) / 100;
+      d.cart = [];
+      d.locked = false;
+    },
+    send: () => run('markOrdered', answer, SLIM),
+  });
+  memo.set('checkout', null);
+  haptic();
+  if (answer !== 'yes') toast('Got it. The list is cleared for next time.');
+}
+
+// ------------------------------------------------ A finished price run: the basket sheet
+
+const money = (n, dp = 2) => `AED ${Number(n).toFixed(dp)}`;
+const basketPick = (s) => (s.baskets || []).find((b) => b.pick) || (s.baskets || [])[0] || null;
+const optionName = (b) => b.option.replace(/^split:\s*/i, '');
+
+function openBasket() {
+  const s = shopData();
+  const pick = s && basketPick(s);
+  if (!pick) return;
+  perfLocal('Open basket');
+  shop.basket = pick.option;
+  drawBasket();
+  $('#d-basket').showModal();
+}
+
+function lineHtml(l) {
+  const what = [l.product, l.pack, l.unit].filter(Boolean).join(' · ');
+  const flag = l.status === 'swapped' ? `Swapped${l.note ? `: ${l.note}` : ''}`
+    : ['not sold', 'out of stock', 'unsure'].includes(l.status) ? `${capFirst(l.status)}${l.note ? `: ${l.note}` : ''}` : '';
+  const price = l.total == null ? '<output class="none">None</output>' : `<output>${esc(l.total.toFixed(2))}</output>`;
+  return `<div class="bk-line"><span><b dir="auto">${esc(l.item)}${l.qty > 1 ? ` ×${l.qty}` : ''}</b>${what ? `<small dir="auto">${esc(what)}</small>` : ''}${flag ? `<small class="flag" dir="auto">${esc(flag)}</small>` : ''}</span>${price}</div>`;
+}
+
+function basketHtml(s, b) {
+  const all = s.baskets || [];
+  const many = b.links.length > 1 || b.stores.length > 1;
+  const sums = [];
+  if (b.subtotal != null) sums.push(`${money(b.subtotal)} items`);
+  if (b.delivery) sums.push(`+ ${b.delivery.toFixed(2)} fees`);
+  if (b.credit) sums.push(`− ${b.credit.toFixed(2)} credit`);
+  const filled = b.filled === 'yes' ? (many ? 'Claude filled these carts.' : 'Claude filled this cart.')
+    : b.filled === 'partly' ? 'Claude filled part of the cart. Check what made it in.' : '';
+  let html = '<span class="grab" aria-hidden="true"></span>';
+  html += `<div class="sheet-head"><span class="small muted">${b.pick ? "Claude's pick" : 'Another option'}${b.checkedOn ? ` · checked ${esc(shortDate(b.checkedOn))}` : ''}</span><h2 class="title-l" id="basket-title" tabindex="-1" autofocus dir="auto">${esc(optionName(b))}</h2></div>`;
+  if (b.total != null) html += `<div class="bk-total"><strong>${esc(money(b.total))}</strong>${sums.length > 1 ? `<span>${esc(sums.join(' '))}</span>` : ''}</div>`;
+  if (b.missing.length) html += `<div class="attention" role="note">Missing here: ${esc(b.missing.join(', '))}</div>`;
+  if (b.why) html += `<p class="bk-why" dir="auto">${esc(b.why)}</p>`;
+  if (b.links.length) {
+    const kind = b.filled === 'yes' || b.filled === 'partly' ? 'primary' : 'secondary';
+    html += `<div class="bk-carts">${b.links.map((k) => `<a class="${kind}" href="${esc(k.url)}" target="_blank" rel="noopener">Open the ${esc(k.store || 'store')} cart</a>`).join('')}`;
+    html += `<span class="hint">${esc(filled || "Claude only fills the pick's cart, so this one may be empty.")} Checking out and paying is all yours: Claude never orders.</span></div>`;
+  }
+  if (b.lines.length) {
+    const byStore = b.stores.length > 1;
+    html += `<div><span class="label">What's in it</span>${b.stores.map((st) => {
+      const ls = b.lines.filter((l) => l.store.toLowerCase() === st.toLowerCase());
+      if (!ls.length) return '';
+      return `${byStore ? `<span class="hint">${esc(st)}</span>` : ''}<div class="bk-lines">${ls.map(lineHtml).join('')}</div>`;
+    }).join('')}</div>`;
+  }
+  const others = all.filter((o) => o !== b);
+  if (others.length) {
+    html += `<div><span class="label">${b.pick ? 'What the others came to' : 'All the options'}</span><div class="bk-others">${others.map((o) => {
+      const sub = o.pick ? "Claude's pick" : o.missing.length ? `Missing ${o.missing.length}` : 'Has everything';
+      return `<button type="button" class="bk-other" data-basket-option="${esc(o.option)}"><span><b dir="auto">${esc(optionName(o))}</b><small>${esc(sub)}</small></span>${o.total == null ? '' : `<output>${esc(money(o.total))}</output>`}</button>`;
+    }).join('')}</div></div>`;
+  }
+  if (s.sheetUrl) html += `<p class="bk-foot">Every price Claude saw is in <a href="${esc(s.sheetUrl)}" target="_blank" rel="noopener">the Sheet</a>.</p>`;
+  return html;
+}
+
+function drawBasket() {
+  const s = shopData();
+  const all = (s && s.baskets) || [];
+  const b = all.find((o) => o.option === shop.basket) || basketPick(s || {});
+  if (!b) { if ($('#d-basket').open) $('#d-basket').close(); return; }
+  $('#basket-body').innerHTML = basketHtml(s, b);
+}
+
+$('#basket-body').addEventListener('click', (e) => {
+  const other = e.target.closest('[data-basket-option]');
+  if (!other) return;
+  shop.basket = other.dataset.basketOption;
+  drawBasket();
+  $('#d-basket').scrollTop = 0;
+});
 
 function cartSub(s) {
   const r = s.request;
@@ -3590,14 +4138,33 @@ function renderShop() {
     list.innerHTML = shopNote('Shopping needs its Sheet', "Paste the Home – Groceries Sheet's link into the Groceries sheet row of the Settings tab (in the To-do Sheet), then pull down to refresh.");
     return;
   }
-  $('#shop-due').innerHTML = q ? '' : bannerHtml(s);
-  list.innerHTML = q ? searchHtml(s, q) : cartHtml(s);
+  const stage = shopStage(s);
+  const locked = !['building', 'snag'].includes(stage);
+  const dock = [];
+  const staged = stageHtml(s, stage, dock);
+  // Arrivals play once, when a stage starts; later redraws (a refresh every minute) stay still.
+  const fresh = shop.stage !== `${stage}:${s.request ? s.request.id : ''}`;
+  shop.stage = `${stage}:${s.request ? s.request.id : ''}`;
+  if (fresh) shop.othersOpen = false;
+  $('#shop-find').hidden = locked;
+  $('#stage-dock').hidden = !dock.length;
+  $('#stage-dock-in').innerHTML = dock.join('');
+  list.classList.toggle('staged', Boolean(dock.length));
+  if ($('#d-basket').open) drawBasket();
+  if (locked) {
+    if (q) setSearch('');
+    $('#shop-due').innerHTML = '';
+    list.innerHTML = `<section class="stage${fresh ? ' play' : ''}" aria-live="polite">${staged}</section>`;
+    return;
+  }
+  $('#shop-due').innerHTML = q || staged ? '' : bannerHtml(s);
+  list.innerHTML = (q ? '' : staged ? `<section class="stage${fresh ? ' play' : ''}">${staged}</section>` : '') + (q ? searchHtml(s, q) : cartHtml(s));
   if (q || !s.cart.length) return;
   bar.hidden = false;
   $('#cart-count').textContent = s.cart.reduce((n, l) => n + l.qty, 0);
   $('#cart-sub').textContent = cartSub(s);
   const asked = s.request && ['waiting', 'running'].includes(s.request.status);
-  $('#cart-go').textContent = asked ? 'Asked' : 'Get prices';
+  $('#cart-go').textContent = asked ? 'Asked' : stage === 'snag' ? 'Try again' : 'Get prices';
   $('#cart-go').classList.toggle('asked', Boolean(asked));
 }
 
@@ -3746,8 +4313,53 @@ $('#v-shop').addEventListener('click', (e) => {
     (s.due || []).forEach((d) => cartAdd(d.id ? { id: d.id } : { name: d.name }));
     return;
   }
-  if (e.target.closest('[data-retry-prices]')) {
-    getPrices();
+  if (e.target.closest('[data-open-basket]')) {
+    openBasket();
+    return;
+  }
+  if (e.target.closest('[data-pull]')) { openPull(); return; }
+  if (e.target.closest('[data-fresh]')) { getPrices(); return; }
+  const ordered = e.target.closest('[data-ordered]');
+  if (ordered) { answerOrdered(ordered.dataset.ordered); return; }
+  if (e.target.closest('[data-ordered-seen]')) {
+    const s = shopData();
+    memo.set('seen', s && s.request ? s.request.id : null);
+    renderShop();
+    return;
+  }
+  if (e.target.closest('[data-checkout]')) {
+    // Back from the store, the dock asks "Did you order it?"
+    const s = shopData();
+    memo.set('checkout', s && s.request ? s.request.id : null);
+    setTimeout(renderShop, 600);
+    return;
+  }
+  const alt = e.target.closest('[data-alt]');
+  if (alt) {
+    const note = $(`[data-alt-note="${alt.dataset.alt}"]`, $('#shop-list'));
+    if (note) { note.hidden = !note.hidden; alt.setAttribute('aria-expanded', String(!note.hidden)); }
+    return;
+  }
+  if (e.target.closest('[data-others]')) {
+    shop.othersOpen = !shop.othersOpen;
+    const bar = e.target.closest('[data-others]');
+    bar.setAttribute('aria-expanded', String(shop.othersOpen));
+    bar.nextElementSibling.classList.toggle('open', shop.othersOpen);
+    // The list opens under the buttons at the bottom: bring it up into view.
+    if (shop.othersOpen) {
+      setTimeout(() => {
+        const gap = bar.nextElementSibling.getBoundingClientRect().bottom - $('#stage-dock').getBoundingClientRect().top + 12;
+        if (gap > 0) window.scrollBy({ top: gap, behavior: REDUCED_MOTION ? 'auto' : 'smooth' });
+      }, REDUCED_MOTION ? 0 : 330);
+    }
+    return;
+  }
+  const option = e.target.closest('[data-basket-option]');
+  if (option) {
+    // Another store's basket opens in the sheet, with its own cart link.
+    shop.basket = option.dataset.basketOption;
+    drawBasket();
+    $('#d-basket').showModal();
     return;
   }
   const item = e.target.closest('[data-item]');

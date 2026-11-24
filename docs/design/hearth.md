@@ -29,6 +29,9 @@ The two person colours differ in lightness as well as hue, so they still read ap
 | `--accent` | `#8E3B52` damson | `#E08AA0` | primary buttons, mic, links |
 | `--danger` | `#A63A2B` | `#EF8A7A` | overdue, delete |
 | `--done` | `#557A4A` sage | `#7FA571` | swipe-to-done |
+| `--done-soft` | `#E3ECDD` | `#26301F` | savings line on a ready basket |
+| `--kraft`, `--kraft-deep`, `--kraft-ink` | `#D9B98C`, `#B8925F`, `#6B4E2A` | `#8A6E4B`, `#6E5638`, `#F1DDBF` | paper bag and Mel, the woven basket (Shopping price run) |
+| `--wall`, `--lamp`, `--sun`, `--blush` | `#EDE3D3`, `#F6D38A`, `#F2B66D`, `#F0B9C6` | `#2A231E`, `#E9B85E`, `#F1E3B5`, `#6B3445` | price-run scenes: wall, door light, coins and moon, Mel's cheeks |
 | attention | bg `#F3E2E6`, text `#6F2C40` | bg `#3A2229`, text `#F2C6D2` | "Add a date" and other missing details |
 
 ## Type
