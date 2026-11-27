@@ -1476,23 +1476,47 @@ function capture(text, opts) {
   const message = String(text || '').trim().slice(0, 3000);
   if (!message) throw new Error('Nothing to save yet. Say or type what needs doing.');
   let drafts = null;
+  let forCart = [];
   let notice = '';
+  let closed = null; // why the cart can't take things: '' when it can, looked up once
   if (claudeKey_()) {
     try {
-      drafts = askClaudeCapture_(message, me.name);
+      ({ drafts, shopping: forCart } = askClaudeCapture_(message, me.name));
     } catch (err) {
       console.error('Claude capture failed:', err);
       notice = 'Claude was unavailable, so the simple rules read this one.';
+      drafts = null;
+      forCart = [];
     }
   }
-  if (!drafts || !drafts.length) drafts = draftsFromRules_(message, me.name);
+  if (!drafts) {
+    // The rules only look for shopping once Shopping is linked (before that, it all stays a to-do).
+    closed = groceriesId_() ? cartClosed_() : 'unlinked';
+    const split = closed !== 'unlinked' ? cartFromRules_(message, knownThings_()) : { rest: message, items: [] };
+    forCart = split.items;
+    drafts = split.rest ? draftsFromRules_(split.rest, me.name) : [];
+  }
+  if (forCart.length) {
+    if (closed === null) closed = cartClosed_();
+    if (closed) {
+      // Nothing said is lost: with no cart to take it, it's a to-do.
+      drafts.push(shortenDraft_({ ...draftFromRules_(`Buy ${forCart.join(', ')}`, me.name), category: 'shopping' }));
+      if (closed === 'ready') notice = "Claude's basket is waiting for you, so the shopping went on the to-dos instead.";
+      else if (closed !== 'unlinked') notice = 'The list is with Claude right now, so the shopping went on the to-dos instead.';
+      forCart = [];
+    }
+  }
+  if (!drafts.length && !forCart.length) drafts = draftsFromRules_(message, me.name);
   const saved = withLock_(() => drafts.slice(0, MAX_CAPTURED)
     .map((d) => createTask_({ ...d, repeats: d.dueDate ? d.repeats : 'Never' }, me.name)));
   const captured = saved.map((t) => t.id);
-  if (slim_(opts)) return slimReply_({ tasks: saved.map(clientTask_), captured, notice });
+  // The phone turns forCart into cart lines with the same splitter as the Shopping mic.
+  const cart = forCart.length ? { forCart, shopping: shoppingState_() } : {};
+  if (slim_(opts)) return slimReply_({ tasks: saved.map(clientTask_), captured, notice, ...cart });
   const state = state_();
   state.captured = captured;
   state.notice = notice;
+  if (forCart.length) { state.forCart = forCart; state.shopping = cart.shopping; }
   return state;
 }
 
@@ -1513,6 +1537,142 @@ function discardCapture(ids, opts) {
   });
   if (slim_(opts)) return slimReply_({ deletedIds: [...wanted] });
   return state_();
+}
+
+// ---------------------------------------------------------------- Shopping said into the To-dos mic
+
+// "Cook the ragu tonight, and we need milk": the task is saved and "milk" goes to the cart (the
+// phone splits it into cart lines, as the Shopping mic does, and Review shows both). That needs the
+// Groceries sheet linked and the cart open; otherwise it stays a to-do ("Buy milk"), so nothing
+// said is lost. Claude decides when there's a key; these rules are the fallback.
+
+// Strong: always shopping. Weak ("we need", "get"): only for things that look like groceries.
+const CART_STRONG = [
+  /^(?:we(?:'re| are)?|i(?:'m| am)) (?:out of|running (?:low on|out of)|low on|almost out of|nearly out of)\s+(.+)$/i,
+  /^(?:we|i)(?:'ve| have)? (?:run|ran) out of\s+(.+)$/i,
+  /^(?:(?:i|we) (?:need|have|want) to |(?:can|could) (?:you|someone|we) |let's |please )?(?:buy|order|grab|stock up on)\s+(.+)$/i,
+];
+const CART_WEAK = [
+  /^(?:we|i)(?:'ll| will)? need\s+(?!to\b)(.+)$/i,
+  /^(?:(?:i|we) (?:need|have|want) to |(?:can|could) (?:you|someone|we) |let's |please )?(?:get|pick up)\s+(.+)$/i,
+];
+const CART_TAIL = /\s+(?:to|on|onto|in|into) (?:the |our )?(?:cart|list|shopping(?: list)?|basket)\s*$/i;
+const CART_FILLER = /^(?:(?:and|also|plus|oh|so|then|um+|uh+|okay|ok|remember|don't forget|dont forget|i think|looks like)\b[\s,]*)+/i;
+// Plans and errands, not things for the cart.
+const NOT_FOR_CART = new RegExp(`\\b(?:(?:mon|tues|wednes|thurs|fri|satur|sun)day|today|tonight|tomorrow|weekend|next week|this week|morning|afternoon|evening|\\d{1,2}(?::\\d{2})?\\s*(?:am|pm)|present|gift|tickets?|flights?|groceries|shopping|appointment|plumber|electrician|cleaner for)\\b`, 'i');
+const CART_AMOUNT = /^(?:(?:a|an|one|two|three|four|five|six|seven|eight|nine|ten|twelve|a couple of|a few|some|more|\d+(?:\.\d+)?)\s+)?(?:(?:packs?|packets?|bottles?|boxe?s?|bags?|cartons?|loa(?:f|ves)|tins?|cans?|jars?|bunche?s?|tubs?|trays?|rolls?|dozens?|kilos?|kg|grams?|g|litres?|liters?|l|ml)\s+(?:of\s+)?)?/i;
+
+/** The words of one thing to buy, without "two packs of" in front: what matching looks at. */
+const cartCore_ = (part) => String(part).trim().replace(CART_AMOUNT, '').replace(/^(?:of|the)\s+/i, '').trim();
+
+/**
+ * Whether every part of "milk, eggs and two loaves of bread" is a thing we know (catalogue or past
+ * orders) or, when looser is set, looks like groceries (it has an aisle).
+ */
+function groceryList_(text, known, looser) {
+  const isThing = (part) => {
+    const core = cartCore_(part);
+    if (!core || core.split(/\s+/).length > 4) return false;
+    if (known.has(itemKey_(core))) return true;
+    if (!looser) return false;
+    // "Water the plants" and "wash the dishes" are chores, not groceries.
+    if (/\b(?:the|my|our|his|her|their)\b/i.test(core) || new RegExp(`^(?:${ERRAND_VERBS})\\b`, 'i').test(core)) return false;
+    return aisleFor_(core) !== OTHER_AISLE;
+  };
+  const whole = String(text).trim();
+  if (isThing(whole)) return true;
+  const parts = whole.split(/\s*,\s*|\s+(?:and|&)\s+/).filter(Boolean);
+  return parts.length > 0 && parts.every(isThing);
+}
+
+/** One clause as a thing (or things) to buy, or null when it's a task. */
+function cartClause_(clause, known) {
+  let c = String(clause).replace(/[’]/g, "'").trim().replace(/[.!?]+$/, '').replace(CART_FILLER, '').trim();
+  if (!c) return null;
+  const tail = CART_TAIL.test(c);
+  if (tail) c = c.replace(CART_TAIL, '').replace(/^(?:please )?(?:add|put|pop|stick)\s+/i, '').trim();
+  let what = null;
+  let strong = tail;
+  CART_STRONG.some((re) => { const m = re.exec(c); if (m) { what = m[1]; strong = true; } return m; });
+  if (!what) CART_WEAK.some((re) => { const m = re.exec(c); if (m) what = m[1]; return m; });
+  if (!what && tail) what = c;
+  if (!what) return null;
+  what = what.replace(/^(?:some (?:more )?|more |a few more )/i, '').trim();
+  if (!what || NOT_FOR_CART.test(what) || /^to\b/i.test(what)) return null;
+  if (!strong && !groceryList_(what, known, true)) return null;
+  return what;
+}
+
+/**
+ * Takes what's for the cart out of a recording. Returns { rest, items }: rest is what's left for
+ * the task rules (untouched where nothing was taken), items the things to buy as said.
+ * A goal with its errands ("I need to cook, so I need to buy...") is left whole: those are steps.
+ */
+function cartFromRules_(text, known) {
+  const items = [];
+  const rest = [];
+  String(text).split(/\n+|(?<=[.!?;])\s+/).forEach((sentence) => {
+    const s = sentence.trim();
+    if (!s) return;
+    if (goalWithSteps_(s)) { rest.push(s); return; }
+    // "milk, eggs and bread" on its own: everything said is a thing we buy.
+    const bare = s.replace(/[.!?;]+$/, '').replace(CART_FILLER, '');
+    if (groceryList_(bare, known, false) || (bare.split(/\s+/).length <= 8 && !/\b(?:i|we|you|let's)\b/i.test(bare) && groceryList_(bare, known, true))) {
+      items.push(bare);
+      return;
+    }
+    const pieces = s.split(/\s*[,;]\s*|\s+(?:and|but|also|plus)\s+(?=(?:also |then |oh )?(?:i|we|you|let's|can|could|please|remember|don't|dont)\b)|\s+(?:also|plus|and then|oh and)\s+/i)
+      .map((p) => p.trim()).filter(Boolean);
+    const kept = [];
+    let buying = false;
+    let took = false;
+    let gap = false;
+    pieces.forEach((p) => {
+      const what = cartClause_(p, known);
+      // "we need milk, eggs and two packs of oats": the list carries on after a comma.
+      const more = !what && buying && groceryList_(p.replace(/[.!?]+$/, '').replace(/^(?:and|also|plus)\s+/i, ''), known, true);
+      if (what || more) {
+        items.push(what || p.replace(/[.!?]+$/, '').replace(/^(?:and|also|plus)\s+/i, ''));
+        buying = true;
+        took = true;
+      } else {
+        // Pieces either side of the shopping were said separately: keep them apart.
+        const piece = p.replace(/[.!?;]+$/, '');
+        if (gap && kept.length) kept.push(`. ${piece.replace(/^(?:and|also|plus|then)\s+/i, '')}`);
+        else kept.push(kept.length ? `, ${piece}` : piece.replace(/^(?:and|also|plus|then)\s+/i, ''));
+        buying = false;
+        gap = false;
+        return;
+      }
+      gap = true;
+    });
+    if (!took) rest.push(s);
+    else if (kept.length) rest.push(`${kept.join('')}.`);
+  });
+  return { rest: rest.join(' ').trim(), items };
+}
+
+/** Names we already buy (catalogue, then past orders), as matching keys. Empty while Shopping isn't linked. */
+function knownThings_() {
+  try {
+    if (!groceries_()) return new Set();
+    const keys = new Set(shopItems_().rows.filter((r) => filled_(r, 'Item')).map((r) => itemKey_(r.Item)));
+    insights_().forEach((l, key) => keys.add(key));
+    return keys;
+  } catch (err) {
+    return new Set();
+  }
+}
+
+/** Why the cart can't take spoken things right now ('' when it can). */
+function cartClosed_() {
+  try {
+    if (!groceries_()) return 'unlinked';
+    const status = statusOf_(lastRequest_(shopTable_(REQUESTS, REQUEST_COLUMNS)));
+    return CART_LOCKED.includes(status) ? status : '';
+  } catch (err) {
+    return 'unlinked';
+  }
 }
 
 // Verbs that usually start a new errand after "and": "pick up the dry cleaning and buy a present".
@@ -1890,7 +2050,9 @@ Use only the task ids listed. Resolve relative dates ("next Tuesday", "in two we
 }
 
 function capturePrompt_() {
-  return `You turn what a household member said (often dictated, without punctuation) into tasks for a shared household task app. Reply with ONLY a JSON object, no other text: {"tasks": [ ... ]}, each task being ${draftFields_()}.
+  return `You turn what a household member said (often dictated, without punctuation) into tasks for a shared household task app. Reply with ONLY a JSON object, no other text: {"tasks": [ ... ], "shopping": [ ... ]}, each task being ${draftFields_()}, and each shopping entry one thing to buy for the household's shopping cart, in the words said, with any amount ("milk", "two packs of blueberries", "1.5 kilo chicken breast").
+
+Groceries and household things they need ("we need milk", "we're out of eggs", "buy kitchen roll", "add oats to the list") go in "shopping", not in "tasks". Everything else is a task: errands with a time, place or person ("pick up the dry cleaning", "buy a present for Mum on Friday"), services ("we need a plumber"), and the errands a goal needs, which are its prep steps. When everything said is shopping, "tasks" is []. Nothing said may be dropped.
 
 Titles are short: about 2 to 6 words, starting with a verb ("Cook the ragu", "Book the car service"). Never use the whole sentence as a title. Details that don't fit in the title (where, which one, names, numbers) go in "notes".
 
@@ -1914,7 +2076,13 @@ Examples (said on Sunday 2026-10-11, by Naser):
 "Sara can you pick up the dry cleaning tomorrow and I'll call the bank"
 → {"tasks": [{"title": "Pick up the dry cleaning", "due_date": "2026-10-12", "due_time": null, "owner": "Sara", "prep_steps": []}, {"title": "Call the bank", "due_date": null, "due_time": null, "owner": "Naser", "prep_steps": []}]}
 
-(In the examples, fields left out take their defaults; always include every field in your reply.)`;
+"Cook the ragu tonight, and we need milk"
+→ {"tasks": [{"title": "Cook the ragu", "due_date": "2026-10-11", "due_time": "19:00", "owner": null, "prep_steps": []}], "shopping": ["milk"]}
+
+"we're out of eggs and toilet paper, oh and two packs of blueberries"
+→ {"tasks": [], "shopping": ["eggs", "toilet paper", "two packs of blueberries"]}
+
+(In the examples, "shopping" left out is [] and other fields left out take their defaults; always include every field in your reply.)`;
 }
 
 function editPrompt_() {
@@ -2037,12 +2205,14 @@ function claudeContext_(speaker) {
   ].join('\n');
 }
 
-/** Claude's split of a recording into task drafts. */
+/** Claude's split of a recording into task drafts, and things to buy for the cart. */
 function askClaudeCapture_(text, speaker) {
   const raw = jsonIn_(callClaude_(capturePrompt_(), `${claudeContext_(speaker)}\n\nWhat ${speaker} said:\n${text}`));
   const drafts = (Array.isArray(raw.tasks) ? raw.tasks : []).map(cleanDraft_).filter((d) => d.title).map(shortenDraft_);
-  if (!drafts.length) throw new Error('no tasks in the reply');
-  return drafts;
+  const shopping = (Array.isArray(raw.shopping) ? raw.shopping : [])
+    .map((x) => String(x && typeof x === 'object' ? x.name || '' : x || '').trim().slice(0, 120)).filter(Boolean).slice(0, 30);
+  if (!drafts.length && !shopping.length) throw new Error('no tasks in the reply');
+  return { drafts, shopping };
 }
 
 /** Claude's reading of a spoken change to one task, in the shape editFromRules_ returns. */

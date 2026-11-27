@@ -233,6 +233,17 @@ textarea.field { resize: vertical; min-height: 88px; }
 .rcard.enter { animation: rise 250ms var(--ease-out) both; animation-delay: calc(var(--i, 0) * 40ms); }
 @keyframes rise { from { opacity: 0; transform: translateY(8px); } }
 .rcard .chip { height: 32px; padding: 0 12px; border-radius: 10px; font-size: calc(13px * var(--ts)); }
+.rcard.cart { box-shadow: inset 4px 0 0 var(--kraft); gap: 6px; }
+.rcard-kicker { font-size: calc(12px * var(--ts)); font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--kraft-ink); }
+.rcart-lines { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.rcart-lines li { display: flex; align-items: center; gap: 8px; min-height: 44px; border-top: 1px dashed var(--line); }
+.rcart-lines li:first-child { border-top: 0; }
+.rcart-name { flex: 1; min-width: 0; font-weight: 600; font-size: calc(16px * var(--ts)); overflow-wrap: anywhere; }
+.rcart-qty { color: var(--muted); font-size: calc(13px * var(--ts)); font-weight: 600; }
+.rcart-out { width: 44px; height: 44px; margin-right: -12px; display: grid; place-items: center; color: var(--muted); border-radius: 12px; }
+.rcart-out:active { transform: scale(0.97); }
+.rcard-swap { align-self: flex-start; min-height: 44px; color: var(--accent); font-weight: 700; font-size: calc(14px * var(--ts)); }
+.rcard-swap:active { opacity: 0.6; }
 .badge { display: inline-flex; align-items: center; gap: 6px; font-size: calc(13px * var(--ts)); font-weight: 700; color: var(--accent); }
 
 /* Dialogs: bottom sheets and full screens */
@@ -1007,7 +1018,7 @@ async function run(fn, ...args) {
 }
 
 const state = {
-  data: null, view: 'tasks', filter: 'all', detailId: null, reviewIds: [], lastEdit: null, draft: null, deepLinked: false,
+  data: null, view: 'tasks', filter: 'all', detailId: null, reviewIds: [], reviewCart: [], lastEdit: null, draft: null, deepLinked: false,
   linger: new Set(), fresh: new Set(), pop: new Map(), renderLater: false,
 };
 
@@ -1790,6 +1801,7 @@ function createTask(data) {
     },
     send: () => run('saveTask', data, SLIM),
   });
+  return tempId;
 }
 
 function setStep(id, index, done) {
@@ -1951,19 +1963,21 @@ function undoVoiceEdit() {
 
 function renderReview() {
   const tasks = state.reviewIds.map(taskById).filter(Boolean);
+  const cart = state.reviewCart || [];
   // Waiting for the server (the reply can land a moment before its tasks are handed over).
   const waiting = state.reviewWait ? { text: state.reviewText || '' } : null;
-  $('#review-sub').textContent = waiting ? 'Saving what you said…' : 'Already saved. Tap anything to change it.';
+  $('#review-sub').textContent = waiting ? 'Saving what you said…'
+    : cart.length && !tasks.length ? 'Sounds like shopping, so it went straight in the cart.' : 'Already saved. Tap anything to change it.';
   $('#review-badge').hidden = Boolean(waiting);
-  $('#review-save').textContent = waiting ? 'Save' : `Save${tasks.length > 1 ? ` ${tasks.length} tasks` : ''}`;
+  $('#review-save').textContent = waiting ? 'Save' : cart.length && tasks.length ? 'Save all' : `Save${tasks.length > 1 ? ` ${tasks.length} tasks` : ''}`;
   if (waiting && !tasks.length) {
     $('#review-list').innerHTML = `<article class="rcard waiting" aria-live="polite"><q class="rcard-quote" dir="auto">${esc(waiting.text)}</q>
       <span class="row-meta"><span class="spinner" aria-hidden="true"></span> Understanding…</span></article>`;
     return;
   }
-  if (!tasks.length) { state.view = 'tasks'; renderTasks(); show('v-tasks'); return; }
+  if (!tasks.length && !cart.length) { state.view = 'tasks'; renderTasks(); show('v-tasks'); return; }
   // A new set of cards (not the same ones with their saved ids filled in) animates in, once.
-  const ids = state.reviewIds.map(realId);
+  const ids = [...state.reviewIds.map(realId), ...cart.map((a) => `cart:${a.name}`)];
   if (!ids.some((id) => reviewSeen.ids.has(id))) reviewSeen = { at: Date.now(), ids: new Set() };
   const entering = Date.now() - reviewSeen.at < 800;
   let fresh = 0;
@@ -1980,7 +1994,22 @@ function renderReview() {
       ${t.repeats !== 'Never' ? `<button type="button" class="chip" data-open="${t.id}">${esc(t.repeats)}</button>` : ''}
     </div>
   </article>`;
-  }).join('');
+  }).join('') + (cart.length ? reviewCartCard(cart, entering && !reviewSeen.ids.has(`cart:${cart[0].name}`), fresh) : '');
+  cart.forEach((a) => reviewSeen.ids.add(`cart:${a.name}`));
+}
+
+/** The things to buy from a mixed recording: already in the cart, each can come out, or all can be a to-do. */
+function reviewCartCard(cart, enter, i) {
+  const n = cart.length;
+  return `<article class="rcard cart${enter ? ' enter' : ''}"${enter ? ` style="--i:${i}"` : ''}>
+    <span class="rcard-kicker">Sounds like shopping</span>
+    <h2 class="rcard-title">${n === 1 ? 'Popped in the cart' : `${n} things popped in the cart`}</h2>
+    <ul class="rcart-lines">${cart.map((a, k) => `<li>
+      <span class="rcart-name" dir="auto">${esc(a.name)}</span>${a.qty > 1 ? `<span class="rcart-qty">×${a.qty}</span>` : ''}
+      <button type="button" class="rcart-out" data-uncart="${k}" aria-label="Take ${esc(a.name)} out of the cart"><svg width="18" height="18"><use href="#i-x"/></svg></button>
+    </li>`).join('')}</ul>
+    <button type="button" class="rcard-swap" data-totask>Not shopping? Make ${n === 1 ? 'it' : 'them'} a to-do</button>
+  </article>`;
 }
 // Cards animate in once, the first time each is shown, not on every redraw.
 let reviewSeen = { at: 0, ids: new Set() };
@@ -2210,6 +2239,7 @@ function handleCapture(text) {
   const pid = ++sync.seq;
   // Straight to Review: it shows what was said as "Understanding…" and fills in when the reply comes.
   state.reviewIds = [];
+  state.reviewCart = [];
   state.reviewWait = pid;
   state.reviewText = text;
   mutate({
@@ -2231,10 +2261,13 @@ function handleCapture(text) {
 /** The server's reply to a capture: fills the Review screen if it's still open, otherwise a toast. */
 function showCaptured(res, pid) {
   const ids = (res && res.captured) || [];
+  if (state.reviewDiscard === pid) { state.reviewDiscard = null; if (ids.length) discard(ids, { quiet: true }); return; }
+  // "…and we need milk": the server heard shopping; it goes in the cart the Shopping mic's way.
+  // (Review keeps waiting meanwhile, so the redraws this makes don't close it.)
+  const cart = putInCart(splitForCart(res && res.forCart));
   const waiting = state.reviewWait === pid;
   if (waiting) state.reviewWait = null;
-  if (state.reviewDiscard === pid) { state.reviewDiscard = null; if (ids.length) discard(ids, { quiet: true }); return; }
-  if (!ids.length) {
+  if (!ids.length && !cart.length) {
     if (waiting && state.view === 'review') go('tasks');
     toast((res && res.notice) || "Didn't find a task in that. Try again.");
     return;
@@ -2243,19 +2276,36 @@ function showCaptured(res, pid) {
   setTimeout(() => { ids.forEach((id) => state.fresh.delete(id)); }, 1600);
   if (waiting && state.view === 'review') {
     state.reviewIds = ids;
+    state.reviewCart = cart;
     quietDraw();
     if (res.notice) toast(res.notice);
     return;
   }
   quietDraw();
-  savedToast(ids);
+  savedToast(ids, cart);
 }
 
-function savedToast(ids) {
+/** What the capture heard for the cart, as cart lines (names we know keep our spelling). */
+function splitForCart(forCart) {
+  const s = shopData();
+  if (!s || !s.linked || !Array.isArray(forCart) || !forCart.length) return [];
+  return splitSpoken(forCart.join(', '), [...s.items.map((i) => i.name), ...(s.known || [])]);
+}
+
+/** "eggs, laban and 2 blueberries", for a to-do's title. */
+function buyWords(cart) {
+  const words = cart.map((a) => `${a.qty > 1 ? `${a.qty} ` : ''}${a.name.charAt(0).toLowerCase()}${a.name.slice(1)}`);
+  return words.length > 1 ? `${words.slice(0, -1).join(', ')} and ${words[words.length - 1]}` : words.join('');
+}
+const cartWords = (cart) => cart.map((a) => (a.qty > 1 ? `${a.name} ×${a.qty}` : a.name)).join(', ');
+
+function savedToast(ids, cart = []) {
   const n = ids.length;
-  toast(`Saved ${n} task${n === 1 ? '' : 's'}`, [
-    { label: 'Review', fn: () => { state.reviewIds = ids; go('review'); } },
-    { label: 'Undo', fn: () => discard(ids) },
+  const tasks = `${n} task${n === 1 ? '' : 's'}`;
+  const msg = !cart.length ? `Saved ${tasks}` : !n ? `In the cart: ${cartWords(cart)}` : `Saved ${tasks}, and ${cart.length} in the cart`;
+  toast(msg, [
+    { label: 'Review', fn: () => { state.reviewIds = ids; state.reviewCart = cart; go('review'); } },
+    { label: 'Undo', fn: () => { if (n) discard(ids, { quiet: true }); takeOutOfCart(cart); toast('Not saved'); } },
   ]);
 }
 
@@ -2286,6 +2336,7 @@ $('#heard-review').addEventListener('click', () => {
   clearTimeout(heardTimer);
   $('#d-heard').close();
   state.reviewIds = captured.slice();
+  state.reviewCart = [];
   go('review');
 });
 $('#heard-discard').addEventListener('click', () => {
@@ -2313,15 +2364,38 @@ function leaveReview() { go('tasks'); }
 $('#review-close').addEventListener('click', leaveReview);
 $('#review-save').addEventListener('click', () => {
   const ids = state.reviewIds.slice();
+  const cart = (state.reviewCart || []).slice();
   leaveReview();
-  if (ids.length) savedToast(ids);
+  if (ids.length || cart.length) savedToast(ids, cart);
 });
 $('#review-discard').addEventListener('click', () => {
   const ids = state.reviewIds.slice();
+  const cart = (state.reviewCart || []).slice();
   state.reviewIds = [];
+  state.reviewCart = [];
   if (state.reviewWait) { state.reviewDiscard = state.reviewWait; state.reviewWait = null; }
   leaveReview();
-  if (ids.length) discardSoon(ids); else toast('Not saved');
+  takeOutOfCart(cart);
+  if (ids.length) discardSoon(ids); else toast(cart.length ? 'Taken back out of the cart' : 'Not saved');
+});
+$('#review-list').addEventListener('click', (e) => {
+  const out = e.target.closest('[data-uncart]');
+  if (out) {
+    const [a] = state.reviewCart.splice(Number(out.dataset.uncart), 1);
+    if (a) { takeOutOfCart([a]); toast(`${a.name}: back out of the cart`); }
+    draw();
+    return;
+  }
+  if (e.target.closest('[data-totask]')) {
+    // Not shopping after all: one to-do with everything that was in the card, and the cart as it was.
+    // (The cart card stays until the task is in, so Review never finds itself empty and closes.)
+    const cart = state.reviewCart.slice();
+    const tempId = createTask({ title: `Buy ${buyWords(cart)}`.slice(0, 200), dueDate: '', time: '', owner: '', repeats: 'Never', category: 'shopping' });
+    state.reviewIds.push(tempId);
+    state.reviewCart = [];
+    takeOutOfCart(cart);
+    draw();
+  }
 });
 $('#d-heard').addEventListener('cancel', (e) => { e.preventDefault(); if (captured.length) finishCapture(); });
 
@@ -4269,17 +4343,29 @@ function addSpoken(text) {
   const said = String(text || '').trim();
   const parts = s && s.linked ? splitSpoken(said, [...s.items.map((i) => i.name), ...(s.known || [])]) : [];
   if (!parts.length) { setSearch(said.replace(/[.?!]+$/, '').trim()); $('#shop-q').focus(); return; }
-  const added = parts.map((p) => {
+  const added = putInCart(parts);
+  if (!added.length) return;
+  setSearch('');
+  const list = cartWords(added);
+  const msg = added.length === 1 ? `${list} is in the cart` : `${added.length} in the cart: ${list}`;
+  toast(msg, [{ label: 'Undo', fn: () => takeOutOfCart(added) }], 6000);
+}
+
+/** Puts spoken lines ({ name, qty, size }) in the cart. Returns what was added, with how many there were before, for Undo. */
+function putInCart(parts) {
+  const s = shopData();
+  if (!s || !s.linked) return [];
+  return parts.map((p) => {
     const before = ((s.items.find((i) => shopKey(i.name) === shopKey(p.name)) || {}).id);
     const was = before ? (lineIn(s, before) || { qty: 0 }).qty : 0;
     const item = cartAdd({ name: p.name, size: p.size }, p.qty);
     return item && { id: item.id, name: item.name, qty: p.qty, was };
   }).filter(Boolean);
-  if (!added.length) return;
-  setSearch('');
-  const list = added.map((a) => (a.qty > 1 ? `${a.name} ×${a.qty}` : a.name)).join(', ');
-  const msg = added.length === 1 ? `${list} is in the cart` : `${added.length} in the cart: ${list}`;
-  toast(msg, [{ label: 'Undo', fn: () => added.forEach((a) => cartSet(a.id, a.was, { quiet: true })) }], 6000);
+}
+
+/** Puts the cart back as it was before putInCart. */
+function takeOutOfCart(added) {
+  added.forEach((a) => cartSet(a.id, a.was, { quiet: true }));
 }
 $('#shop-mic').addEventListener('click', () => {
   listen({
