@@ -132,3 +132,16 @@ test('Claude: shopping with Shopping not linked turns into a to-do', () => {
   assert.deepEqual(r.tasks, ['Buy milk']);
   assert.deepEqual(r.cart, []);
 });
+
+test('Naser\'s example (28 Nov): "and" + a task verb starts a new task, and a day doesn\'t stop groceries', () => {
+  const h = household();
+  const r = said(h, 'We need to get oats and schedule maintenance company tomorrow');
+  assert.deepEqual([r.tasks, r.cart], [['Schedule maintenance company'], ['oats']]);
+  assert.equal(r.reply.tasks[0].dueDate, '2026-11-23');
+  assert.deepEqual(said(h, 'We need oats tomorrow').cart, ['oats']);
+  assert.deepEqual(said(h, 'we need milk for tonight').cart, ['milk']);
+  assert.deepEqual(said(h, 'we need eggs and water').cart, ['eggs and water'], '"water" is a drink here, not a chore');
+  const sofa = said(h, 'buy a new sofa on Friday');
+  assert.deepEqual([sofa.tasks, sofa.cart], [['Buy a new sofa'], []]);
+  assert.deepEqual(said(h, 'we need to call the maintenance company').cart, []);
+});
