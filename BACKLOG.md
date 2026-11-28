@@ -103,6 +103,8 @@ Melody is a web app saved to the home screen. A native iPhone app may come later
 |---|---|---|---|
 | App icon updates only when the app is removed and re-added to the home screen (found Oct 2026, when the new B6 icon went live) | Future icon changes need a note to both of you to re-add the app | — (note) | **Better native**: native app icons update with the app |
 | Possible icon tweak: B6's split-ring dot on a damson tile (B3's background), if the light oat tile gets lost on the home screen | Bolder on light wallpapers | Small | — |
+| **Feels native, not a web page** (Nov 28, EPICS A1). Long-pressing text today selects it and shows Copy / Look Up / Share, which gives away that Melody is a web page. Turn it off app-wide with `user-select: none` and `-webkit-touch-callout: none` on the body (today only buttons, chips and bars have it), plus `-webkit-tap-highlight-color: transparent`; keep inputs, text areas and the task note selectable so editing still works. Check the other mobile-native fixes at the same time (no double-tap zoom, no input zoom). | The app feels installed, not like a website | Small | **Better native**: Safari still owns some gestures (e.g. the link preview on long-press of a link, text selection inside fields); a native app controls all of them |
+| **Times with AM and PM** (Nov 28, EPICS A2). Show every time in 12-hour format with AM / PM ("6:30 PM"), e.g. when an order was placed, task times, quick times and the evening-nudge time. Use one shared time formatter so every screen matches; the Sheet can keep storing 24-hour times. | Easier to read at a glance; matches how we talk about time | Small | — |
 
 ## Shopping
 
