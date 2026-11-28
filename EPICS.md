@@ -61,3 +61,14 @@ A Melody Duet for building our online orders: a cart backed by a catalogue of th
 - Ticks on the cart (open question: what they'd mean when we order online).
 - Prices and a link to the household ledger.
 - Reminder when near a store (**Native only**: web apps can't watch your location in the background).
+
+---
+
+## App-wide polish
+
+Small fixes that apply across every Melody Duet. Details are in `BACKLOG.md`, "Look and feel".
+
+| # | Item | Status | What it does |
+|---|---|---|---|
+| A1 | **Feels native, not a web page** | Later | Long-pressing text no longer selects it or brings up Copy / Look Up; only text fields and notes stay selectable (**Better native**) |
+| A2 | **Times with AM and PM** | Later | Every time the app shows (task times, "order placed", Ready, Settings) reads like "6:30 PM", not "18:30" |
