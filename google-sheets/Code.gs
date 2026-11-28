@@ -1559,7 +1559,11 @@ const CART_WEAK = [
 const CART_TAIL = /\s+(?:to|on|onto|in|into) (?:the |our )?(?:cart|list|shopping(?: list)?|basket)\s*$/i;
 const CART_FILLER = /^(?:(?:and|also|plus|oh|so|then|um+|uh+|okay|ok|remember|don't forget|dont forget|i think|looks like)\b[\s,]*)+/i;
 // Plans and errands, not things for the cart.
-const NOT_FOR_CART = new RegExp(`\\b(?:(?:mon|tues|wednes|thurs|fri|satur|sun)day|today|tonight|tomorrow|weekend|next week|this week|morning|afternoon|evening|\\d{1,2}(?::\\d{2})?\\s*(?:am|pm)|present|gift|tickets?|flights?|groceries|shopping|appointment|plumber|electrician|cleaner for)\\b`, 'i');
+const NOT_FOR_CART = /\b(?:present|gift|tickets?|flights?|groceries|shopping|appointment|plumber|electrician|cleaner for|company|service|repair)\b/i;
+// When it's needed by: "we need oats tomorrow" is still oats for the cart (if it looks like groceries).
+const CART_WHEN = /\s*\b(?:(?:for|by|on|before)\s+)?(?:(?:this|next)\s+)?(?:(?:mon|tues|wednes|thurs|fri|satur|sun)day|today|tonight|tomorrow|weekend|week|morning|afternoon|evening|\d{1,2}(?::\d{2})?\s*(?:am|pm))\b/gi;
+// "...and schedule the maintenance company": a new task starts after "and" + a task verb.
+const TASK_AFTER_AND = '(?:call|ring|phone|book|pay|send|email|text|collect|drop off|renew|cancel|post|wash|feed|walk|mow|tidy|clean|sort out|write|change|replace|arrange|schedule|return|fix|cook|make|remind|check|organi[sz]e|plan|take)';
 const CART_AMOUNT = /^(?:(?:a|an|one|two|three|four|five|six|seven|eight|nine|ten|twelve|a couple of|a few|some|more|\d+(?:\.\d+)?)\s+)?(?:(?:packs?|packets?|bottles?|boxe?s?|bags?|cartons?|loa(?:f|ves)|tins?|cans?|jars?|bunche?s?|tubs?|trays?|rolls?|dozens?|kilos?|kg|grams?|g|litres?|liters?|l|ml)\s+(?:of\s+)?)?/i;
 
 /** The words of one thing to buy, without "two packs of" in front: what matching looks at. */
@@ -1599,8 +1603,11 @@ function cartClause_(clause, known) {
   if (!what) return null;
   what = what.replace(/^(?:some (?:more )?|more |a few more )/i, '').trim();
   if (!what || NOT_FOR_CART.test(what) || /^to\b/i.test(what)) return null;
-  if (!strong && !groceryList_(what, known, true)) return null;
-  return what;
+  const bare = what.replace(CART_WHEN, '').trim();
+  if (!bare) return null;
+  // With a day said, only clear groceries count ("buy a new sofa on Friday" is a plan).
+  if ((bare !== what || !strong) && !groceryList_(bare, known, true)) return null;
+  return bare;
 }
 
 /**
@@ -1621,7 +1628,7 @@ function cartFromRules_(text, known) {
       items.push(bare);
       return;
     }
-    const pieces = s.split(/\s*[,;]\s*|\s+(?:and|but|also|plus)\s+(?=(?:also |then |oh )?(?:i|we|you|let's|can|could|please|remember|don't|dont)\b)|\s+(?:also|plus|and then|oh and)\s+/i)
+    const pieces = s.split(new RegExp(`\\s*[,;]\\s*|\\s+(?:and|but|also|plus)\\s+(?=(?:also |then |oh )?(?:i|we|you|let's|can|could|please|remember|don't|dont|${TASK_AFTER_AND})\\b)|\\s+(?:also|plus|and then|oh and)\\s+`, 'i'))
       .map((p) => p.trim()).filter(Boolean);
     const kept = [];
     let buying = false;
