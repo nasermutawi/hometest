@@ -991,12 +991,34 @@ class ServerError extends Error {
 }
 
 const isNetworkError = (err) => !(err instanceof ServerError) && /NetworkError|Failed to fetch|Load failed|network/i.test(err && err.message);
+// A request that never answers (iOS can freeze one when the app is put away) would hold up every
+// later refresh, so each gives up after a while. Reads give up sooner: the next refresh tries again.
+const READS = new Set(['getState', 'getShopping', 'getActivity']);
+const READ_TIMEOUT = 25000;
+const WRITE_TIMEOUT = 60000;
 async function runOnce(fn, args) {
+  const ms = READS.has(fn) ? READ_TIMEOUT : WRITE_TIMEOUT;
+  const ctrl = window.AbortController ? new AbortController() : null;
+  let timer;
+  const late = new Promise((resolve, reject) => {
+    timer = setTimeout(() => {
+      if (ctrl) ctrl.abort();
+      reject(new Error(READS.has(fn) ? 'The household server is taking too long. Try again in a moment.' : 'No answer from the household server, so that may not have saved. Pull down to check.'));
+    }, ms);
+  });
+  try {
+    return await Promise.race([callServer(fn, args, ctrl), late]);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+async function callServer(fn, args, ctrl) {
   if (window.householdApi) return window.householdApi(fn, args); // the preview's stand-in server
   // text/plain keeps this a "simple" request, which Google's servers accept from another site.
   // keepalive lets a change sent as the app is put away still arrive.
   const res = await fetch(config.server, {
     method: 'POST', redirect: 'follow', keepalive: document.visibilityState === 'hidden', body: JSON.stringify({ key: config.key, fn, args }),
+    ...(ctrl ? { signal: ctrl.signal } : {}),
   });
   const body = await res.json();
   if (!body.ok) throw new ServerError(body.message || 'Something went wrong.', body.error);
@@ -1079,7 +1101,10 @@ function perfEnd(entry, result, serverMs) {
 const SLIM = { slim: true };
 const QUIET_AFTER_WRITE = 3000;
 const REFRESH_EVERY = 60000;
-const sync = { base: null, ops: [], sending: null, lastWrite: 0, version: 0, ids: new Map(), seq: 0, refreshing: false, nowAt: Date.now(), wake: null };
+const SHOP_RUN_EVERY = 20000;
+// refreshing: when the refresh on its way started (0: none). wokeAt: when the app last came back to
+// the front; a refresh that started before then may be frozen, so a new one goes ahead anyway.
+const sync = { base: null, ops: [], sending: null, lastWrite: 0, version: 0, ids: new Map(), seq: 0, refreshing: 0, wokeAt: 0, nowAt: Date.now(), wake: null };
 
 const clone = (o) => (window.structuredClone ? structuredClone(o) : JSON.parse(JSON.stringify(o)));
 const realId = (id) => sync.ids.get(Number(id)) || Number(id);
@@ -1220,25 +1245,29 @@ function remap(tempId, id) {
 async function refresh() {
   if (!config && !PREVIEW) return;
   clearTimeout(refresh.later);
-  if (sync.refreshing) return;
+  if (sync.refreshing && sync.refreshing >= sync.wokeAt) return;
   const sinceWrite = Date.now() - sync.lastWrite;
   if (sync.base && (sync.ops.length || sync.sending || sinceWrite < QUIET_AFTER_WRITE)) {
     refresh.later = setTimeout(refresh, Math.max(QUIET_AFTER_WRITE - sinceWrite, 1000));
     return;
   }
-  sync.refreshing = true;
+  const mine = sync.refreshing = Date.now();
   setBusy();
   const version = sync.version;
   const entry = perfStart('Refresh', { screen: false });
   const started = performance.now();
+  // On Shopping the cart is what matters (has someone sent it to Claude?): fetch it alongside.
+  if (state.view === 'shop') loadShopping();
   try {
     const data = await run('getState');
     perfEnd(entry, 'ok', performance.now() - started);
+    if (sync.refreshing !== mine) return; // given up on: a newer refresh has taken over
     // A change confirmed meanwhile may be newer than this; fetch again shortly instead.
     if (sync.version !== version) { refresh.later = setTimeout(refresh, QUIET_AFTER_WRITE); return; }
     receive(data, false);
-    if (state.view === 'shop') await loadShopping();
+    if (state.view === 'shop') loadShopping(); // no-op if the one above is still on its way
   } catch (err) {
+    if (sync.refreshing !== mine) return;
     perfEnd(entry, `failed: ${err.message}`, performance.now() - started);
     // Once the app is showing, a failed background refresh just waits for the next one.
     if (state.data && state.data.me) return;
@@ -1246,7 +1275,7 @@ async function refresh() {
     $('#blocked-msg').textContent = /reach the household/.test(err.message) ? NETWORK_HELP : err.message;
     show('v-blocked');
   } finally {
-    sync.refreshing = false;
+    if (sync.refreshing === mine) sync.refreshing = 0;
     setBusy();
   }
 }
@@ -3388,7 +3417,7 @@ if (PREVIEW) {
 // through mutate() like tasks do; each reply carries the whole shopping state, which is small.
 // "Get prices" only asks a Claude to compare stores. Nothing here ever places an order.
 
-const shop = { q: '', itemId: null, basket: '', form: null, loading: false, error: '', ids: new Map(), seq: 0, stage: '', othersOpen: false };
+const shop = { q: '', itemId: null, basket: '', form: null, loading: 0, error: '', ids: new Map(), seq: 0, stage: '', othersOpen: false };
 const shopId = (id) => shop.ids.get(Number(id)) || Number(id);
 const shopData = (data = state.data) => (data && data.shopping) || null;
 const itemIn = (s, id) => s.items.find((i) => i.id === shopId(id));
@@ -3516,26 +3545,29 @@ function splitSpoken(text, known = []) {
 
 /** Fetches the cart and catalogue, unless changes are still on their way. */
 async function loadShopping() {
-  if (shop.loading || !sync.base || (!config && !PREVIEW)) return;
+  if ((shop.loading && shop.loading >= sync.wokeAt) || !sync.base || (!config && !PREVIEW)) return;
   if (sync.ops.length || sync.sending) { clearTimeout(loadShopping.later); loadShopping.later = setTimeout(loadShopping, QUIET_AFTER_WRITE); return; }
-  shop.loading = true;
+  const mine = shop.loading = Date.now();
   try {
     const s = await run('getShopping');
+    if (shop.loading !== mine) return; // given up on: a newer one has taken over
     shop.error = '';
     if (sync.ops.length || sync.sending) return; // a change of ours is newer: its reply brings the cart
+    // Only the cart changes, so a household refresh on its way stays good (no setBase).
     sync.base.shopping = s;
-    setBase(sync.base);
+    saveCache(sync.base);
     recompute();
     if (state.view === 'shop') quietDraw();
     if ($('#d-settings').open) renderRunner();
   } catch (err) {
+    if (shop.loading !== mine) return;
     if (err instanceof ServerError && err.code === 'link') return;
     shop.error = err && err.code === 'unknown'
       ? 'Shopping needs the new Code.gs on the server. Once it is deployed, pull down to refresh.'
       : err.message;
     if (state.view === 'shop') quietDraw();
   } finally {
-    shop.loading = false;
+    if (shop.loading === mine) shop.loading = 0;
   }
 }
 
@@ -3581,6 +3613,8 @@ function cartAdd(ref, qty = 1) {
     },
     send: () => run('addToCart', size ? { name, size } : { name }, qty, SLIM),
     stateOf: shopRemap(temp, name),
+    cart: true,
+    fail: cartRefused,
   });
   return { id: temp, name };
 }
@@ -3607,8 +3641,37 @@ function cartSet(id, qty, { quiet = false } = {}) {
       else d.cart.push({ itemId: it.id, qty: n, addedBy: data.me.name });
     },
     send: () => run('setCartQty', shopId(id), n, SLIM),
+    cart: true,
+    fail: cartRefused,
   });
   if (!n && !quiet) toast(`${item.name}: out of the cart`, [{ label: 'Undo', fn: () => { if (!cancel(op)) cartSet(id, before); } }]);
+}
+
+/**
+ * A cart change didn't go in. Usually this phone was showing an old copy and the list has gone to
+ * Claude meanwhile (the server refuses changes then), so the screen catches up and says why.
+ * Other cart changes still waiting would be refused too: they're dropped.
+ */
+async function cartRefused(err) {
+  const refused = err instanceof ServerError || Boolean(err && err.code); // the server said no (not a lost connection)
+  if (!refused) { couldntSave(this, err); return; } // this: the change (called as op.fail)
+  const dropped = sync.ops.filter((o) => o.cart && o !== sync.sending);
+  if (dropped.length) {
+    sync.ops = sync.ops.filter((o) => !dropped.includes(o));
+    dropped.forEach((o) => perfEnd(o.perf, 'dropped (cart locked)'));
+    recompute();
+    draw();
+  }
+  await loadShopping();
+  const s = shopData();
+  toast(s && s.locked ? lockedNote(s) : err.message, [], 6000, 'alert');
+}
+/** Why the cart can't change right now, in plain words. */
+function lockedNote(s) {
+  const r = s.request || {};
+  if (r.status === 'ready') return "Claude's basket is ready, so the list is frozen. Tap Change the list to edit it.";
+  const who = r.askedBy && r.askedBy !== state.data.me.name ? r.askedBy : '';
+  return `${who ? `${who} beat you to it: the list` : 'The list'}'s already with Claude, so that change didn't go in. Pull it back to change it.`;
 }
 
 /** Changes an item's name, size, brand or heart. */
@@ -4456,7 +4519,18 @@ $('#v-shop').addEventListener('click', (e) => {
 
 // The other person's changes arrive when the app opens or comes back to the front, and every
 // minute while it's showing. Live updates between phones aren't needed.
+// While Claude is hunting, Shopping checks the cart more often, so "Claude's on it" turns into the
+// basket soon after it's ready.
 setInterval(() => { if (!document.hidden) refresh(); }, REFRESH_EVERY);
+setInterval(() => {
+  const r = shopData() && shopData().request;
+  if (!document.hidden && state.view === 'shop' && r && ['waiting', 'running'].includes(r.status)) loadShopping();
+}, SHOP_RUN_EVERY);
+/** The app is back on screen: whatever was on its way before may be frozen, so fetch afresh. */
+function wakeUp() {
+  sync.wokeAt = Date.now();
+  refresh();
+}
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) {
     releaseMic();
@@ -4464,9 +4538,12 @@ document.addEventListener('visibilitychange', () => {
     // Phone put away mid-countdown: the tasks are saved already, so just settle the screen.
     if ($('#d-heard').open && captured.length) finishCapture();
   } else {
-    refresh();
+    wakeUp();
   }
 });
+// iOS can bring a home-screen app back from its page cache without a visibilitychange.
+window.addEventListener('pageshow', (e) => { if (e.persisted) wakeUp(); });
+window.addEventListener('online', () => refresh());
 window.addEventListener('pagehide', () => { releaseMic(); flushHeld(); });
 
 // No zooming: iOS ignores user-scalable=no, so pinches are stopped here (double-tap is stopped by touch-action).
